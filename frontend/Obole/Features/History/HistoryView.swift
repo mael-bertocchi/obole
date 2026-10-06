@@ -114,6 +114,10 @@ struct HistoryView: View {
         } else {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
+                    if dateRange != nil {
+                        StatCard(label: String(appLocalized: "Total spent"), value: Formatting.amount(groups.reduce(0) { $0 + $1.spent }))
+                            .padding(.top, 4)
+                    }
                     ForEach(groups) { group in
                         HStack {
                             DayLabel(Formatting.relativeDay(group.date))

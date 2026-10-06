@@ -1094,6 +1094,16 @@
         }
       }
     },
+    "Total spent" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total dépensé"
+          }
+        }
+      }
+    },
     "Transport" : {
       "localizations" : {
         "fr" : {
