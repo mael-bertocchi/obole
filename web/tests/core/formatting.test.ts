@@ -1,5 +1,5 @@
 import { currencyNamed } from '@core/currencies';
-import { amountInput, dayShort, euro, euroPrecise, fieldDate, money, monthWithYear, percent, rate, relativeDay, truncate } from '@core/formatting';
+import { amountInput, dayShort, euro, euroPrecise, fieldDate, money, monthWithYear, percent, rangeTitle, rate, relativeDay, truncate } from '@core/formatting';
 import { chooseLanguage } from '@core/i18n';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -54,6 +54,12 @@ describe('dates', () => {
         expect(monthWithYear(NOW)).toBe('September 2026');
         expect(dayShort(NOW)).toBe('27 Sep');
     });
+
+    it('names a date filter, with the year only for another year', () => {
+        expect(rangeTitle({ start: new Date(2026, 8, 5), end: new Date(2026, 8, 5) }, NOW)).toBe('5 Sep');
+        expect(rangeTitle({ start: new Date(2026, 8, 1), end: new Date(2026, 8, 27) }, NOW)).toBe('1 Sep → 27 Sep');
+        expect(rangeTitle({ start: new Date(2025, 11, 20), end: new Date(2026, 0, 4) }, NOW)).toBe('20 Dec 2025 → 4 Jan');
+    });
 });
 
 describe('in French', () => {
@@ -81,6 +87,10 @@ describe('in French', () => {
         expect(fieldDate(new Date(2026, 8, 3), NOW)).toBe('jeu. 3 sept.');
         expect(monthWithYear(NOW)).toBe('Septembre 2026');
         expect(dayShort(new Date(2026, 6, 4))).toBe('4 juil.');
+    });
+
+    it('names a date filter in French', () => {
+        expect(rangeTitle({ start: new Date(2026, 8, 1), end: new Date(2026, 8, 27) }, NOW)).toBe('1 sept. → 27 sept.');
     });
 });
 

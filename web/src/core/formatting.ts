@@ -1,5 +1,6 @@
 import type { Currency } from '@core/currencies';
 import { EURO } from '@core/currencies';
+import type { DayRange } from '@core/dates';
 import { isSameDay } from '@core/dates';
 import type { Language } from '@core/i18n';
 import { currentLanguage, t } from '@core/i18n';
@@ -211,6 +212,23 @@ export function relativeDay(date: Date, now: Date = new Date()): string {
     }
 
     return weekdayDay(date);
+}
+
+/**
+ * @function filterDay
+ * @description A day the way the History date filter names it: 5 Oct, with the year once it isn't the current one.
+ */
+function filterDay(date: Date, now: Date): string {
+    return date.getFullYear() === now.getFullYear() ? dayShort(date) : `${dayShort(date)} ${date.getFullYear()}`;
+}
+
+/**
+ * @function rangeTitle
+ * @description A range of days the way the History date filter names it: 5 Oct for a single day, 1 Sep → 30 Sep for
+ * a period.
+ */
+export function rangeTitle(range: DayRange, now: Date = new Date()): string {
+    return isSameDay(range.start, range.end) ? filterDay(range.start, now) : `${filterDay(range.start, now)} → ${filterDay(range.end, now)}`;
 }
 
 /**

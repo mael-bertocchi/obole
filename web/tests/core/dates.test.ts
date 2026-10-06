@@ -1,4 +1,4 @@
-import { dayKey, isFutureDay, monthKey, parseDay, parseMonthKey, shiftMonth } from '@core/dates';
+import { dayKey, dayRange, isFutureDay, isInRange, monthKey, parseDay, parseDayKey, parseMonthKey, shiftMonth } from '@core/dates';
 import { describe, expect, it } from 'vitest';
 
 import { NOW } from '../support/fixtures';
@@ -40,5 +40,31 @@ describe('months', () => {
     it('spots a future day', () => {
         expect(isFutureDay(new Date(2026, 8, 28), NOW)).toBe(true);
         expect(isFutureDay(new Date(2026, 8, 27, 23, 59), NOW)).toBe(false);
+    });
+});
+
+describe('day ranges', () => {
+    it('reads day keys back and refuses what names no real day', () => {
+        expect(dayKey(parseDayKey('2026-09-25') ?? new Date(0))).toBe('2026-09-25');
+        expect(parseDayKey('2026-06-31')).toBeNull();
+        expect(parseDayKey('25/09/2026')).toBeNull();
+        expect(parseDayKey('')).toBeNull();
+    });
+
+    it('orders its ends, at midnight', () => {
+        const range = dayRange(new Date(2026, 8, 27, 18), new Date(2026, 8, 3, 9));
+
+        expect(dayKey(range.start)).toBe('2026-09-03');
+        expect(dayKey(range.end)).toBe('2026-09-27');
+        expect(range.end.getHours()).toBe(0);
+    });
+
+    it('takes in every hour of both ends and nothing beyond', () => {
+        const range = dayRange(new Date(2026, 8, 3), new Date(2026, 8, 27));
+
+        expect(isInRange(new Date(2026, 8, 3, 0, 0), range)).toBe(true);
+        expect(isInRange(new Date(2026, 8, 27, 23, 59), range)).toBe(true);
+        expect(isInRange(new Date(2026, 8, 2, 23, 59), range)).toBe(false);
+        expect(isInRange(new Date(2026, 8, 28, 0, 0), range)).toBe(false);
     });
 });

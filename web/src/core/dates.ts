@@ -154,6 +154,20 @@ function calendarDay(year: number, month: number, day: number): Maybe<Date> {
 }
 
 /**
+ * @function parseDayKey
+ * @description Reads a YYYY-MM-DD key back into its day.
+ *
+ * @param {string} key The key.
+ *
+ * @returns {Maybe<Date>} Midnight of the day, or null for a malformed key or one that names no real day.
+ */
+export function parseDayKey(key: string): Maybe<Date> {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
+
+    return match === null ? null : calendarDay(Number(match[1]), Number(match[2]), Number(match[3]));
+}
+
+/**
  * @function parseDay
  * @description Reads a day typed by hand: "today", "yesterday", 2026-09-25, 25/09/2026, 25/09/26 or 25/09. A day
  * with no year is the most recent one that isn't in the future.
@@ -202,4 +216,39 @@ export function parseDay(input: string, now: Date): Maybe<Date> {
     }
 
     return calendarDay(now.getFullYear() - 1, month, day);
+}
+
+/**
+ * @interface DayRange
+ * @description A run of whole days, both ends included. A single day starts and ends on itself.
+ */
+export interface DayRange {
+    start: Date; /*!< Midnight of its first day */
+    end: Date; /*!< Midnight of its last day */
+}
+
+/**
+ * @function dayRange
+ * @description The days from one date to another, whichever of the two comes first.
+ *
+ * @param {Date} left One end.
+ * @param {Date} right The other end.
+ *
+ * @returns {DayRange} The range, in order.
+ */
+export function dayRange(left: Date, right: Date): DayRange {
+    const first = startOfDay(left);
+    const second = startOfDay(right);
+
+    return first.getTime() <= second.getTime() ? { start: first, end: second } : { start: second, end: first };
+}
+
+/**
+ * @function isInRange
+ * @description Whether a date falls on one of a range's days.
+ */
+export function isInRange(date: Date, range: DayRange): boolean {
+    const day = startOfDay(date).getTime();
+
+    return day >= range.start.getTime() && day <= range.end.getTime();
 }
