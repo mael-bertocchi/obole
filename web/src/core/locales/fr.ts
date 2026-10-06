@@ -94,7 +94,7 @@ export const fr: Messages = {
     'settings.eyebrow': 'Réglages',
     'settings.title': 'Préférences',
     'settings.account': 'Compte',
-    'settings.signedIn': 'Connecté',
+    'settings.sync': 'Synchronisation',
     'settings.signOut': 'Se déconnecter',
     'settings.budget': 'Budget',
     'settings.budgetAndLimits': 'Budget et limites',

@@ -92,7 +92,7 @@ export const en = {
     'settings.eyebrow': 'Settings',
     'settings.title': 'Preferences',
     'settings.account': 'Account',
-    'settings.signedIn': 'Signed in',
+    'settings.sync': 'Sync',
     'settings.signOut': 'Sign out',
     'settings.budget': 'Budget',
     'settings.budgetAndLimits': 'Budget & limits',

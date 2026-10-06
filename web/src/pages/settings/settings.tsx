@@ -11,7 +11,7 @@ import type { LanguageChoice } from '@core/i18n';
 import { chooseLanguage, LANGUAGES, languageChoice, t } from '@core/i18n';
 import { defaultCurrency, rememberCurrency } from '@core/preferences';
 import LimitsSheet from '@pages/budget/limits-sheet';
-import { ChevronRight, CircleUser, Euro, Languages, LayoutGrid, List, LogOut, Target, Trash2 } from 'lucide-react';
+import { ChevronRight, Euro, Languages, LayoutGrid, List, LogOut, RefreshCw, Target, Trash2 } from 'lucide-react';
 import { useState, type JSX, type ReactNode } from 'react';
 
 /**
@@ -101,7 +101,7 @@ function SettingsPage(): JSX.Element {
             <h1 className="mb-8 mt-1 text-[34px] font-semibold leading-tight tracking-tight">{t('settings.title')}</h1>
 
             <Group title={t('settings.account')}>
-                <Row icon={<IconTileComponent icon={CircleUser} color={ACCENT} size={30} />} title={t('settings.signedIn')}>
+                <Row icon={<IconTileComponent icon={RefreshCw} color={ACCENT} size={30} />} title={t('settings.sync')}>
                     <SyncBadgeComponent status={status} />
                 </Row>
                 <Row icon={<IconTileComponent icon={LogOut} color={NEGATIVE} size={30} />} title={t('settings.signOut')} destructive onClick={() => setConfirming('signOut')} />
