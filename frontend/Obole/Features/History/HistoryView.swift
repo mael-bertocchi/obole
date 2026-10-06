@@ -5,6 +5,33 @@ enum HistoryFilter: Hashable {
     case category(String)
 }
 
+/// A run of whole days, both ends included. A single day starts and ends on itself.
+struct DayRange: Hashable {
+    let start: Date
+    let end: Date
+
+    /// The days from one date to another, whichever of the two comes first.
+    init(_ first: Date, _ second: Date) {
+        let first = BudgetMath.calendar.startOfDay(for: first)
+        let second = BudgetMath.calendar.startOfDay(for: second)
+        start = min(first, second)
+        end = max(first, second)
+    }
+
+    init(day: Date) {
+        self.init(day, day)
+    }
+
+    var isSingleDay: Bool {
+        start == end
+    }
+
+    func contains(_ date: Date) -> Bool {
+        let day = BudgetMath.calendar.startOfDay(for: date)
+        return day >= start && day <= end
+    }
+}
+
 struct HistoryView: View {
     @Binding var filter: HistoryFilter
     var onSelect: (Operation) -> Void = { _ in }
@@ -14,11 +41,16 @@ struct HistoryView: View {
     @Environment(Preferences.self) private var preferences
 
     @State private var query = ""
+    @State private var dateRange: DayRange?
+    @State private var showDateSheet = false
 
     var body: some View {
         VStack(spacing: 0) {
             headerBlock
             operationList
+        }
+        .sheet(isPresented: $showDateSheet) {
+            HistoryDateSheet(range: $dateRange)
         }
     }
 
@@ -39,6 +71,17 @@ struct HistoryView: View {
 
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
+                    FilterChip(
+                        title: dateRange.map(Formatting.rangeTitle) ?? String(appLocalized: "Date"),
+                        systemImage: "calendar",
+                        isActive: dateRange != nil
+                    ) {
+                        preferences.tap()
+                        showDateSheet = true
+                    }
+                    Rectangle()
+                        .fill(Theme.divider)
+                        .frame(width: 1, height: 18)
                     FilterChip(title: String(appLocalized: "All"), isActive: filter == .all) {
                         select(.all)
                     }
@@ -111,7 +154,7 @@ struct HistoryView: View {
     }
 
     private var emptyMessage: String {
-        if !query.isEmpty || filter != .all {
+        if !query.isEmpty || filter != .all || dateRange != nil {
             return String(appLocalized: "No operations match this search.")
         }
         return String(appLocalized: "No operations yet. Tap ＋ to log your first expense.")
@@ -120,7 +163,7 @@ struct HistoryView: View {
     private var groups: [DayGroup] {
         let trimmed = query.trimmingCharacters(in: .whitespaces)
         let filtered = store.operations.filter { operation in
-            matchesFilter(operation) && matchesQuery(operation, trimmed)
+            matchesFilter(operation) && (dateRange?.contains(operation.date) ?? true) && matchesQuery(operation, trimmed)
         }
         return BudgetMath.dayGroups(filtered)
     }

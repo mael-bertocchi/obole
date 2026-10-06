@@ -206,6 +206,18 @@ enum Formatting {
         self.date(date, format: "EEE d MMM")
     }
 
+    /// A day the way the History date filter names it: 5 Oct, with the year once it isn't the current one.
+    private static func filterDay(_ date: Date) -> String {
+        if Calendar.current.isDate(date, equalTo: .now, toGranularity: .year) { return dayShort(date) }
+        return self.date(date, format: "d MMM yyyy")
+    }
+
+    /// A range of days the way the History date filter names it: 5 Oct for a single day, 1 Sep → 30 Sep for a period.
+    static func rangeTitle(_ range: DayRange) -> String {
+        if range.isSingleDay { return filterDay(range.start) }
+        return "\(filterDay(range.start)) → \(filterDay(range.end))"
+    }
+
     static func relativeDay(_ date: Date) -> String {
         if Calendar.current.isDateInToday(date) { return String(appLocalized: "Today") }
         if Calendar.current.isDateInYesterday(date) { return String(appLocalized: "Yesterday") }

@@ -119,25 +119,32 @@ struct StepperButton: View {
 
 struct FilterChip: View {
     let title: String
+    var systemImage: String?
     let isActive: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(Theme.font(12, .medium))
-                .foregroundStyle(isActive ? Theme.accent : Theme.muted)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(
-                    isActive ? AnyShapeStyle(Theme.accent.opacity(0.12)) : AnyShapeStyle(Theme.neutral900),
-                    in: RoundedRectangle(cornerRadius: 6, style: .continuous)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .strokeBorder(isActive ? Theme.accent : Color.clear, lineWidth: 1)
-                )
-                .expandedTapTarget(vertical: 6, horizontal: 2)
+            HStack(spacing: 5) {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 11, weight: .medium))
+                }
+                Text(title)
+                    .font(Theme.font(12, .medium))
+            }
+            .foregroundStyle(isActive ? Theme.accent : Theme.muted)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(
+                isActive ? AnyShapeStyle(Theme.accent.opacity(0.12)) : AnyShapeStyle(Theme.neutral900),
+                in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .strokeBorder(isActive ? Theme.accent : Color.clear, lineWidth: 1)
+            )
+            .expandedTapTarget(vertical: 6, horizontal: 2)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isActive ? [.isSelected] : [])
