@@ -65,6 +65,7 @@ export const en = {
     'history.to': 'To',
     'history.apply': 'Apply',
     'history.allDates': 'All dates',
+    'history.totalSpent': 'Total spent',
     'history.noMatch': 'No operations match this search.',
     'history.empty': 'No operations yet. Use New operation to log your first expense.',
     'history.recurring': 'Recurring',

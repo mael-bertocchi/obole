@@ -67,6 +67,7 @@ export const fr: Messages = {
     'history.to': 'Au',
     'history.apply': 'Appliquer',
     'history.allDates': 'Toutes les dates',
+    'history.totalSpent': 'Total dépensé',
     'history.noMatch': 'Aucune opération ne correspond à cette recherche.',
     'history.empty': 'Aucune opération pour l’instant. Utilisez Nouvelle opération pour ajouter votre première dépense.',
     'history.recurring': 'Récurrente',

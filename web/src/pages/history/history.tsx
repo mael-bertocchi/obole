@@ -86,8 +86,8 @@ function OperationRow({ document, operation, onOpen }: { document: BudgetDocumen
 /**
  * @function HistoryPage
  * @description The History tab: every operation grouped by day with each day's total, a search, a date filter on one
- * day or a period, and one filter chip per category. The filters live in the address, so a category opened from Budget
- * survives a reload.
+ * day or a period, and one filter chip per category. Under a date filter, the total of what is listed comes first. The
+ * filters live in the address, so a category opened from Budget survives a reload.
  */
 function HistoryPage(): JSX.Element {
     const document = useDocument();
@@ -185,6 +185,12 @@ function HistoryPage(): JSX.Element {
                 {groups.length === 0 && (
                     <div className="mt-6">
                         <EmptyStateComponent message={isFiltered ? t('history.noMatch') : t('history.empty')} />
+                    </div>
+                )}
+                {range !== null && groups.length > 0 && (
+                    <div className="card mt-6 flex items-baseline justify-between gap-4 px-5 py-4">
+                        <span className="text-[15px] font-medium text-ink-secondary">{t('history.totalSpent')}</span>
+                        <span className="text-[20px] font-semibold tracking-tight tabular-nums">{money(groups.reduce((total, group) => total + group.spent, 0))}</span>
                     </div>
                 )}
                 {groups.map((group) => (
