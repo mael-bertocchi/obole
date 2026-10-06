@@ -23,8 +23,8 @@ struct SettingsView: View {
                     .padding(.bottom, 10)
                 VStack(spacing: 0) {
                     HStack(spacing: 12) {
-                        IconTile(symbol: "person.crop.circle", color: Theme.accent)
-                        Text("Signed in")
+                        IconTile(symbol: "arrow.triangle.2.circlepath", color: Theme.accent)
+                        Text("Sync")
                             .font(Theme.font(14))
                             .foregroundStyle(Theme.text)
                         Spacer(minLength: 8)
@@ -192,31 +192,24 @@ struct SettingsView: View {
         }
     }
 
+    /// The dot alone tells the state; its words stay for VoiceOver.
     private var syncBadge: some View {
-        HStack(spacing: 5) {
+        Group {
             switch session.syncState {
             case .syncing:
                 ProgressView()
                     .controlSize(.mini)
                     .tint(Theme.muted)
-                Text("Syncing")
-                    .font(Theme.font(12))
-                    .foregroundStyle(Theme.muted)
+                    .accessibilityLabel("Syncing")
             case .idle:
                 StatusDot(color: Theme.positive)
-                Text("Synced")
-                    .font(Theme.font(12))
-                    .foregroundStyle(Theme.muted)
+                    .accessibilityLabel("Synced")
             case .offline:
                 StatusDot(color: Theme.warning)
-                Text("Offline")
-                    .font(Theme.font(12))
-                    .foregroundStyle(Theme.muted)
+                    .accessibilityLabel("Offline")
             case .error:
                 StatusDot(color: Theme.negative)
-                Text("Error")
-                    .font(Theme.font(12))
-                    .foregroundStyle(Theme.muted)
+                    .accessibilityLabel("Error")
             }
         }
     }

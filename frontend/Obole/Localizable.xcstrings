@@ -884,16 +884,6 @@
         }
       }
     },
-    "Signed in" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Connecté"
-          }
-        }
-      }
-    },
     "South Korean Won" : {
       "localizations" : {
         "fr" : {
@@ -920,6 +910,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Franc suisse"
+          }
+        }
+      }
+    },
+    "Sync" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisation"
           }
         }
       }
