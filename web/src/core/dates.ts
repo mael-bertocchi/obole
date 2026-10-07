@@ -94,6 +94,40 @@ export function dayKey(date: Date): string {
 }
 
 /**
+ * @function timeKey
+ * @description A time of day in HH:MM form, the way a time field holds it.
+ *
+ * @param {Date} date The date.
+ *
+ * @returns {string} The key.
+ */
+export function timeKey(date: Date): string {
+    return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/**
+ * @function atTime
+ * @description A date's day at a time of day read from a time field, on the minute.
+ *
+ * @param {Date} date The date to take the day of.
+ * @param {string} key The time, in HH:MM form, seconds tolerated and dropped.
+ *
+ * @returns {Maybe<Date>} The day at that time, or null when the key names no time of day.
+ */
+export function atTime(date: Date, key: string): Maybe<Date> {
+    const match = /^(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/.exec(key);
+
+    if (match === null) {
+        return null;
+    }
+
+    const hours = Number(match[1]);
+    const minutes = Number(match[2]);
+
+    return hours <= 23 && minutes <= 59 ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes) : null;
+}
+
+/**
  * @function parseMonthKey
  * @description Reads a YYYY-MM key back into the month's first day.
  *
@@ -123,7 +157,7 @@ export function wholeSeconds(date: Date): Date {
 
 /**
  * @function withTimeOf
- * @description A day at the time of day of another date, the way the app's date picker keeps the current time when
+ * @description A day at the time of day of another date, the way the app's date picker keeps the time it holds when
  * another day is picked.
  *
  * @param {Date} day The day.

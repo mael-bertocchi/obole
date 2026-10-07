@@ -7,7 +7,7 @@ import { categoriesOf, categoryName, categoryOrFallback } from '@core/categories
 import { currencyNamed, EURO } from '@core/currencies';
 import type { DayRange } from '@core/dates';
 import { dayKey, dayRange, isInRange, parseDayKey } from '@core/dates';
-import { euroPrecise, money, rangeTitle, relativeDay } from '@core/formatting';
+import { clockTime, euroPrecise, money, rangeTitle, relativeDay } from '@core/formatting';
 import { t } from '@core/i18n';
 import type { BudgetDocument, Operation } from '@core/models';
 import DateSheet from '@pages/history/date-sheet';
@@ -51,8 +51,8 @@ function rangeOf(from: Maybe<string>, to: Maybe<string>): Maybe<DayRange> {
 
 /**
  * @function OperationRow
- * @description One operation: its category, name and marks, where it happened, and its amount, with the euro figure
- * under a foreign one.
+ * @description One operation: its category, name and marks, when and where it happened, and its amount, with the euro
+ * figure under a foreign one.
  */
 function OperationRow({ document, operation, onOpen }: { document: BudgetDocument; operation: Operation; onOpen: () => void }): JSX.Element {
     const category = categoryOrFallback(document.categories, operation.categoryId);
@@ -68,12 +68,15 @@ function OperationRow({ document, operation, onOpen }: { document: BudgetDocumen
                     {operation.isRecurring && <Repeat size={13} className="shrink-0 text-ink-quaternary" aria-label={t('history.recurring')} />}
                     {hasDescription && <AlignLeft size={13} className="shrink-0 text-ink-quaternary" aria-label={t('history.hasNote')} />}
                 </span>
-                {operation.isOnline && (
-                    <span className="mt-0.5 flex items-center gap-1 text-[13px] text-ink-secondary"><Globe size={12} /> {t('history.online')}</span>
-                )}
-                {!operation.isOnline && (operation.location ?? '') !== '' && (
-                    <span className="mt-0.5 flex items-center gap-1 text-[13px] text-ink-secondary"><MapPin size={12} className="shrink-0" /> <span className="truncate">{operation.location}</span></span>
-                )}
+                <span className="mt-0.5 flex items-center gap-2 text-[13px] text-ink-secondary">
+                    <time dateTime={operation.date.toISOString()} className="shrink-0 tabular-nums">{clockTime(operation.date)}</time>
+                    {operation.isOnline && (
+                        <span className="flex items-center gap-1"><Globe size={12} /> {t('history.online')}</span>
+                    )}
+                    {!operation.isOnline && (operation.location ?? '') !== '' && (
+                        <span className="flex min-w-0 items-center gap-1"><MapPin size={12} className="shrink-0" /> <span className="truncate">{operation.location}</span></span>
+                    )}
+                </span>
             </span>
             <span className="shrink-0 text-right">
                 <span className="block text-[15px] font-semibold tabular-nums">{money(operation.amount, currencyNamed(operation.currencyCode))}</span>

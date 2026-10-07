@@ -8,7 +8,7 @@ import SwitchComponent from '@components/switch';
 import { latestLocation } from '@core/budget-math';
 import { categoriesOf, categoryName } from '@core/categories';
 import { CURRENCIES, EURO } from '@core/currencies';
-import { dayKey, isFutureDay, isSameDay, parseDay, withTimeOf } from '@core/dates';
+import { atTime, dayKey, isFutureDay, parseDay, timeKey, withTimeOf } from '@core/dates';
 import { euroPrecise, fieldDate, rate } from '@core/formatting';
 import { t } from '@core/i18n';
 import type { Operation } from '@core/models';
@@ -96,21 +96,34 @@ function OperationForm({ existing, onDone, onDelete, onValidityChange }: { exist
     }, [isValid, onValidityChange]);
 
     /**
+     * @function settle
+     * @description Dates the operation, at the latest now: like the app's picker, the future is out of reach.
+     */
+    const settle = (picked: Date): void => {
+        setDate(picked.getTime() > now.getTime() ? now : picked);
+    };
+
+    /**
      * @function pickDay
-     * @description Moves the operation to another day. Its own day keeps its time; another day takes the current time
-     * of day, as the app's date picker does. The future is out of reach.
+     * @description Moves the operation to another day, at the time of day it already holds.
      */
     const pickDay = (value: string): void => {
         const picked = parseDay(value, now);
 
-        if (picked === null || isFutureDay(picked, now)) {
-            return;
+        if (picked !== null && !isFutureDay(picked, now)) {
+            settle(withTimeOf(picked, date));
         }
+    };
 
-        if (existing !== null && isSameDay(picked, existing.date)) {
-            setDate(existing.date);
-        } else {
-            setDate(isSameDay(picked, now) ? now : withTimeOf(picked, now));
+    /**
+     * @function pickTime
+     * @description Moves the operation to another time of day, on its day.
+     */
+    const pickTime = (value: string): void => {
+        const picked = atTime(date, value);
+
+        if (picked !== null) {
+            settle(picked);
         }
     };
 
@@ -216,7 +229,10 @@ function OperationForm({ existing, onDone, onDelete, onValidityChange }: { exist
             </Field>
 
             <Field label={t('operation.date')} htmlFor="date" aside={fieldDate(date, now)}>
-                <input id="date" type="date" className="field" value={day} max={dayKey(now)} onChange={(event) => pickDay(event.target.value)} />
+                <div className="flex gap-2">
+                    <input id="date" type="date" className="field min-w-0 flex-1" value={day} max={dayKey(now)} onChange={(event) => pickDay(event.target.value)} />
+                    <input type="time" aria-label={t('operation.time')} className="field w-28 shrink-0" value={timeKey(date)} onChange={(event) => pickTime(event.target.value)} />
+                </div>
             </Field>
 
             <ToggleRow icon={Globe} title={t('operation.online')} hint={t('operation.onlineHint')} checked={isOnline} onChange={setIsOnline} />

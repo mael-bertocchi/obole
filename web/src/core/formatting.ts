@@ -1,7 +1,7 @@
 import type { Currency } from '@core/currencies';
 import { EURO } from '@core/currencies';
 import type { DayRange } from '@core/dates';
-import { isSameDay } from '@core/dates';
+import { isSameDay, timeKey } from '@core/dates';
 import type { Language } from '@core/i18n';
 import { currentLanguage, t } from '@core/i18n';
 import type { Maybe } from '@/models';
@@ -232,10 +232,19 @@ export function rangeTitle(range: DayRange, now: Date = new Date()): string {
 }
 
 /**
- * @function fieldDate
- * @description The date of an operation the way its editor shows it: Today, 27 Sep.
+ * @function clockTime
+ * @description The time of day on a 24-hour clock, in both languages as in the app: 09:05. Like every date the page
+ * shows, it reads in the browser's time zone, so an operation logged in another zone shows the hour it was here.
  */
-export function fieldDate(date: Date, now: Date = new Date()): string {
+export function clockTime(date: Date): string {
+    return timeKey(date);
+}
+
+/**
+ * @function fieldDay
+ * @description The day of an operation the way its editor names it: Today, 27 Sep.
+ */
+function fieldDay(date: Date, now: Date): string {
     if (isSameDay(date, now)) {
         return t('dates.todayOn', { day: dayShort(date) });
     }
@@ -245,6 +254,14 @@ export function fieldDate(date: Date, now: Date = new Date()): string {
     }
 
     return weekdayDay(date);
+}
+
+/**
+ * @function fieldDate
+ * @description When an operation happened, the way its editor shows it: Today, 27 Sep at 15:30.
+ */
+export function fieldDate(date: Date, now: Date = new Date()): string {
+    return t('dates.at', { day: fieldDay(date, now), time: clockTime(date) });
 }
 
 /**

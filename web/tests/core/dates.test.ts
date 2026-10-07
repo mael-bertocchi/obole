@@ -1,4 +1,4 @@
-import { dayKey, dayRange, isFutureDay, isInRange, monthKey, parseDay, parseDayKey, parseMonthKey, shiftMonth } from '@core/dates';
+import { atTime, dayKey, dayRange, isFutureDay, isInRange, monthKey, parseDay, parseDayKey, parseMonthKey, shiftMonth, timeKey, withTimeOf } from '@core/dates';
 import { describe, expect, it } from 'vitest';
 
 import { NOW } from '../support/fixtures';
@@ -40,6 +40,28 @@ describe('months', () => {
     it('spots a future day', () => {
         expect(isFutureDay(new Date(2026, 8, 28), NOW)).toBe(true);
         expect(isFutureDay(new Date(2026, 8, 27, 23, 59), NOW)).toBe(false);
+    });
+});
+
+describe('times of day', () => {
+    it('keys a time of day the way a time field holds it', () => {
+        expect(timeKey(new Date(2026, 8, 27, 9, 5, 42))).toBe('09:05');
+        expect(timeKey(new Date(2026, 8, 27, 0, 0))).toBe('00:00');
+    });
+
+    it('moves a date to a typed time, on the minute and on the same day', () => {
+        expect(atTime(NOW, '08:45')).toEqual(new Date(2026, 8, 27, 8, 45));
+        expect(atTime(NOW, '23:59:30')).toEqual(new Date(2026, 8, 27, 23, 59));
+    });
+
+    it('refuses what names no time of day', () => {
+        expect(atTime(NOW, '')).toBeNull();
+        expect(atTime(NOW, '24:00')).toBeNull();
+        expect(atTime(NOW, '9:5')).toBeNull();
+    });
+
+    it('keeps the time of day when moving to another day', () => {
+        expect(withTimeOf(new Date(2026, 8, 3), new Date(2026, 8, 27, 18, 30, 12))).toEqual(new Date(2026, 8, 3, 18, 30, 12));
     });
 });
 

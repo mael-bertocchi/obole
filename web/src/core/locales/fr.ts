@@ -84,6 +84,7 @@ export const fr: Messages = {
     'operation.description': 'Description',
     'operation.descriptionPlaceholder': 'Courses de la semaine avec Anna',
     'operation.date': 'Date',
+    'operation.time': 'Heure',
     'operation.online': 'En ligne',
     'operation.onlineHint': 'Pas de lieu physique',
     'operation.location': 'Lieu',
@@ -128,6 +129,7 @@ export const fr: Messages = {
     'dates.yesterday': 'Hier',
     'dates.todayOn': 'Aujourd’hui, {day}',
     'dates.yesterdayOn': 'Hier, {day}',
+    'dates.at': '{day} à {time}',
 
     'category.groceries': 'Courses',
     'category.restaurant': 'Restaurant',

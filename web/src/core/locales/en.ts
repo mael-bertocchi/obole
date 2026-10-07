@@ -82,6 +82,7 @@ export const en = {
     'operation.description': 'Description',
     'operation.descriptionPlaceholder': 'Weekly groceries with Anna',
     'operation.date': 'Date',
+    'operation.time': 'Time',
     'operation.online': 'Online',
     'operation.onlineHint': 'No physical location',
     'operation.location': 'Location',
@@ -126,6 +127,7 @@ export const en = {
     'dates.yesterday': 'Yesterday',
     'dates.todayOn': 'Today, {day}',
     'dates.yesterdayOn': 'Yesterday, {day}',
+    'dates.at': '{day} at {time}',
 
     'category.groceries': 'Groceries',
     'category.restaurant': 'Restaurant',
