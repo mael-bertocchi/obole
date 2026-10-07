@@ -4,6 +4,16 @@
     "" : {
       "shouldTranslate" : false
     },
+    "%@ at %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ à %2$@"
+          }
+        }
+      }
+    },
     "%@ of the budget is not dispatched yet" : {
       "localizations" : {
         "fr" : {

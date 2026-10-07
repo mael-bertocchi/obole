@@ -55,6 +55,7 @@ struct MainShell: View {
     @State private var selection: AppTab = .budget
     @State private var editorRoute: OperationEditorRoute?
     @State private var historyFilter: HistoryFilter = .all
+    @State private var timeZone = TimeZone.current.identifier
 
     var body: some View {
         TabView(selection: $selection) {
@@ -78,13 +79,17 @@ struct MainShell: View {
                     .screenBackground()
             }
         }
-        .id(preferences.language)
+        .id([preferences.language.rawValue, timeZone])
         .tabBarMinimizeBehavior(.onScrollDown)
         .sheet(item: $editorRoute) { route in
             OperationEditorSheet(route: route)
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            followTimeZone()
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
+                followTimeZone()
                 store.sealCompletedMonths()
                 session.applicationBecameActive()
             }
@@ -100,6 +105,14 @@ struct MainShell: View {
             }
             #endif
         }
+    }
+
+    /// Dates read in the time zone the device is in now. Foundation keeps the zone it first read until told to look
+    /// again, so it is asked on every return to the app and every significant time change (a new zone among them),
+    /// and the screens are drawn again when it moved.
+    private func followTimeZone() {
+        NSTimeZone.resetSystemTimeZone()
+        timeZone = TimeZone.current.identifier
     }
 
     private func openCategoryInHistory(_ category: Category) {

@@ -227,25 +227,27 @@ struct OperationRow: View {
                             .foregroundStyle(Theme.faint)
                     }
                 }
-                if operation.isOnline {
-                    HStack(spacing: 4) {
-                        Image(systemName: "globe")
-                            .font(.system(size: 10))
-                        Text("Online")
+                HStack(spacing: 8) {
+                    Text(Formatting.time(operation.date))
+                        .monospacedDigit()
+                    if operation.isOnline {
+                        HStack(spacing: 4) {
+                            Image(systemName: "globe")
+                                .font(.system(size: 10))
+                            Text("Online")
+                        }
+                    } else if let location = operation.location, !location.isEmpty {
+                        HStack(spacing: 4) {
+                            Image(systemName: "mappin")
+                                .font(.system(size: 10))
+                            Text(location)
+                        }
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                     }
-                    .font(Theme.font(12))
-                    .foregroundStyle(Theme.muted)
-                } else if let location = operation.location, !location.isEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "mappin")
-                            .font(.system(size: 10))
-                        Text(location)
-                    }
-                    .font(Theme.font(12))
-                    .foregroundStyle(Theme.muted)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
                 }
+                .font(Theme.font(12))
+                .foregroundStyle(Theme.muted)
             }
 
             Spacer(minLength: 8)
@@ -275,7 +277,7 @@ struct OperationRow: View {
     }
 
     private var accessibilityText: String {
-        var parts = [operation.name, amountText]
+        var parts = [operation.name, amountText, Formatting.time(operation.date)]
         if let location = operation.location, !location.isEmpty {
             parts.append(location)
         }

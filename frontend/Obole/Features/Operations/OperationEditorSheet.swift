@@ -281,8 +281,9 @@ struct OperationEditorSheet: View {
                 .buttonStyle(.plain)
 
                 if showDatePicker {
-                    DatePicker("", selection: $date, in: ...Date.now, displayedComponents: .date)
+                    DatePicker("", selection: $date, in: ...Date.now, displayedComponents: [.date, .hourAndMinute])
                         .datePickerStyle(.graphical)
+                        .environment(\.locale, Formatting.clockLocale)
                         .tint(Theme.accent)
                         .labelsHidden()
                         .padding(.horizontal, 6)

@@ -87,10 +87,14 @@ final class ExchangeRates {
         snapshot = Self.stored()
     }
 
-    /// The calendar day a date falls on, in the viewer's own timezone. Picking the 5th should price an
-    /// operation at the 5th's rate, whatever that instant happens to be in UTC.
+    /// The calendar day a date falls on, in the time zone the device is in now. Picking the 5th should price an
+    /// operation at the 5th's rate, whatever that instant happens to be in UTC. The zone is read on every call:
+    /// a formatter kept around would stay in the one it was created in after the device moves to another.
     static func day(from date: Date) -> String {
-        dayFormatter.string(from: date)
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        let parts = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
     }
 
     /// The catalogue with the latest known rate overlaid onto each currency, carrying the bank's markup:
@@ -220,14 +224,6 @@ final class ExchangeRates {
     }
 
     private static let staleAfter: TimeInterval = 60 * 60
-
-    private static let dayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter
-    }()
 
     private enum Keys {
         static let snapshot = "rates.snapshot"

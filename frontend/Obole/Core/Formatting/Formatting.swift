@@ -224,7 +224,26 @@ enum Formatting {
         return weekdayDay(date)
     }
 
+    /// The time of day on a 24-hour clock, in both languages and on the web alike: 09:05. Like every date the app
+    /// shows, it reads in the time zone the device is in now, so an operation logged in another zone shows the hour
+    /// it was here.
+    static func time(_ date: Date) -> String {
+        self.date(date, format: "HH:mm")
+    }
+
+    /// The interface's locale on a 24-hour clock, so the time picker writes hours the way `time` does.
+    static var clockLocale: Locale {
+        var components = Locale.Components(locale: Localization.locale)
+        components.hourCycle = .zeroToTwentyThree
+        return Locale(components: components)
+    }
+
+    /// When an operation happened, the way its editor shows it: Today, 7 Oct at 18:00.
     static func fieldDate(_ date: Date) -> String {
+        String(appLocalized: "\(fieldDay(date)) at \(time(date))")
+    }
+
+    private static func fieldDay(_ date: Date) -> String {
         if Calendar.current.isDateInToday(date) { return String(appLocalized: "Today, \(dayShort(date))") }
         if Calendar.current.isDateInYesterday(date) { return String(appLocalized: "Yesterday, \(dayShort(date))") }
         return weekdayDay(date)
