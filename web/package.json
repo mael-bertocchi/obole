@@ -1,6 +1,6 @@
 {
   "name": "@obole/web",
-  "description": "The web interface of Obole, a personal budget tracker.",
+  "description": "Obole, a personal portal: the budget, and the apps that come after it.",
   "version": "1.8.0",
   "private": true,
   "type": "module",
@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@simplewebauthn/browser": "^14.0.0",
     "lucide-react": "^1.48.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

@@ -5,11 +5,12 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: {
     alias: {
-      '@application': path.resolve(import.meta.dirname, 'src/application'),
-      '@components': path.resolve(import.meta.dirname, 'src/components'),
-      '@core': path.resolve(import.meta.dirname, 'src/core'),
-      '@pages': path.resolve(import.meta.dirname, 'src/pages'),
-      '@': path.resolve(import.meta.dirname, 'src'),
+      'components': path.resolve(import.meta.dirname, 'src/components'),
+      'models': path.resolve(import.meta.dirname, 'src/models'),
+      'modules': path.resolve(import.meta.dirname, 'src/modules'),
+      'pages': path.resolve(import.meta.dirname, 'src/pages'),
+      'styles': path.resolve(import.meta.dirname, 'src/styles'),
+      'utils': path.resolve(import.meta.dirname, 'src/utils'),
     },
   },
   test: {

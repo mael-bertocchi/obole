@@ -5,7 +5,7 @@
 	# Serve static files
 	root * /usr/share/caddy
 
-	# Security headers on every response; the page only ever talks to itself and to the budget API
+	# Security headers on every response; the page only ever talks to itself and to the portal's API
 	header {
 		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api-obole.mael-bertocchi.fr; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
 		X-Content-Type-Options "nosniff"

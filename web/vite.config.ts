@@ -13,11 +13,12 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@application': '/src/application',
-        '@components': '/src/components',
-        '@core': '/src/core',
-        '@pages': '/src/pages',
-        '@': '/src',
+        'components': '/src/components',
+        'models': '/src/models',
+        'modules': '/src/modules',
+        'pages': '/src/pages',
+        'styles': '/src/styles',
+        'utils': '/src/utils'
       },
     },
     server: {

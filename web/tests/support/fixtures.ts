@@ -1,5 +1,5 @@
-import { DEFAULT_CATEGORIES } from '@core/categories';
-import type { BudgetDocument, Operation } from '@core/models';
+import { DEFAULT_CATEGORIES } from 'modules/budget/budget-categories';
+import type { BudgetDocument, Operation } from 'modules/budget/budget-models';
 
 /**
  * @constant NOW
