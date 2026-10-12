@@ -1,0 +1,29 @@
+name: Deploy to Dokploy
+description: Triggers a deployment of one Dokploy application through its API, then follows it until it succeeds or fails.
+
+inputs:
+  url:
+    description: Base address of the Dokploy instance, without the /api suffix
+    required: true
+  api-key:
+    description: Dokploy API key
+    required: true
+  application-id:
+    description: Identifier of the Dokploy application to deploy
+    required: true
+  timeout:
+    description: Seconds to wait for the deployment to finish
+    required: false
+    default: '1200'
+
+runs:
+  using: composite
+  steps:
+    - name: Deploy
+      shell: bash
+      env:
+        DOKPLOY_URL: ${{ inputs.url }}
+        DOKPLOY_API_KEY: ${{ inputs.api-key }}
+        APPLICATION_ID: ${{ inputs.application-id }}
+        TIMEOUT: ${{ inputs.timeout }}
+      run: bash "${{ github.action_path }}/deploy.sh"

@@ -45,7 +45,21 @@ A portal of your own: one site, one passkey, and the apps you use every day insi
 obole/
 ├─ frontend/   iOS application (SwiftUI)
 ├─ web/        The portal and its apps (React)
-└─ backend/    Fastify server (TypeScript)
+├─ backend/    Fastify server (TypeScript)
+└─ .github/    The pipeline: checks, then deployment to Dokploy
 ```
 
 Pick a side: **[run the application](frontend/README.md)**, **[open the portal](web/README.md)** or **[spin up the server](backend/README.md)**.
+
+## Deployment
+
+The backend and the portal run on Dokploy, and the pipeline decides when they ship. Each push to `main` runs the workflow of the side it touches ([backend](.github/workflows/backend.yml), [web](.github/workflows/web.yml)): lint, types, tests and build, then a deployment that waits for your approval in GitHub. Once approved, it asks Dokploy to deploy that application ([deploy-dokploy](.github/actions/deploy-dokploy/action.yml)) and follows the deployment until it succeeds or fails. The iOS app is not deployed from here.
+
+To set it up, once:
+
+1. In Dokploy, turn **Autodeploy** off on both applications, so that only the pipeline deploys, and generate an API key in your profile.
+2. In GitHub, under *Settings › Environments*, create the **production** environment and add yourself as its required reviewer (leave *Prevent self-review* off). Give it:
+   - the variables `DOKPLOY_URL` (the panel's address, without `/api`), `DOKPLOY_BACKEND_APPLICATION_ID` and `DOKPLOY_WEB_APPLICATION_ID` (each at the end of the application's address in Dokploy);
+   - the secret `DOKPLOY_API_KEY`.
+
+A failed deployment fails the run, with Dokploy's error message; *Re-run jobs* tries again.
