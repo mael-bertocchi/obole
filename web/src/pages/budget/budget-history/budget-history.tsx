@@ -205,7 +205,7 @@ function BudgetHistoryComponent(): JSX.Element {
             </label>
 
             <div
-                className='no-scrollbar -mx-5 mt-4 flex gap-2 overflow-x-auto px-5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0'
+                className='no-scrollbar -mx-5 -mb-2 mt-2 flex gap-2 overflow-x-auto px-5 py-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0'
             >
                 <button
                     type='button'
