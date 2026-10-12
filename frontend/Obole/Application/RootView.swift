@@ -1,17 +1,29 @@
 import SwiftUI
 
+/**
+ * @type AppTab
+ * @description The app's tabs
+ */
 enum AppTab: String, CaseIterable, Identifiable {
-    case budget
-    case history
-    case settings
+    case budget /*!< The budget ring and the categories */
+    case history /*!< The operations, day by day */
+    case settings /*!< The settings */
 
-    var id: String { rawValue }
+    var id: String { rawValue } /*!< Its identifier, for the tab view */
 }
 
+/**
+ * @class RootView
+ * @description The app's root: a spinner while the session starts, the sign-in screen, or the tabs
+ */
 struct RootView: View {
-    @Environment(LocalStore.self) private var store
-    @Environment(ApplicationSession.self) private var session
+    @Environment(LocalStore.self) private var store /*!< The budget */
+    @Environment(ApplicationSession.self) private var session /*!< The session with the server */
 
+    /**
+     * @method body
+     * @description The screen the session calls for
+     */
     var body: some View {
         Group {
             switch session.identityState {
@@ -46,17 +58,26 @@ struct RootView: View {
     }
 }
 
+/**
+ * @class MainShell
+ * @description The tabs, with the operation sheet they share; it follows the time zone and reconciles whenever the app
+ * becomes active
+ */
 struct MainShell: View {
-    @Environment(LocalStore.self) private var store
-    @Environment(Preferences.self) private var preferences
-    @Environment(ApplicationSession.self) private var session
-    @Environment(\.scenePhase) private var scenePhase
+    @Environment(LocalStore.self) private var store /*!< The budget */
+    @Environment(Preferences.self) private var preferences /*!< The device's settings, for the language */
+    @Environment(ApplicationSession.self) private var session /*!< The session with the server */
+    @Environment(\.scenePhase) private var scenePhase /*!< Whether the app is active */
 
-    @State private var selection: AppTab = .budget
-    @State private var editorRoute: OperationEditorRoute?
-    @State private var historyFilter: HistoryFilter = .all
-    @State private var timeZone = TimeZone.current.identifier
+    @State private var selection: AppTab = .budget /*!< The tab shown */
+    @State private var editorRoute: OperationEditorRoute? /*!< What the operation sheet is open on, none while closed */
+    @State private var historyFilter: HistoryFilter = .all /*!< The History filter, which the Budget tab sets when a category is opened */
+    @State private var timeZone = TimeZone.current.identifier /*!< The time zone the dates are read in */
 
+    /**
+     * @method body
+     * @description The tab bar
+     */
     var body: some View {
         TabView(selection: $selection) {
             Tab("Budget", systemImage: "chart.pie", value: AppTab.budget) {
@@ -107,14 +128,21 @@ struct MainShell: View {
         }
     }
 
-    /// Dates read in the time zone the device is in now. Foundation keeps the zone it first read until told to look
-    /// again, so it is asked on every return to the app and every significant time change (a new zone among them),
-    /// and the screens are drawn again when it moved.
+    /**
+     * @method followTimeZone
+     * @description Reads the dates in the time zone the phone is in now
+     */
     private func followTimeZone() {
         NSTimeZone.resetSystemTimeZone()
         timeZone = TimeZone.current.identifier
     }
 
+    /**
+     * @method openCategoryInHistory
+     * @description Shows a category's operations in History
+     *
+     * @param category The category
+     */
     private func openCategoryInHistory(_ category: Category) {
         historyFilter = .category(category.id)
         withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {

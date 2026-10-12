@@ -1,16 +1,25 @@
 import SwiftUI
 
+/**
+ * @class SettingsView
+ * @description The Settings tab: the sync state and signing out, the budget and its limits, the default currency, the
+ * language, the haptics, the exchange rates and what the budget holds
+ */
 struct SettingsView: View {
-    @Environment(LocalStore.self) private var store
-    @Environment(ExchangeRates.self) private var rates
-    @Environment(Preferences.self) private var preferences
-    @Environment(ApplicationSession.self) private var session
+    @Environment(LocalStore.self) private var store /*!< The budget */
+    @Environment(ExchangeRates.self) private var rates /*!< The exchange rates */
+    @Environment(Preferences.self) private var preferences /*!< The device's settings */
+    @Environment(ApplicationSession.self) private var session /*!< The session with the server */
 
-    @State private var showLimits = false
-    @State private var showCurrencyPicker = false
-    @State private var showResetConfirmation = false
-    @State private var showSignOutConfirmation = false
+    @State private var showLimits = false /*!< Whether the limits sheet is open */
+    @State private var showCurrencyPicker = false /*!< Whether the currency picker is open */
+    @State private var showResetConfirmation = false /*!< Whether the reset is being confirmed */
+    @State private var showSignOutConfirmation = false /*!< Whether signing out is being confirmed */
 
+    /**
+     * @method body
+     * @description The tab
+     */
     var body: some View {
         @Bindable var preferences = preferences
 
@@ -192,7 +201,10 @@ struct SettingsView: View {
         }
     }
 
-    /// The dot alone tells the state; its words stay for VoiceOver.
+    /**
+     * @method syncBadge
+     * @description Where the budget stands with the server, as a bare dot
+     */
     private var syncBadge: some View {
         Group {
             switch session.syncState {
@@ -214,7 +226,10 @@ struct SettingsView: View {
         }
     }
 
-    /// Picking a language redraws every screen in it on the spot, so a menu is enough: no sheet to come back from.
+    /**
+     * @method languageRow
+     * @description The language picker
+     */
     private var languageRow: some View {
         let selection = Binding(
             get: { preferences.language },
@@ -254,10 +269,25 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
+    /**
+     * @method applicationVersion
+     * @description The app's version, from its bundle
+     */
     private var applicationVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     }
 
+    /**
+     * @method valueRow
+     * @description A setting that opens something, with its current value
+     *
+     * @param symbol Its SF Symbol
+     * @param color Its tile's colour
+     * @param title Its title
+     * @param value Its current value
+     * @param action What tapping it opens
+     * @returns The row
+     */
     private func valueRow(
         symbol: String,
         color: Color,
@@ -289,6 +319,15 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
+    /**
+     * @method infoRow
+     * @description A figure to read, with its icon
+     *
+     * @param symbol Its SF Symbol
+     * @param title Its title
+     * @param value The figure
+     * @returns The row
+     */
     private func infoRow(symbol: String, title: String, value: String) -> some View {
         HStack(spacing: 12) {
             IconTile(symbol: symbol, color: Theme.accent)

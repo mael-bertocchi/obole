@@ -1,13 +1,21 @@
 import SwiftUI
 
+/**
+ * @class IconTile
+ * @description A glyph on a tinted rounded tile, like a category's icon
+ */
 struct IconTile: View {
-    let symbol: String
-    let color: Color
-    var size: CGFloat = 32
-    var radius: CGFloat = Theme.tileRadius
-    var glyphSize: CGFloat = 16
-    var background: Color?
+    let symbol: String /*!< The SF Symbol drawn */
+    let color: Color /*!< The glyph's colour, which tints the tile */
+    var size: CGFloat = 32 /*!< The tile's side */
+    var radius: CGFloat = Theme.tileRadius /*!< The tile's corner radius */
+    var glyphSize: CGFloat = 16 /*!< The glyph's size */
+    var background: Color? /*!< The tile's fill, a tint of the colour by default */
 
+    /**
+     * @method body
+     * @description The tile
+     */
     var body: some View {
         RoundedRectangle(cornerRadius: radius, style: .continuous)
             .fill(background ?? color.opacity(0.20))
@@ -20,10 +28,18 @@ struct IconTile: View {
     }
 }
 
+/**
+ * @class StatCard
+ * @description A small card with a label and a figure, under the budget ring
+ */
 struct StatCard: View {
-    let label: String
-    let value: String
+    let label: String /*!< What the figure is */
+    let value: String /*!< The figure */
 
+    /**
+     * @method body
+     * @description The card
+     */
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
@@ -43,11 +59,19 @@ struct StatCard: View {
     }
 }
 
+/**
+ * @class CategoryChip
+ * @description A category to pick, as a chip with its icon and name
+ */
 struct CategoryChip: View {
-    let category: Category
-    let isSelected: Bool
-    let action: () -> Void
+    let category: Category /*!< The category */
+    let isSelected: Bool /*!< Whether it is the one picked */
+    let action: () -> Void /*!< Picks it */
 
+    /**
+     * @method body
+     * @description The chip
+     */
     var body: some View {
         Button(action: action) {
             VStack(spacing: 6) {
@@ -79,13 +103,27 @@ struct CategoryChip: View {
     }
 }
 
+/**
+ * @class FieldLabel
+ * @description The small label above a field
+ */
 struct FieldLabel: View {
-    let text: String
+    let text: String /*!< The label */
 
+    /**
+     * @constructor init
+     * @description Labels a field
+     *
+     * @param text The label
+     */
     init(_ text: String) {
         self.text = text
     }
 
+    /**
+     * @method body
+     * @description The label
+     */
     var body: some View {
         Text(text)
             .font(Theme.font(12))
@@ -93,10 +131,18 @@ struct FieldLabel: View {
     }
 }
 
+/**
+ * @class GlassField
+ * @description A field on a glass input, with its label above
+ */
 struct GlassField<Content: View>: View {
-    var label: String?
-    @ViewBuilder var content: () -> Content
+    var label: String? /*!< The label, if any */
+    @ViewBuilder var content: () -> Content /*!< The field */
 
+    /**
+     * @method body
+     * @description The labelled field
+     */
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             if let label {

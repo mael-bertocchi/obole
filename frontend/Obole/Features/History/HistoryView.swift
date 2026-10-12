@@ -1,16 +1,29 @@
 import SwiftUI
 
+/**
+ * @type HistoryFilter
+ * @description Which operations History shows
+ */
 enum HistoryFilter: Hashable {
-    case all
-    case category(String)
+    case all /*!< Every operation */
+    case category(String) /*!< One category's */
 }
 
-/// A run of whole days, both ends included. A single day starts and ends on itself.
+/**
+ * @class DayRange
+ * @description A span of whole days, for the date filter
+ */
 struct DayRange: Hashable {
-    let start: Date
-    let end: Date
+    let start: Date /*!< Its first day, at midnight */
+    let end: Date /*!< Its last day, at midnight */
 
-    /// The days from one date to another, whichever of the two comes first.
+    /**
+     * @constructor init
+     * @description The days between two dates, in either order
+     *
+     * @param first One end
+     * @param second The other
+     */
     init(_ first: Date, _ second: Date) {
         let first = BudgetMath.calendar.startOfDay(for: first)
         let second = BudgetMath.calendar.startOfDay(for: second)
@@ -18,32 +31,58 @@ struct DayRange: Hashable {
         end = max(first, second)
     }
 
+    /**
+     * @constructor init
+     * @description A single day
+     *
+     * @param day The day
+     */
     init(day: Date) {
         self.init(day, day)
     }
 
+    /**
+     * @method isSingleDay
+     * @description Whether it spans a single day
+     */
     var isSingleDay: Bool {
         start == end
     }
 
+    /**
+     * @method contains
+     * @description Whether a date falls on one of its days
+     *
+     * @param date The date
+     * @returns Whether it does
+     */
     func contains(_ date: Date) -> Bool {
         let day = BudgetMath.calendar.startOfDay(for: date)
         return day >= start && day <= end
     }
 }
 
+/**
+ * @class HistoryView
+ * @description The History tab: operations grouped by day with day totals, a search, a date filter and a filter chip
+ * per category
+ */
 struct HistoryView: View {
-    @Binding var filter: HistoryFilter
-    var onSelect: (Operation) -> Void = { _ in }
-    var onNewOperation: () -> Void = {}
+    @Binding var filter: HistoryFilter /*!< The category filter, which the Budget tab can set */
+    var onSelect: (Operation) -> Void = { _ in } /*!< Opens an operation */
+    var onNewOperation: () -> Void = {} /*!< Opens the operation sheet on a new operation */
 
-    @Environment(LocalStore.self) private var store
-    @Environment(Preferences.self) private var preferences
+    @Environment(LocalStore.self) private var store /*!< The budget */
+    @Environment(Preferences.self) private var preferences /*!< The device's settings, for the haptics */
 
-    @State private var query = ""
-    @State private var dateRange: DayRange?
-    @State private var showDateSheet = false
+    @State private var query = "" /*!< The search typed */
+    @State private var dateRange: DayRange? /*!< The days shown, every date when nil */
+    @State private var showDateSheet = false /*!< Whether the date filter sheet is open */
 
+    /**
+     * @method body
+     * @description The tab
+     */
     var body: some View {
         VStack(spacing: 0) {
             headerBlock
@@ -54,6 +93,10 @@ struct HistoryView: View {
         }
     }
 
+    /**
+     * @method headerBlock
+     * @description The title, the new operation button, the search and the filter chips
+     */
     private var headerBlock: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center) {
@@ -101,6 +144,10 @@ struct HistoryView: View {
         .padding(.bottom, 12)
     }
 
+    /**
+     * @method operationList
+     * @description The operations day by day, with the total when a date filter is in place, or why there is none
+     */
     @ViewBuilder
     private var operationList: some View {
         if groups.isEmpty {
@@ -157,6 +204,10 @@ struct HistoryView: View {
         }
     }
 
+    /**
+     * @method emptyMessage
+     * @description Why there is no operation to show
+     */
     private var emptyMessage: String {
         if !query.isEmpty || filter != .all || dateRange != nil {
             return String(appLocalized: "No operations match this search.")
@@ -164,6 +215,10 @@ struct HistoryView: View {
         return String(appLocalized: "No operations yet. Tap ＋ to log your first expense.")
     }
 
+    /**
+     * @method groups
+     * @description The operations the filters and the search let through, grouped by day
+     */
     private var groups: [DayGroup] {
         let trimmed = query.trimmingCharacters(in: .whitespaces)
         let filtered = store.operations.filter { operation in
@@ -172,6 +227,13 @@ struct HistoryView: View {
         return BudgetMath.dayGroups(filtered)
     }
 
+    /**
+     * @method matchesFilter
+     * @description Whether an operation passes the category filter
+     *
+     * @param operation The operation
+     * @returns Whether it passes
+     */
     private func matchesFilter(_ operation: Operation) -> Bool {
         switch filter {
         case .all:
@@ -181,13 +243,29 @@ struct HistoryView: View {
         }
     }
 
+    /**
+     * @method matchesQuery
+     * @description Whether an operation matches the search: its name, note, place or category
+     *
+     * @param operation The operation
+     * @param query The search
+     * @returns Whether it matches
+     */
     private func matchesQuery(_ operation: Operation, _ query: String) -> Bool {
-        guard !query.isEmpty else { return true }
+        guard !query.isEmpty else {
+            return true
+        }
         let category = store.categoryOrFallback(id: operation.categoryId).title
         let haystack = [operation.name, operation.description ?? "", operation.location ?? "", category]
         return haystack.contains { $0.localizedCaseInsensitiveContains(query) }
     }
 
+    /**
+     * @method select
+     * @description Applies a category filter, or removes it when tapped again
+     *
+     * @param value The filter
+     */
     private func select(_ value: HistoryFilter) {
         preferences.tap()
         withAnimation(.easeOut(duration: 0.18)) {
@@ -196,10 +274,19 @@ struct HistoryView: View {
     }
 }
 
+/**
+ * @class OperationRow
+ * @description An operation in History: its category's icon, its name with its markers, its time and place, and its
+ * amount with the euro equivalent
+ */
 struct OperationRow: View {
-    let operation: Operation
-    let category: Category
+    let operation: Operation /*!< The operation */
+    let category: Category /*!< Its category */
 
+    /**
+     * @method body
+     * @description The row
+     */
     var body: some View {
         HStack(spacing: 12) {
             IconTile(
@@ -271,11 +358,21 @@ struct OperationRow: View {
         .accessibilityLabel(accessibilityText)
     }
 
+    /**
+     * @method hasDescription
+     * @description Whether the operation carries a note
+     */
     private var hasDescription: Bool {
-        guard let description = operation.description else { return false }
+        guard let description = operation.description else {
+            return false
+        }
         return !description.isEmpty
     }
 
+    /**
+     * @method accessibilityText
+     * @description What VoiceOver reads for the row
+     */
     private var accessibilityText: String {
         var parts = [operation.name, amountText, Formatting.time(operation.date)]
         if let location = operation.location, !location.isEmpty {
@@ -287,6 +384,10 @@ struct OperationRow: View {
         return parts.joined(separator: ", ")
     }
 
+    /**
+     * @method amountText
+     * @description The amount in its own currency
+     */
     private var amountText: String {
         Formatting.amount(operation.amount, currency: Currency.named(operation.currencyCode))
     }

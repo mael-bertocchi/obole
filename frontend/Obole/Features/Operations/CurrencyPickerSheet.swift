@@ -1,12 +1,20 @@
 import SwiftUI
 
+/**
+ * @class CurrencyPickerSheet
+ * @description The sheet picking the currency an operation is entered in, each with its rate to the euro
+ */
 struct CurrencyPickerSheet: View {
-    @Binding var selection: String
+    @Binding var selection: String /*!< The currency picked */
 
-    @Environment(ExchangeRates.self) private var rates
-    @Environment(Preferences.self) private var preferences
-    @Environment(\.dismiss) private var dismiss
+    @Environment(ExchangeRates.self) private var rates /*!< The exchange rates */
+    @Environment(Preferences.self) private var preferences /*!< The device's settings, for the haptics and the last currency used */
+    @Environment(\.dismiss) private var dismiss /*!< Closes the sheet */
 
+    /**
+     * @method body
+     * @description The list of currencies
+     */
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -39,6 +47,13 @@ struct CurrencyPickerSheet: View {
         .presentationDragIndicator(.visible)
     }
 
+    /**
+     * @method row
+     * @description One currency: its code, its name and its rate, checked when picked
+     *
+     * @param currency The currency
+     * @returns The row
+     */
     private func row(_ currency: Currency) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 1) {

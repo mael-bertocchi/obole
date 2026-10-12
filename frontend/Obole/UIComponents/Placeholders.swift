@@ -1,10 +1,18 @@
 import SwiftUI
 
+/**
+ * @class EmptyStateCard
+ * @description A quiet card saying there is nothing to show yet, with an optional link to fix that
+ */
 struct EmptyStateCard: View {
-    let message: String
-    var actionTitle: String?
-    var action: (() -> Void)?
+    let message: String /*!< What there is nothing of yet */
+    var actionTitle: String? /*!< The link's title, if there is one */
+    var action: (() -> Void)? /*!< What the link does */
 
+    /**
+     * @method body
+     * @description The card
+     */
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(message)

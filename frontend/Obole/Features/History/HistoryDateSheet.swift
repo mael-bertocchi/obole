@@ -1,23 +1,35 @@
 import SwiftUI
 
+/**
+ * @class HistoryDateSheet
+ * @description The sheet filtering History by a day or a period, past days only
+ */
 struct HistoryDateSheet: View {
-    @Binding var range: DayRange?
+    @Binding var range: DayRange? /*!< The days shown, every date when nil */
 
-    @Environment(Preferences.self) private var preferences
-    @Environment(\.dismiss) private var dismiss
+    @Environment(Preferences.self) private var preferences /*!< The device's settings, for the haptics */
+    @Environment(\.dismiss) private var dismiss /*!< Closes the sheet */
 
-    @State private var mode: Mode
-    @State private var day: Date
-    @State private var start: Date
-    @State private var end: Date
+    @State private var mode: Mode /*!< Whether a single day or a period is being picked */
+    @State private var day: Date /*!< The day picked */
+    @State private var start: Date /*!< The period's first day */
+    @State private var end: Date /*!< The period's last day */
 
+    /**
+     * @type Mode
+     * @description What the sheet picks
+     */
     private enum Mode: Hashable {
-        case day
-        case period
+        case day /*!< A single day */
+        case period /*!< A period */
     }
 
-    /// Starts on the filter in place, or on today. A period not yet picked runs from the first of the day's month up
-    /// to that day.
+    /**
+     * @constructor init
+     * @description Opens on the filter in place: its day, or its period
+     *
+     * @param range The days shown
+     */
     init(range: Binding<DayRange?>) {
         _range = range
         let calendar = BudgetMath.calendar
@@ -33,6 +45,10 @@ struct HistoryDateSheet: View {
         }
     }
 
+    /**
+     * @method body
+     * @description The sheet
+     */
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -83,13 +99,25 @@ struct HistoryDateSheet: View {
         .screenBackground()
         .presentationDragIndicator(.visible)
         .onChange(of: start) { _, value in
-            if value > end { end = value }
+            if value > end {
+                end = value
+            }
         }
         .onChange(of: end) { _, value in
-            if value < start { start = value }
+            if value < start {
+                start = value
+            }
         }
     }
 
+    /**
+     * @method dateRow
+     * @description One date of the period, with its label
+     *
+     * @param title Its label
+     * @param selection The date
+     * @returns The row
+     */
     private func dateRow(_ title: LocalizedStringKey, selection: Binding<Date>) -> some View {
         HStack(spacing: 12) {
             Text(title)
@@ -104,6 +132,12 @@ struct HistoryDateSheet: View {
         .padding(.horizontal, 14)
     }
 
+    /**
+     * @method apply
+     * @description Puts a filter in place, or every date back, and closes the sheet
+     *
+     * @param picked The days to show, nil for every date
+     */
     private func apply(_ picked: DayRange?) {
         preferences.tap()
         withAnimation(.easeOut(duration: 0.18)) {

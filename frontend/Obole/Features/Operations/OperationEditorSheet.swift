@@ -1,9 +1,17 @@
 import SwiftUI
 
+/**
+ * @type OperationEditorRoute
+ * @description What the operation sheet is open on
+ */
 enum OperationEditorRoute: Identifiable {
-    case new
-    case edit(String)
+    case new /*!< A new operation */
+    case edit(String) /*!< An existing operation, by its id */
 
+    /**
+     * @method id
+     * @description Its identifier, for the sheet
+     */
     var id: String {
         switch self {
         case .new: return "new"
@@ -12,37 +20,50 @@ enum OperationEditorRoute: Identifiable {
     }
 }
 
+/**
+ * @class OperationEditorSheet
+ * @description The sheet logging or editing an operation: the amount in any currency with its euro equivalent at the
+ * rate of its own day, the category, name, note, date and time, online or the place, recurring, and deleting it
+ */
 struct OperationEditorSheet: View {
-    let route: OperationEditorRoute
+    let route: OperationEditorRoute /*!< What the sheet is open on */
 
-    @Environment(LocalStore.self) private var store
-    @Environment(ExchangeRates.self) private var rates
-    @Environment(Preferences.self) private var preferences
-    @Environment(\.dismiss) private var dismiss
+    @Environment(LocalStore.self) private var store /*!< The budget */
+    @Environment(ExchangeRates.self) private var rates /*!< The exchange rates */
+    @Environment(Preferences.self) private var preferences /*!< The device's settings, for the haptics and the last currency used */
+    @Environment(\.dismiss) private var dismiss /*!< Closes the sheet */
 
-    @State private var amountText = ""
-    @State private var currencyCode = Currency.euro.code
-    @State private var categoryId = ""
-    @State private var name = ""
-    @State private var description = ""
-    @State private var location = ""
-    @State private var date = Date.now
-    @State private var isOnline = false
-    @State private var isRecurring = false
+    @State private var amountText = "" /*!< The amount, as typed */
+    @State private var currencyCode = Currency.euro.code /*!< The currency the amount is in */
+    @State private var categoryId = "" /*!< The category picked */
+    @State private var name = "" /*!< The name typed */
+    @State private var description = "" /*!< The note typed */
+    @State private var location = "" /*!< The place typed */
+    @State private var date = Date.now /*!< When it happened */
+    @State private var isOnline = false /*!< Whether it was paid online */
+    @State private var isRecurring = false /*!< Whether it repeats every month */
 
-    @State private var showCurrencyPicker = false
-    @State private var showDatePicker = false
-    @State private var showDeleteConfirmation = false
+    @State private var showCurrencyPicker = false /*!< Whether the currency picker is open */
+    @State private var showDatePicker = false /*!< Whether the date picker is shown */
+    @State private var showDeleteConfirmation = false /*!< Whether the deletion is being confirmed */
 
-    @FocusState private var focus: Field?
+    @FocusState private var focus: Field? /*!< The field being typed in */
 
+    /**
+     * @type Field
+     * @description The sheet's text fields
+     */
     private enum Field {
-        case amount
-        case name
-        case description
-        case location
+        case amount /*!< The amount */
+        case name /*!< The name */
+        case description /*!< The note */
+        case location /*!< The place */
     }
 
+    /**
+     * @method body
+     * @description The sheet
+     */
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -105,55 +126,89 @@ struct OperationEditorSheet: View {
         }
         .onChange(of: amountText) { _, typed in
             let formatted = Formatting.groupedAmountInput(Formatting.sanitizeAmountInput(typed))
-            if formatted != typed { amountText = formatted }
+            if formatted != typed {
+                amountText = formatted
+            }
         }
         .onChange(of: focus) { _, field in
-            guard field != nil, showDatePicker else { return }
+            guard field != nil, showDatePicker else {
+                return
+            }
             withAnimation(.easeOut(duration: 0.2)) { showDatePicker = false }
         }
     }
 
+    /**
+     * @method isEditing
+     * @description Whether an existing operation is being edited
+     */
     private var isEditing: Bool {
-        if case .edit = route { return true }
+        if case .edit = route {
+            return true
+        }
         return false
     }
 
+    /**
+     * @method currency
+     * @description The currency the amount is in, with its latest rate
+     */
     private var currency: Currency {
         rates.currency(code: currencyCode)
     }
 
+    /**
+     * @method amount
+     * @description The amount typed, zero when there is none
+     */
     private var amount: Double {
         Formatting.parseAmountInput(amountText) ?? 0
     }
 
+    /**
+     * @method selectedDay
+     * @description The day the operation happened on, whose rate prices it
+     */
     private var selectedDay: String {
         ExchangeRates.day(from: date)
     }
 
-    /// The rate the operation was saved at, while its date and currency are still the ones it was saved with.
-    /// It came from a real published rate, markup included, so it stands in perfectly well until the day's
-    /// rate arrives.
+    /**
+     * @method storedRate
+     * @description The rate the operation was saved with, while its currency and day are unchanged: it stands in until
+     * that day's rate is loaded
+     */
     private var storedRate: Double? {
         guard case .edit(let operationId) = route,
               let operation = store.operation(id: operationId),
               operation.currencyCode == currencyCode,
-              ExchangeRates.day(from: operation.date) == selectedDay else { return nil }
+              ExchangeRates.day(from: operation.date) == selectedDay else {
+            return nil
+        }
 
         return operation.rateToEuro
     }
 
-    /// The rate to price this operation at, or nil while none is known. Nothing is ever guessed here: a
-    /// rate the app invented must never be shown as though it were published.
+    /**
+     * @method appliedRate
+     * @description The rate the operation is priced at: its day's published rate, or the one it was saved with
+     */
     private var appliedRate: Double? {
         rates.rate(code: currencyCode, on: selectedDay) ?? storedRate
     }
 
-    /// The reason there is no rate to show, or nil when there is one.
+    /**
+     * @method rateProblem
+     * @description Why there is no rate to price the operation at, nil once there is one
+     */
     private var rateProblem: String? {
         appliedRate == nil ? (rates.failure(on: selectedDay) ?? String(appLocalized: "Loading…")) : nil
     }
 
-    /// The rate, or why there isn't one yet.
+    /**
+     * @method rateLine
+     * @description The rate applied, or why it is missing
+     */
     private var rateLine: String {
         guard let appliedRate else {
             return rates.failure(on: selectedDay) ?? String(appLocalized: "Loading…")
@@ -162,16 +217,30 @@ struct OperationEditorSheet: View {
         return String(appLocalized: "Rate \(Formatting.rate(appliedRate))")
     }
 
+    /**
+     * @method euroAmount
+     * @description The amount in euros, nil until the rate is known
+     */
     private var euroAmount: Double? {
-        guard let appliedRate else { return nil }
+        guard let appliedRate else {
+            return nil
+        }
 
         return amount * appliedRate
     }
 
+    /**
+     * @method isValid
+     * @description Whether the operation can be saved: an amount, a name, a category and a rate
+     */
     private var isValid: Bool {
         amount > 0 && !name.trimmingCharacters(in: .whitespaces).isEmpty && !categoryId.isEmpty && appliedRate != nil
     }
 
+    /**
+     * @method amountBlock
+     * @description The amount, its currency and its euro equivalent
+     */
     private var amountBlock: some View {
         VStack(spacing: 4) {
             FieldLabel(String(appLocalized: "Amount"))
@@ -222,6 +291,10 @@ struct OperationEditorSheet: View {
         .frame(maxWidth: .infinity)
     }
 
+    /**
+     * @method categoryGrid
+     * @description The categories to pick from
+     */
     private var categoryGrid: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 9), count: 4), spacing: 9) {
             ForEach(store.categories) { category in
@@ -235,6 +308,10 @@ struct OperationEditorSheet: View {
         }
     }
 
+    /**
+     * @method fields
+     * @description The name, the note, the date and time, and the place
+     */
     private var fields: some View {
         VStack(alignment: .leading, spacing: 12) {
             GlassField(label: String(appLocalized: "Name")) {
@@ -311,6 +388,10 @@ struct OperationEditorSheet: View {
         }
     }
 
+    /**
+     * @method onlineRow
+     * @description The online switch
+     */
     private var onlineRow: some View {
         HStack(spacing: 10) {
             Image(systemName: "globe")
@@ -335,6 +416,10 @@ struct OperationEditorSheet: View {
         .glassCard(radius: Theme.controlRadius)
     }
 
+    /**
+     * @method recurringRow
+     * @description The recurring switch
+     */
     private var recurringRow: some View {
         HStack(spacing: 10) {
             Image(systemName: "repeat")
@@ -359,6 +444,11 @@ struct OperationEditorSheet: View {
         .glassCard(radius: Theme.controlRadius)
     }
 
+    /**
+     * @method loadValues
+     * @description Fills the sheet with the operation edited, or the defaults of a new one: the last currency used, the
+     * first category, the latest place
+     */
     private func loadValues() {
         guard case .edit(let operationId) = route, let operation = store.operation(id: operationId) else {
             currencyCode = preferences.lastUsedCurrencyCode
@@ -377,22 +467,38 @@ struct OperationEditorSheet: View {
         isRecurring = operation.isRecurring
     }
 
+    /**
+     * @method dismissEditing
+     * @description Puts the keyboard and the date picker away
+     */
     private func dismissEditing() {
         focus = nil
-        guard showDatePicker else { return }
+        guard showDatePicker else {
+            return
+        }
         withAnimation(.easeOut(duration: 0.2)) { showDatePicker = false }
     }
 
+    /**
+     * @method save
+     * @description Saves the operation, priced at its rate, then closes the sheet
+     */
     private func save() {
-        guard isValid else { return }
+        guard isValid else {
+            return
+        }
         let trimmedLocation = isOnline ? "" : location.trimmingCharacters(in: .whitespaces)
         let trimmedDescription = description.trimmingCharacters(in: .whitespacesAndNewlines)
         let existingId: String? = {
-            if case .edit(let operationId) = route { return operationId }
+            if case .edit(let operationId) = route {
+                return operationId
+            }
             return nil
         }()
 
-        guard let appliedRate else { return }
+        guard let appliedRate else {
+            return
+        }
 
         let operation = Operation(
             id: existingId ?? UUID().uuidString,
@@ -414,8 +520,14 @@ struct OperationEditorSheet: View {
         dismiss()
     }
 
+    /**
+     * @method delete
+     * @description Deletes the operation edited, then closes the sheet
+     */
     private func delete() {
-        guard case .edit(let operationId) = route else { return }
+        guard case .edit(let operationId) = route else {
+            return
+        }
         store.deleteOperation(id: operationId)
         preferences.success()
         dismiss()

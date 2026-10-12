@@ -1,12 +1,20 @@
 import SwiftUI
 
+/**
+ * @class OboleApplication
+ * @description The app: it builds the store, the rates, the settings and the session once, and hands them to every view
+ */
 @main
 struct OboleApplication: App {
-    @State private var store: LocalStore
-    @State private var rates: ExchangeRates
-    @State private var preferences: Preferences
-    @State private var session: ApplicationSession
+    @State private var store: LocalStore /*!< The budget, saved on the device */
+    @State private var rates: ExchangeRates /*!< The exchange rates */
+    @State private var preferences: Preferences /*!< The device's settings */
+    @State private var session: ApplicationSession /*!< The session with the server, and the sync */
 
+    /**
+     * @constructor init
+     * @description Builds the long-lived objects, sharing one server client and one token store
+     */
     init() {
         let store = LocalStore()
         let tokens = TokenStore()
@@ -18,12 +26,19 @@ struct OboleApplication: App {
         _session = State(initialValue: ApplicationSession(store: store, rates: rates, tokens: tokens, api: api))
     }
 
-    /// Read through `preferences` so the scene redraws in a language picked in Settings.
+    /**
+     * @method interfaceLocale
+     * @description The locale the interface is shown in, read again whenever another language is picked
+     */
     private var interfaceLocale: Locale {
         _ = preferences.language
         return Localization.locale
     }
 
+    /**
+     * @method body
+     * @description The app's one window, dark, in the language picked
+     */
     var body: some Scene {
         WindowGroup {
             RootView()

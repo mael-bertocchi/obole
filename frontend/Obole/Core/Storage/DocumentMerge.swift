@@ -1,13 +1,22 @@
 import Foundation
 
-/// Reconciles the device's copy of the budget with the server's, now that the device is no longer the only writer.
-///
-/// Both copies are compared against the base (the last document the two agreed on), so each side's edits can be
-/// told apart from the other's and kept. Only when both sides changed the same entry does one have to lose, and the
-/// device wins: it holds what the person in front of it just did. An entry one side edited and the other deleted
-/// is kept, since an edit is the more recent intent and a lost expense is worse than a stray one.
+/**
+ * @type DocumentMerge
+ * @description The three-way merge of the budget: the device's edits and the server's are measured against the last
+ * version both agreed on, so neither erases the other
+ */
 enum DocumentMerge {
 
+    /**
+     * @method merge
+     * @description Merges the device's budget and the server's against their common base. Each side's edits are kept;
+     * when both changed the same entry the device wins, and an edit always beats a deletion
+     *
+     * @param base The last budget both sides agreed on
+     * @param local The device's budget
+     * @param remote The server's budget
+     * @returns The merged budget
+     */
     static func merge(base: BudgetDocument, local: BudgetDocument, remote: BudgetDocument) -> BudgetDocument {
         BudgetDocument(
             categories: merge(base: base.categories, local: local.categories, remote: remote.categories, same: ==),
@@ -17,13 +26,22 @@ enum DocumentMerge {
         )
     }
 
-    /// Whether two documents hold the same budget. The server stamps its own `updatedAt` and keeps dates to the
-    /// millisecond while the device encodes them to the second, so neither difference counts as an edit.
+    /**
+     * @method sameContent
+     * @description Whether two budgets hold the same thing, ignoring what the server rewrites on its own (sub-second
+     * dates, update stamps)
+     *
+     * @param lhs One budget
+     * @param rhs The other
+     * @returns Whether they match
+     */
     static func sameContent(_ lhs: BudgetDocument, _ rhs: BudgetDocument) -> Bool {
         guard lhs.categories == rhs.categories,
               lhs.budget == rhs.budget,
               lhs.budgetHistory == rhs.budgetHistory,
-              lhs.operations.count == rhs.operations.count else { return false }
+              lhs.operations.count == rhs.operations.count else {
+            return false
+        }
 
         let indexed = Dictionary(rhs.operations.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
 
@@ -32,10 +50,26 @@ enum DocumentMerge {
         }
     }
 
+    /**
+     * @method sameOperation
+     * @description Whether two operations match once the server's own rewrites are set aside
+     *
+     * @param lhs One operation
+     * @param rhs The other
+     * @returns Whether they match
+     */
     private static func sameOperation(_ lhs: Operation, _ rhs: Operation) -> Bool {
         comparable(lhs) == comparable(rhs)
     }
 
+    /**
+     * @method comparable
+     * @description An operation with its date rounded to the second and its update stamp blanked, as both sides can
+     * compare it
+     *
+     * @param operation The operation
+     * @returns Its comparable copy
+     */
     private static func comparable(_ operation: Operation) -> Operation {
         var copy = operation
         copy.date = Date(timeIntervalSince1970: operation.date.timeIntervalSince1970.rounded(.down))
@@ -43,13 +77,37 @@ enum DocumentMerge {
         return copy
     }
 
+    /**
+     * @method resolve
+     * @description Picks one entry's merged value: the side that changed it since the base, or the device's when both
+     * did
+     *
+     * @param base The entry in the base, if it was there
+     * @param local The entry on the device, if it is there
+     * @param remote The entry on the server, if it is there
+     * @param same Whether two values match
+     * @returns The merged entry, or nil when it is deleted
+     */
     private static func resolve<Value>(base: Value?, local: Value?, remote: Value?, same: (Value, Value) -> Bool) -> Value? {
-        if matches(local, base, same) { return remote }
-        if matches(remote, base, same) { return local }
+        if matches(local, base, same) {
+            return remote
+        }
+        if matches(remote, base, same) {
+            return local
+        }
 
         return local ?? remote
     }
 
+    /**
+     * @method matches
+     * @description Whether two optional values match: both missing, or both there and the same
+     *
+     * @param lhs One value
+     * @param rhs The other
+     * @param same Whether two values match
+     * @returns Whether they match
+     */
     private static func matches<Value>(_ lhs: Value?, _ rhs: Value?, _ same: (Value, Value) -> Bool) -> Bool {
         switch (lhs, rhs) {
         case (nil, nil): return true
@@ -58,8 +116,16 @@ enum DocumentMerge {
         }
     }
 
-    /// Merges two lists entry by entry. The result keeps the device's order, with anything only the server knows
-    /// appended in the server's order.
+    /**
+     * @method merge
+     * @description Merges two lists of identified entries against their base, keeping the device's order first
+     *
+     * @param base The list in the base
+     * @param local The device's list
+     * @param remote The server's list
+     * @param same Whether two entries match
+     * @returns The merged list
+     */
     private static func merge<Item: Identifiable>(
         base: [Item],
         local: [Item],
@@ -78,6 +144,15 @@ enum DocumentMerge {
         }
     }
 
+    /**
+     * @method merge
+     * @description Merges two dictionaries against their base, key by key
+     *
+     * @param base The dictionary in the base
+     * @param local The device's dictionary
+     * @param remote The server's dictionary
+     * @returns The merged dictionary
+     */
     private static func merge<Value: Equatable>(
         base: [String: Value],
         local: [String: Value],

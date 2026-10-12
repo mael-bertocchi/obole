@@ -1,11 +1,19 @@
 import SwiftUI
 
+/**
+ * @class GlassStyle
+ * @description How a Liquid Glass surface is drawn: its fill, border, top highlight and blur
+ */
 struct GlassStyle {
-    var fill: Color
-    var border: Color
-    var specular: Color
-    var blur: Material
+    var fill: Color /*!< The tint over the blur */
+    var border: Color /*!< The border */
+    var specular: Color /*!< The highlight along the top edge */
+    var blur: Material /*!< The blur behind it */
 
+    /**
+     * @constant card
+     * @description A card's glass
+     */
     static let card = GlassStyle(
         fill: Theme.glassCardFill,
         border: Theme.glassCardBorder,
@@ -13,6 +21,10 @@ struct GlassStyle {
         blur: .ultraThinMaterial
     )
 
+    /**
+     * @constant input
+     * @description An input's glass
+     */
     static let input = GlassStyle(
         fill: Theme.glassInputFill,
         border: Theme.glassInputBorder,
@@ -21,15 +33,30 @@ struct GlassStyle {
     )
 }
 
+/**
+ * @class GlassSurface
+ * @description Draws a view on a rounded Liquid Glass surface
+ */
 struct GlassSurface: ViewModifier {
-    var radius: CGFloat
-    var style: GlassStyle
-    var shadow: Bool
+    var radius: CGFloat /*!< The surface's corner radius */
+    var style: GlassStyle /*!< How the glass is drawn */
+    var shadow: Bool /*!< Whether it casts a shadow */
 
+    /**
+     * @method shape
+     * @description The surface's shape
+     */
     private var shape: RoundedRectangle {
         RoundedRectangle(cornerRadius: radius, style: .continuous)
     }
 
+    /**
+     * @method body
+     * @description The view on its glass surface
+     *
+     * @param content The view
+     * @returns The view on glass
+     */
     func body(content: Content) -> some View {
         content
             .background {
@@ -57,16 +84,38 @@ struct GlassSurface: ViewModifier {
 }
 
 extension View {
+    /**
+     * @method glassCard
+     * @description Puts the view on a glass card
+     *
+     * @param radius The card's corner radius
+     * @returns The view on glass
+     */
     func glassCard(radius: CGFloat = Theme.cardRadius) -> some View {
         modifier(GlassSurface(radius: radius, style: .card, shadow: false))
     }
 
+    /**
+     * @method glassInput
+     * @description Puts the view on a glass input
+     *
+     * @param radius The input's corner radius
+     * @returns The view on glass
+     */
     func glassInput(radius: CGFloat = Theme.inputRadius) -> some View {
         modifier(GlassSurface(radius: radius, style: .input, shadow: false))
     }
 }
 
+/**
+ * @class AmbientBackground
+ * @description The screens' background: black, with violet, blue and teal glows at its edges
+ */
 struct AmbientBackground: View {
+    /**
+     * @method body
+     * @description The background
+     */
     var body: some View {
         ZStack {
             Theme.background
@@ -77,6 +126,15 @@ struct AmbientBackground: View {
         .ignoresSafeArea()
     }
 
+    /**
+     * @method glow
+     * @description One soft glow
+     *
+     * @param color Its colour
+     * @param center Where it sits
+     * @param radius How far it reaches, as a fraction of the screen
+     * @returns The glow
+     */
     private func glow(_ color: Color, center: UnitPoint, radius: CGFloat) -> some View {
         EllipticalGradient(
             colors: [color, .clear],
@@ -87,25 +145,59 @@ struct AmbientBackground: View {
     }
 }
 
+/**
+ * @class ScreenBackground
+ * @description Puts the ambient background behind a screen
+ */
 struct ScreenBackground: ViewModifier {
+    /**
+     * @method body
+     * @description The screen on its background
+     *
+     * @param content The screen
+     * @returns The screen on its background
+     */
     func body(content: Content) -> some View {
         content.background(AmbientBackground())
     }
 }
 
 extension View {
+    /**
+     * @method screenBackground
+     * @description Puts the ambient background behind the view
+     *
+     * @returns The view on its background
+     */
     func screenBackground() -> some View {
         modifier(ScreenBackground())
     }
 
+    /**
+     * @method scrollTopBlur
+     * @description Blurs what scrolls under the status bar
+     *
+     * @returns The view with the blur
+     */
     func scrollTopBlur() -> some View {
         modifier(ScrollTopBlur())
     }
 }
 
+/**
+ * @class ScrollTopBlur
+ * @description A blur along the top edge that fades in once the content scrolls under it, like an iOS navigation bar
+ */
 struct ScrollTopBlur: ViewModifier {
-    @State private var isScrolled = false
+    @State private var isScrolled = false /*!< Whether the content is scrolled */
 
+    /**
+     * @method body
+     * @description The content with its blur
+     *
+     * @param content The scrolling content
+     * @returns The content with the blur
+     */
     func body(content: Content) -> some View {
         content
             .onScrollGeometryChange(for: Bool.self) { geometry in
@@ -138,15 +230,30 @@ struct ScrollTopBlur: ViewModifier {
     }
 }
 
+/**
+ * @class SectionLabel
+ * @description A section's title, in small capitals
+ */
 struct SectionLabel: View {
-    let text: String
-    var color: Color = Theme.muted
+    let text: String /*!< The title */
+    var color: Color = Theme.muted /*!< Its colour */
 
+    /**
+     * @constructor init
+     * @description Titles a section
+     *
+     * @param text The title
+     * @param color Its colour
+     */
     init(_ text: String, color: Color = Theme.muted) {
         self.text = text
         self.color = color
     }
 
+    /**
+     * @method body
+     * @description The title
+     */
     var body: some View {
         Text(text.uppercased())
             .font(Theme.font(11))
@@ -155,13 +262,27 @@ struct SectionLabel: View {
     }
 }
 
+/**
+ * @class DayLabel
+ * @description A day's heading in History, in small capitals
+ */
 struct DayLabel: View {
-    let text: String
+    let text: String /*!< The day */
 
+    /**
+     * @constructor init
+     * @description Heads a day
+     *
+     * @param text The day
+     */
     init(_ text: String) {
         self.text = text
     }
 
+    /**
+     * @method body
+     * @description The heading
+     */
     var body: some View {
         Text(text.uppercased())
             .font(Theme.font(12))
@@ -170,7 +291,15 @@ struct DayLabel: View {
     }
 }
 
+/**
+ * @class RowDivider
+ * @description The hairline between two rows of a card
+ */
 struct RowDivider: View {
+    /**
+     * @method body
+     * @description The hairline
+     */
     var body: some View {
         Rectangle()
             .fill(Theme.divider)
@@ -178,10 +307,18 @@ struct RowDivider: View {
     }
 }
 
+/**
+ * @class StatusDot
+ * @description A small coloured dot, for a status
+ */
 struct StatusDot: View {
-    var color: Color
-    var size: CGFloat = 7
+    var color: Color /*!< Its colour */
+    var size: CGFloat = 7 /*!< Its diameter */
 
+    /**
+     * @method body
+     * @description The dot
+     */
     var body: some View {
         Circle()
             .fill(color)

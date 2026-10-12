@@ -1,15 +1,24 @@
 import SwiftUI
 
+/**
+ * @class BudgetView
+ * @description The Budget tab: the ring with what is left to spend, the spent, days-left and per-day figures, and every
+ * category against its limit, month by month
+ */
 struct BudgetView: View {
-    var onOpenCategory: (Category) -> Void = { _ in }
-    var onNewOperation: () -> Void = {}
+    var onOpenCategory: (Category) -> Void = { _ in } /*!< Opens a category's operations in History */
+    var onNewOperation: () -> Void = {} /*!< Opens the operation sheet on a new operation */
 
-    @Environment(LocalStore.self) private var store
-    @Environment(Preferences.self) private var preferences
+    @Environment(LocalStore.self) private var store /*!< The budget */
+    @Environment(Preferences.self) private var preferences /*!< The device's settings, for the haptics */
 
-    @State private var month: Date = BudgetMath.monthStart(.now)
-    @State private var showLimits = false
+    @State private var month: Date = BudgetMath.monthStart(.now) /*!< The month shown */
+    @State private var showLimits = false /*!< Whether the limits sheet is open */
 
+    /**
+     * @method body
+     * @description The tab
+     */
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -53,14 +62,26 @@ struct BudgetView: View {
         }
     }
 
+    /**
+     * @method monthlyBudget
+     * @description The budget the month is measured against
+     */
     private var monthlyBudget: MonthlyBudget {
         store.monthlyBudget(for: month)
     }
 
+    /**
+     * @method hasOperations
+     * @description Whether the month has any operation
+     */
     private var hasOperations: Bool {
         !BudgetMath.operations(store.operations, in: month).isEmpty
     }
 
+    /**
+     * @method summary
+     * @description The month's figures
+     */
     private var summary: MonthSummary {
         BudgetMath.summary(
             operations: store.operations,
@@ -69,14 +90,26 @@ struct BudgetView: View {
         )
     }
 
+    /**
+     * @method isOverBudget
+     * @description Whether the month spent more than its budget
+     */
     private var isOverBudget: Bool {
         hasOperations && summary.left < 0
     }
 
+    /**
+     * @method isCurrentMonth
+     * @description Whether the month shown is the current one, the only one whose limits can be edited
+     */
     private var isCurrentMonth: Bool {
         BudgetMath.isSameMonth(month, .now)
     }
 
+    /**
+     * @method spends
+     * @description The categories with a limit or some spending, each against its limit
+     */
     private var spends: [CategorySpend] {
         BudgetMath.categorySpends(
             operations: store.operations,
@@ -87,14 +120,26 @@ struct BudgetView: View {
         .filter { $0.limit > 0 || $0.spent > 0 }
     }
 
+    /**
+     * @method toDispatch
+     * @description What the monthly budget leaves once every limit is taken out
+     */
     private var toDispatch: Double {
         BudgetMath.toDispatch(categories: store.categories, budget: monthlyBudget)
     }
 
+    /**
+     * @method canGoForward
+     * @description Whether a later month can be shown
+     */
     private var canGoForward: Bool {
         month < BudgetMath.monthStart(.now)
     }
 
+    /**
+     * @method header
+     * @description The month stepper and the new operation button
+     */
     private var header: some View {
         HStack(alignment: .center, spacing: 10) {
             StepperButton(
@@ -111,10 +156,18 @@ struct BudgetView: View {
         }
     }
 
+    /**
+     * @method showDispatchNote
+     * @description Whether to say some of the budget isn't dispatched to a category yet
+     */
     private var showDispatchNote: Bool {
         hasOperations && toDispatch > 0
     }
 
+    /**
+     * @method statCards
+     * @description The spent, days-left and per-day figures
+     */
     private var statCards: some View {
         HStack(spacing: 10) {
             StatCard(label: String(appLocalized: "Spent"), value: hasOperations ? Formatting.euro(summary.spent) : "•")
@@ -123,6 +176,10 @@ struct BudgetView: View {
         }
     }
 
+    /**
+     * @method categoryHeader
+     * @description The categories' title, with the link to edit the limits on the current month
+     */
     private var categoryHeader: some View {
         HStack {
             SectionLabel(String(appLocalized: "By category"))
@@ -136,6 +193,10 @@ struct BudgetView: View {
         }
     }
 
+    /**
+     * @method categoryList
+     * @description Every category against its limit, or why there is none
+     */
     @ViewBuilder
     private var categoryList: some View {
         if !hasOperations {
@@ -157,6 +218,12 @@ struct BudgetView: View {
         }
     }
 
+    /**
+     * @method step
+     * @description Shows the previous or the next month
+     *
+     * @param direction -1 for the previous month, 1 for the next
+     */
     private func step(_ direction: Int) {
         preferences.tap()
         withAnimation(.easeOut(duration: 0.25)) {
@@ -165,9 +232,17 @@ struct BudgetView: View {
     }
 }
 
+/**
+ * @class CategoryProgressRow
+ * @description A category against its limit: its icon, name, figures and bar, red once over
+ */
 private struct CategoryProgressRow: View {
-    let spend: CategorySpend
+    let spend: CategorySpend /*!< The category and what was spent in it */
 
+    /**
+     * @method body
+     * @description The row
+     */
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 11) {
@@ -190,8 +265,14 @@ private struct CategoryProgressRow: View {
         .accessibilityLabel(spend.category.title + ", " + rangeText)
     }
 
+    /**
+     * @method rangeText
+     * @description What was spent, over the limit when there is one
+     */
     private var rangeText: String {
-        guard spend.limit > 0 else { return Formatting.euro(spend.spent) }
+        guard spend.limit > 0 else {
+            return Formatting.euro(spend.spent)
+        }
         return Formatting.euro(spend.spent) + " / " + Formatting.euro(spend.limit)
     }
 }

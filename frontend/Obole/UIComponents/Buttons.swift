@@ -1,9 +1,20 @@
 import SwiftUI
 
+/**
+ * @class ExpandedTapTarget
+ * @description Widens the area a small control answers taps in, without moving it
+ */
 private struct ExpandedTapTarget: ViewModifier {
-    var vertical: CGFloat
-    var horizontal: CGFloat
+    var vertical: CGFloat /*!< How much is added above and below */
+    var horizontal: CGFloat /*!< How much is added on each side */
 
+    /**
+     * @method body
+     * @description The control with its wider tap area
+     *
+     * @param content The control
+     * @returns The control
+     */
     func body(content: Content) -> some View {
         content
             .padding(.vertical, vertical)
@@ -15,18 +26,34 @@ private struct ExpandedTapTarget: ViewModifier {
 }
 
 extension View {
+    /**
+     * @method expandedTapTarget
+     * @description Widens the area the view answers taps in
+     *
+     * @param vertical How much is added above and below
+     * @param horizontal How much is added on each side
+     * @returns The view
+     */
     func expandedTapTarget(vertical: CGFloat = 10, horizontal: CGFloat = 8) -> some View {
         modifier(ExpandedTapTarget(vertical: vertical, horizontal: horizontal))
     }
 }
 
+/**
+ * @class PrimaryButton
+ * @description The main action of a screen or a sheet: a full-width violet button
+ */
 struct PrimaryButton: View {
-    let title: String
-    var systemImage: String?
-    var height: CGFloat = Theme.primaryButtonHeight
-    var isDisabled = false
-    let action: () -> Void
+    let title: String /*!< Its title */
+    var systemImage: String? /*!< An SF Symbol before the title, if any */
+    var height: CGFloat = Theme.primaryButtonHeight /*!< Its height */
+    var isDisabled = false /*!< Whether it can't be tapped right now */
+    let action: () -> Void /*!< What it does */
 
+    /**
+     * @method body
+     * @description The button
+     */
     var body: some View {
         Button(action: action) {
             HStack(spacing: 7) {
@@ -54,12 +81,20 @@ struct PrimaryButton: View {
     }
 }
 
+/**
+ * @class SecondaryButton
+ * @description A secondary action: a full-width glass button
+ */
 struct SecondaryButton: View {
-    let title: String
-    var systemImage: String?
-    var height: CGFloat = Theme.primaryButtonHeight
-    let action: () -> Void
+    let title: String /*!< Its title */
+    var systemImage: String? /*!< An SF Symbol before the title, if any */
+    var height: CGFloat = Theme.primaryButtonHeight /*!< Its height */
+    let action: () -> Void /*!< What it does */
 
+    /**
+     * @method body
+     * @description The button
+     */
     var body: some View {
         Button(action: action) {
             HStack(spacing: 7) {
@@ -79,12 +114,20 @@ struct SecondaryButton: View {
     }
 }
 
+/**
+ * @class StepperButton
+ * @description A title between a back and a forward chevron, to step through months
+ */
 struct StepperButton: View {
-    let title: String
-    var onBack: () -> Void
-    var onForward: () -> Void
-    var forwardEnabled: Bool
+    let title: String /*!< What is shown, the month */
+    var onBack: () -> Void /*!< Steps back */
+    var onForward: () -> Void /*!< Steps forward */
+    var forwardEnabled: Bool /*!< Whether stepping forward is possible */
 
+    /**
+     * @method body
+     * @description The stepper
+     */
     var body: some View {
         HStack(spacing: 8) {
             Button(action: onBack) {
@@ -117,12 +160,20 @@ struct StepperButton: View {
     }
 }
 
+/**
+ * @class FilterChip
+ * @description A filter to toggle, as a small chip
+ */
 struct FilterChip: View {
-    let title: String
-    var systemImage: String?
-    let isActive: Bool
-    let action: () -> Void
+    let title: String /*!< Its title */
+    var systemImage: String? /*!< An SF Symbol before the title, if any */
+    let isActive: Bool /*!< Whether the filter is applied */
+    let action: () -> Void /*!< Toggles it */
 
+    /**
+     * @method body
+     * @description The chip
+     */
     var body: some View {
         Button(action: action) {
             HStack(spacing: 5) {
@@ -151,10 +202,18 @@ struct FilterChip: View {
     }
 }
 
+/**
+ * @class SearchField
+ * @description A search field on glass, with a button clearing it
+ */
 struct SearchField: View {
-    @Binding var text: String
-    var prompt: String = String(appLocalized: "Search")
+    @Binding var text: String /*!< The search typed */
+    var prompt: String = String(appLocalized: "Search") /*!< What the empty field says */
 
+    /**
+     * @method body
+     * @description The field
+     */
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
@@ -189,10 +248,18 @@ struct SearchField: View {
     }
 }
 
+/**
+ * @class InlineLink
+ * @description A small violet link inside a line of text
+ */
 struct InlineLink: View {
-    let title: String
-    let action: () -> Void
+    let title: String /*!< Its title */
+    let action: () -> Void /*!< What it does */
 
+    /**
+     * @method body
+     * @description The link
+     */
     var body: some View {
         Button(action: action) {
             Text(title)
@@ -204,10 +271,18 @@ struct InlineLink: View {
     }
 }
 
+/**
+ * @class SheetHeader
+ * @description A sheet's title, with its close button
+ */
 struct SheetHeader: View {
-    let title: String
-    var onClose: () -> Void
+    let title: String /*!< The title */
+    var onClose: () -> Void /*!< Closes the sheet */
 
+    /**
+     * @method body
+     * @description The header
+     */
     var body: some View {
         HStack(alignment: .center) {
             Text(title)
@@ -227,13 +302,27 @@ struct SheetHeader: View {
     }
 }
 
+/**
+ * @class ScreenTitle
+ * @description A tab's large title
+ */
 struct ScreenTitle: View {
-    let text: String
+    let text: String /*!< The title */
 
+    /**
+     * @constructor init
+     * @description Titles a tab
+     *
+     * @param text The title
+     */
     init(_ text: String) {
         self.text = text
     }
 
+    /**
+     * @method body
+     * @description The title
+     */
     var body: some View {
         Text(text)
             .font(Theme.font(26, .medium))
@@ -242,10 +331,18 @@ struct ScreenTitle: View {
     }
 }
 
+/**
+ * @class HeaderAddButton
+ * @description The round ＋ in a tab's header, opening a new operation
+ */
 struct HeaderAddButton: View {
-    var accessibilityLabel: String = String(appLocalized: "New operation")
-    let action: () -> Void
+    var accessibilityLabel: String = String(appLocalized: "New operation") /*!< What VoiceOver reads for it */
+    let action: () -> Void /*!< What it does */
 
+    /**
+     * @method body
+     * @description The button
+     */
     var body: some View {
         Button(action: action) {
             Image(systemName: "plus")

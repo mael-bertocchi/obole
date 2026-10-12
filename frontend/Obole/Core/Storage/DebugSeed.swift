@@ -1,19 +1,45 @@
 #if DEBUG
 import Foundation
 
+/**
+ * @type DebugSeed
+ * @description The sample month the debug builds can start with, launched with `-demo` or `-demo-empty`
+ */
 @MainActor
 enum DebugSeed {
 
+    /**
+     * @method enterDemo
+     * @description Replaces the budget with the sample month of the design handoff, dated around today
+     *
+     * @param store The store to fill
+     */
     static func enterDemo(store: LocalStore) {
         let calendar = BudgetMath.calendar
         let today = calendar.startOfDay(for: .now)
         let monthStart = BudgetMath.monthStart(today)
 
+        /**
+         * @function day
+         * @description A day counted back from today, at a given hour
+         *
+         * @param offset How many days back
+         * @param hour The hour of the day
+         * @returns The date
+         */
         func day(_ offset: Int, hour: Int = 12) -> Date {
             let base = calendar.date(byAdding: .day, value: -offset, to: today) ?? today
             return calendar.date(bySettingHour: hour, minute: 0, second: 0, of: base) ?? base
         }
 
+        /**
+         * @function dayOfMonth
+         * @description A day of the current month, at a given hour
+         *
+         * @param number The day of the month
+         * @param hour The hour of the day
+         * @returns The date
+         */
         func dayOfMonth(_ number: Int, hour: Int = 12) -> Date {
             let base = calendar.date(byAdding: .day, value: number - 1, to: monthStart) ?? monthStart
             return calendar.date(bySettingHour: hour, minute: 0, second: 0, of: base) ?? base
@@ -74,6 +100,12 @@ enum DebugSeed {
         )
     }
 
+    /**
+     * @method enterDemoEmpty
+     * @description Starts from an empty budget
+     *
+     * @param store The store to empty
+     */
     static func enterDemoEmpty(store: LocalStore) {
         store.clearAll()
     }

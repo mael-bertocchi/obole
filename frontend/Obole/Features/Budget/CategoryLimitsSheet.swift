@@ -1,20 +1,32 @@
 import SwiftUI
 
+/**
+ * @class CategoryLimitsSheet
+ * @description The sheet editing the monthly budget and each category's limit, with what is left to dispatch
+ */
 struct CategoryLimitsSheet: View {
-    @Environment(LocalStore.self) private var store
-    @Environment(Preferences.self) private var preferences
-    @Environment(\.dismiss) private var dismiss
+    @Environment(LocalStore.self) private var store /*!< The budget */
+    @Environment(Preferences.self) private var preferences /*!< The device's settings, for the haptics */
+    @Environment(\.dismiss) private var dismiss /*!< Closes the sheet */
 
-    @State private var monthlyLimit: String = ""
-    @State private var limits: [String: String] = [:]
+    @State private var monthlyLimit: String = "" /*!< The monthly budget, as typed */
+    @State private var limits: [String: String] = [:] /*!< Each category's limit, as typed, by category id */
 
-    @FocusState private var focus: Field?
+    @FocusState private var focus: Field? /*!< The field being typed in */
 
+    /**
+     * @type Field
+     * @description The sheet's fields
+     */
     private enum Field: Hashable {
-        case monthly
-        case category(String)
+        case monthly /*!< The monthly budget */
+        case category(String) /*!< A category's limit */
     }
 
+    /**
+     * @method body
+     * @description The sheet
+     */
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -74,14 +86,22 @@ struct CategoryLimitsSheet: View {
         .onAppear(perform: loadValues)
         .onChange(of: monthlyLimit) { _, typed in
             let formatted = Formatting.groupedAmountInput(Formatting.sanitizeAmountInput(typed))
-            if formatted != typed { monthlyLimit = formatted }
+            if formatted != typed {
+                monthlyLimit = formatted
+            }
         }
         .onChange(of: limits) { _, typed in
             let formatted = typed.mapValues { Formatting.groupedAmountInput(Formatting.sanitizeAmountInput($0)) }
-            if formatted != typed { limits = formatted }
+            if formatted != typed {
+                limits = formatted
+            }
         }
     }
 
+    /**
+     * @method toDispatch
+     * @description What the monthly budget leaves once every limit is taken out, negative when the limits exceed it
+     */
     private var toDispatch: Double {
         let budget = Formatting.parseAmountInput(monthlyLimit) ?? 0
         let allocated = store.categories.reduce(0) { total, category in
@@ -90,18 +110,42 @@ struct CategoryLimitsSheet: View {
         return budget - allocated
     }
 
+    /**
+     * @method dispatchText
+     * @description What is left to dispatch, in words
+     */
     private var dispatchText: String {
-        if toDispatch > 0 { return String(appLocalized: "\(Formatting.euro(toDispatch)) to dispatch") }
-        if toDispatch < 0 { return String(appLocalized: "\(Formatting.euro(-toDispatch)) over budget") }
+        if toDispatch > 0 {
+            return String(appLocalized: "\(Formatting.euro(toDispatch)) to dispatch")
+        }
+        if toDispatch < 0 {
+            return String(appLocalized: "\(Formatting.euro(-toDispatch)) over budget")
+        }
         return String(appLocalized: "Fully dispatched")
     }
 
+    /**
+     * @method dispatchColor
+     * @description The colour of what is left to dispatch: violet while some is, red when over, green when exactly
+     * dispatched
+     */
     private var dispatchColor: Color {
-        if toDispatch > 0 { return Theme.accent300 }
-        if toDispatch < 0 { return Theme.negative }
+        if toDispatch > 0 {
+            return Theme.accent300
+        }
+        if toDispatch < 0 {
+            return Theme.negative
+        }
         return Theme.positive
     }
 
+    /**
+     * @method limitRow
+     * @description One category with its limit field
+     *
+     * @param category The category
+     * @returns The row
+     */
     private func limitRow(_ category: Category) -> some View {
         HStack(spacing: 11) {
             IconTile(symbol: category.symbol, color: category.color)
@@ -137,6 +181,10 @@ struct CategoryLimitsSheet: View {
         .glassCard()
     }
 
+    /**
+     * @method loadValues
+     * @description Fills the fields with the budget as stored
+     */
     private func loadValues() {
         monthlyLimit = Formatting.amountInput(store.budget.monthlyLimit)
         limits = Dictionary(
@@ -144,12 +192,18 @@ struct CategoryLimitsSheet: View {
         )
     }
 
+    /**
+     * @method save
+     * @description Stores the budget and the limits typed, then closes the sheet
+     */
     private func save() {
         if let value = Formatting.parseAmountInput(monthlyLimit) {
             store.setMonthlyLimit(value)
         }
         for (categoryId, text) in limits {
-            guard let value = Formatting.parseAmountInput(text) else { continue }
+            guard let value = Formatting.parseAmountInput(text) else {
+                continue
+            }
             store.updateLimit(categoryId: categoryId, limit: value)
         }
         preferences.success()

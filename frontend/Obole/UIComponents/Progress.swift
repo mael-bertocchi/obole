@@ -1,10 +1,18 @@
 import SwiftUI
 
+/**
+ * @class TrackBar
+ * @description A thin progress bar, for a category against its limit
+ */
 struct TrackBar: View {
-    var progress: Double
-    var color: Color
-    var height: CGFloat = Theme.trackHeight
+    var progress: Double /*!< How full it is, between 0 and 1 */
+    var color: Color /*!< The filled part's colour */
+    var height: CGFloat = Theme.trackHeight /*!< Its thickness */
 
+    /**
+     * @method body
+     * @description The bar
+     */
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
@@ -20,18 +28,26 @@ struct TrackBar: View {
     }
 }
 
+/**
+ * @class BudgetRing
+ * @description The budget ring: a thick arc around the month's main figure, filling as the budget goes
+ */
 struct BudgetRing: View {
-    var progress: Double
-    var caption: String
-    var amount: String
-    var subtitle: String
-    var color: Color = Theme.accent
+    var progress: Double /*!< How much of the budget is spent, between 0 and 1 */
+    var caption: String /*!< What the figure is, above it */
+    var amount: String /*!< The figure */
+    var subtitle: String /*!< What the figure is measured against, under it */
+    var color: Color = Theme.accent /*!< The arc's colour */
 
-    private let diameter: CGFloat = 214
-    private let thickness: CGFloat = 21
+    private let diameter: CGFloat = 214 /*!< The ring's diameter */
+    private let thickness: CGFloat = 21 /*!< The arc's thickness */
 
-    @State private var animatedProgress: Double = 0
+    @State private var animatedProgress: Double = 0 /*!< The progress drawn, which follows the real one with an animation */
 
+    /**
+     * @method body
+     * @description The ring
+     */
     var body: some View {
         ZStack {
             Circle()
