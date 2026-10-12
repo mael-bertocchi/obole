@@ -1,8 +1,8 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { StatusCodes } from 'http-status-codes';
-import type { ExchangeRateSnapshot, PrismaClient } from 'prisma/generated/prisma/client';
-import type { ProviderPayload, RatesBody } from 'src/modules/rates/rates-models';
-import { BASE_CURRENCY, PROVIDER_BASE_URL, ProviderPayloadSchema, toIsoDay } from 'src/modules/rates/rates-models';
+import type { BudgetExchangeRateSnapshot, PrismaClient } from 'prisma/generated/prisma/client';
+import type { ProviderPayload, RatesBody } from 'src/modules/budget/rates/rates-models';
+import { BASE_CURRENCY, PROVIDER_BASE_URL, ProviderPayloadSchema, StoredRatesSchema, toIsoDay } from 'src/modules/budget/rates/rates-models';
 import { RequestError } from 'src/shared/models';
 
 /**
@@ -67,16 +67,16 @@ function toEuroRates(rates: ProviderPayload['rates']): Record<string, number> {
  * @function toBody
  * @description Maps a stored snapshot row onto the response body.
  *
- * @param {ExchangeRateSnapshot} snapshot The stored snapshot row.
+ * @param {BudgetExchangeRateSnapshot} snapshot The stored snapshot row.
  *
  * @returns {RatesBody} The snapshot in the shape served to the client.
  */
-function toBody(snapshot: ExchangeRateSnapshot): RatesBody {
+function toBody(snapshot: BudgetExchangeRateSnapshot): RatesBody {
     return {
         base: BASE_CURRENCY,
         quoteDate: snapshot.quoteDate,
         fetchedAt: snapshot.fetchedAt,
-        rates: snapshot.rates as Record<string, number>
+        rates: StoredRatesSchema.parse(snapshot.rates)
     };
 }
 
@@ -108,13 +108,13 @@ async function fetchProvider(day: string): Promise<ProviderPayload> {
  * be republished. A day still answered by an earlier day's rate is re-checked often, because its own rate is
  * yet to come.
  *
- * @param {ExchangeRateSnapshot} snapshot The stored snapshot.
+ * @param {BudgetExchangeRateSnapshot} snapshot The stored snapshot.
  * @param {string} day The day it was stored for.
  * @param {boolean} settled Whether that day is over.
  *
  * @returns {boolean} Whether to ask the provider again.
  */
-function isStale(snapshot: ExchangeRateSnapshot, day: string, settled: boolean): boolean {
+function isStale(snapshot: BudgetExchangeRateSnapshot, day: string, settled: boolean): boolean {
     if (settled) {
         return false;
     }
@@ -126,9 +126,7 @@ function isStale(snapshot: ExchangeRateSnapshot, day: string, settled: boolean):
 
 /**
  * @function pullSnapshot
- * @description Returns one cached snapshot, refreshing it from the provider when it is missing or stale. A
- * provider outage is never fatal while a snapshot exists: the stored one is served instead, and its
- * `fetchedAt` lets the client judge how old it is.
+ * @description Returns one cached snapshot, refreshing it from the provider when it is missing or stale.
  *
  * @param {PrismaClient} prisma The database client.
  * @param {FastifyBaseLogger} logger The request logger.
@@ -138,7 +136,7 @@ function isStale(snapshot: ExchangeRateSnapshot, day: string, settled: boolean):
  * @returns {Promise<RatesBody>} The rate snapshot, in the client's euros-per-unit convention.
  */
 async function pullSnapshot(prisma: PrismaClient, logger: FastifyBaseLogger, day: string, settled: boolean): Promise<RatesBody> {
-    const cached = await prisma.exchangeRateSnapshot.findUnique({ where: { id: day } });
+    const cached = await prisma.budgetExchangeRateSnapshot.findUnique({ where: { id: day } });
 
     if (cached !== null && !isStale(cached, day, settled)) {
         return toBody(cached);
@@ -163,7 +161,7 @@ async function pullSnapshot(prisma: PrismaClient, logger: FastifyBaseLogger, day
     const rates = toEuroRates(payload.rates);
     const fetchedAt = new Date();
 
-    await prisma.exchangeRateSnapshot.upsert({
+    await prisma.budgetExchangeRateSnapshot.upsert({
         where: { id: day },
         update: { quoteDate: payload.date, rates, fetchedAt },
         create: { id: day, quoteDate: payload.date, rates, fetchedAt }
@@ -187,9 +185,7 @@ export async function pullRates(prisma: PrismaClient, logger: FastifyBaseLogger)
 
 /**
  * @function pullRatesForDay
- * @description Returns the reference rates that applied on one day. The ECB does not publish at weekends or on
- * holidays, so the answer names the day it actually came from, which may be earlier than the one asked for.
- * A day that is over can never be republished, so it is cached permanently.
+ * @description Returns the reference rates that applied on one day.
  *
  * @param {PrismaClient} prisma The database client.
  * @param {FastifyBaseLogger} logger The request logger.
@@ -203,7 +199,6 @@ export async function pullRatesForDay(prisma: PrismaClient, logger: FastifyBaseL
 
     tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
-    // A day ahead of UTC is still "today" somewhere, so only reject what no timezone could call the past.
     if (day > toIsoDay(tomorrow)) {
         throw new RequestError(StatusCodes.BAD_REQUEST, 'Exchange rates cannot be requested for a future date');
     }

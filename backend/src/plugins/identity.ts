@@ -4,14 +4,42 @@ import fastifyJwt from '@fastify/jwt';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import { StatusCodes } from 'http-status-codes';
-import { SignInThrottle } from 'src/modules/identity/identity-throttle';
 import { RequestError } from 'src/shared/models';
+import { OneTimeStore } from 'src/shared/one-time-store';
 
 /**
  * @constant OWNER_ID
  * @description The single account's stable identifier. Everything the API stores belongs to it.
  */
 export const OWNER_ID = 'owner';
+
+/**
+ * @constant CHALLENGE_LIFETIME
+ * @description How long a passkey has to sign the challenge it was handed.
+ */
+const CHALLENGE_LIFETIME = 5 * 60 * 1000;
+
+/**
+ * @constant CONNECTION_LIFETIME
+ * @description How long the app has to trade the one-time code the portal hands it for a session.
+ */
+const CONNECTION_LIFETIME = 2 * 60 * 1000;
+
+/**
+ * @type ChallengePurpose
+ * @description What a challenge was handed out for: signing in with a passkey, or creating one.
+ */
+export type ChallengePurpose = 'authentication' | 'registration';
+
+/**
+ * @interface RelyingParty
+ * @description Who the passkeys belong to, in WebAuthn's words: the portal, at its own origin.
+ */
+export interface RelyingParty {
+    id: string; /*!< The host name every passkey is bound to */
+    name: string; /*!< The name shown when a passkey is created */
+    origin: string; /*!< The portal's origin, the only page allowed to use them */
+}
 
 /**
  * @interface TokenPayload
@@ -37,8 +65,11 @@ export interface IdentityTokens {
  * @description Public interface exposed on the Fastify instance.
  */
 export interface IdentityService {
-    verifyCode: (code: string) => boolean; /*!< Constant-time check of the env-configured six-digit code */
-    throttle: SignInThrottle; /*!< Caps wrong codes across every caller */
+    relyingParty: RelyingParty; /*!< Who the passkeys belong to */
+    ownerName: string; /*!< The owner's name, as their passkeys and the portal show it */
+    challenges: OneTimeStore<ChallengePurpose>; /*!< The challenges handed out and not signed yet */
+    connections: OneTimeStore<string>; /*!< The app's one-time codes, each with the PKCE challenge it was asked with */
+    isEnrollmentToken: (token: string) => boolean; /*!< Constant-time check of the optional enrollment token */
     issueTokens: (userId: string) => Promise<IdentityTokens>; /*!< Creates a refresh session and returns a token pair */
     rotateTokens: (refreshToken: string) => Promise<IdentityTokens>; /*!< Validates and rotates a refresh token into a new pair */
     revokeSession: (userId: string, refreshToken: string) => Promise<void>; /*!< Invalidates a single refresh session (logout) */
@@ -58,8 +89,9 @@ function constantTimeEquals(left: string, right: string): boolean {
 
 /**
  * @function identityPlugin
- * @description Registers JWT signing/verification, persisted refresh sessions, and the route guard for the single account, opened with the
- * six-digit code set in the environment.
+ * @description Registers JWT signing/verification, persisted refresh sessions, and the route guard for the single account, opened with a
+ * passkey. The portal's origin in the environment names who the passkeys belong to, and an optional enrollment token lets the first one
+ * be created.
  */
 export default fp(async function (fastify: FastifyInstance): Promise<void> {
     await fastify.register(fastifyJwt, {
@@ -96,13 +128,17 @@ export default fp(async function (fastify: FastifyInstance): Promise<void> {
         const decoded = fastify.jwt.decode<{ exp: number }>(refreshToken);
         const expiresAt = decoded !== null ? new Date(decoded.exp * 1000) : new Date();
 
-        await fastify.prisma.refreshSession.create({ data: { id: sid, userId, expiresAt } });
+        await fastify.prisma.identityRefreshSession.create({ data: { id: sid, userId, expiresAt } });
 
         const accessToken = fastify.jwt.sign({ id: userId, type: 'access' }, { expiresIn: fastify.variables.JWT_ACCESS_EXPIRY });
 
         return { accessToken, refreshToken };
     };
 
+    /**
+     * @function authenticate
+     * @description Guards a route with a bearer access token: a valid, unexpired access token goes through, anything else is refused with 401
+     */
     const authenticate = async (request: FastifyRequest, _reply: FastifyReply): Promise<void> => {
         try {
             await request.jwtVerify();
@@ -115,29 +151,51 @@ export default fp(async function (fastify: FastifyInstance): Promise<void> {
         }
     };
 
-    fastify.decorate('identity', {
-        verifyCode(code: string): boolean {
-            return constantTimeEquals(code, fastify.variables.IDENTITY_CODE);
-        },
+    const origin = fastify.variables.IDENTITY_ORIGIN;
 
-        throttle: new SignInThrottle(),
+    fastify.decorate('identity', {
+        relyingParty: { id: new URL(origin).hostname, name: 'Obole', origin },
+
+        ownerName: fastify.variables.IDENTITY_OWNER_NAME,
+
+        challenges: new OneTimeStore<ChallengePurpose>(CHALLENGE_LIFETIME),
+
+        connections: new OneTimeStore<string>(CONNECTION_LIFETIME),
+
+        /**
+         * @method isEnrollmentToken
+         * @description Constant-time check of the optional enrollment token; nothing passes while none is set
+         */
+        isEnrollmentToken(token: string): boolean {
+            const expected = fastify.variables.IDENTITY_ENROLLMENT_TOKEN;
+
+            return expected !== '' && constantTimeEquals(token, expected);
+        },
 
         issueTokens,
 
+        /**
+         * @method rotateTokens
+         * @description Validates a refresh token, forgets its session and opens a new one in its place
+         */
         async rotateTokens(refreshToken: string): Promise<IdentityTokens> {
             const { id, sid } = verifyRefresh(refreshToken);
 
-            const session = await fastify.prisma.refreshSession.findUnique({ where: { id: sid } });
+            const session = await fastify.prisma.identityRefreshSession.findUnique({ where: { id: sid } });
 
             if (session === null || session.userId !== id || session.expiresAt.getTime() <= Date.now()) {
                 throw new RequestError(StatusCodes.UNAUTHORIZED, 'Invalid or expired refresh token');
             }
 
-            await fastify.prisma.refreshSession.delete({ where: { id: sid } });
+            await fastify.prisma.identityRefreshSession.delete({ where: { id: sid } });
 
             return await issueTokens(id);
         },
 
+        /**
+         * @method revokeSession
+         * @description Forgets the session a refresh token belongs to, for a sign-out
+         */
         async revokeSession(userId: string, refreshToken: string): Promise<void> {
             const { id, sid } = verifyRefresh(refreshToken);
 
@@ -145,7 +203,7 @@ export default fp(async function (fastify: FastifyInstance): Promise<void> {
                 throw new RequestError(StatusCodes.UNAUTHORIZED, 'Invalid refresh token');
             }
 
-            await fastify.prisma.refreshSession.deleteMany({ where: { id: sid, userId } });
+            await fastify.prisma.identityRefreshSession.deleteMany({ where: { id: sid, userId } });
         },
 
         authenticate

@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { StatusCodes } from 'http-status-codes';
-import type { RatesDayRequest } from 'src/modules/rates/rates-models';
-import { pullRates, pullRatesForDay } from 'src/modules/rates/rates-service';
+import type { RatesDayRequest } from 'src/modules/budget/rates/rates-models';
+import { pullRates, pullRatesForDay } from 'src/modules/budget/rates/rates-service';
 
 /**
  * @function getRates

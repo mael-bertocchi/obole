@@ -1,9 +1,16 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { PrismaClient } from 'prisma/generated/prisma/client';
-import { pullRates, pullRatesForDay } from 'src/modules/rates/rates-service';
+import { pullRates, pullRatesForDay } from 'src/modules/budget/rates/rates-service';
 import { RequestError } from 'src/shared/models';
+import type { Mock } from 'vitest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { standIn } from '../../../support/stand-in';
+
+/**
+ * @constant providerPayload
+ * @description A payload as the upstream provider answers it
+ */
 const providerPayload = {
     base: 'EUR',
     date: '2026-09-07',
@@ -11,15 +18,35 @@ const providerPayload = {
 };
 
 /**
+ * @interface PrismaDouble
+ * @description A Prisma stand-in and the snapshot queries it records.
+ */
+interface PrismaDouble {
+    prisma: PrismaClient; /*!< The stand-in */
+    findUnique: Mock<() => Promise<unknown>>; /*!< The snapshot lookup */
+    upsert: Mock<(query: { create: unknown }) => Promise<unknown>>; /*!< The snapshot write */
+}
+
+/**
+ * @interface LoggerDouble
+ * @description A logger stand-in and what it was told.
+ */
+interface LoggerDouble {
+    logger: FastifyBaseLogger; /*!< The stand-in */
+    warn: Mock; /*!< The warnings */
+    error: Mock; /*!< The errors */
+}
+
+/**
  * @function makePrisma
  * @description Builds a Prisma stand-in whose snapshot row is whatever the test wants it to be.
  */
-function makePrisma(snapshot: unknown) {
+function makePrisma(snapshot: unknown): PrismaDouble {
     const upsert = vi.fn(({ create }: { create: unknown }) => Promise.resolve(create));
     const findUnique = vi.fn(() => Promise.resolve(snapshot));
 
     return {
-        prisma: { exchangeRateSnapshot: { findUnique, upsert } } as unknown as PrismaClient,
+        prisma: standIn<PrismaClient>({ budgetExchangeRateSnapshot: { findUnique, upsert } }),
         findUnique,
         upsert
     };
@@ -29,10 +56,11 @@ function makePrisma(snapshot: unknown) {
  * @function makeLogger
  * @description Builds a logger stand-in that records what the service reported.
  */
-function makeLogger() {
-    const logger = { warn: vi.fn(), error: vi.fn() };
+function makeLogger(): LoggerDouble {
+    const warn = vi.fn();
+    const error = vi.fn();
 
-    return { logger: logger as unknown as FastifyBaseLogger, warn: logger.warn, error: logger.error };
+    return { logger: standIn<FastifyBaseLogger>({ warn, error }), warn, error };
 }
 
 afterEach(() => {
@@ -156,7 +184,6 @@ describe('pullRatesForDay', () => {
     });
 
     it('names the day the rates actually came from, not the day asked for', async () => {
-        // 2026-09-05 is a Saturday, so the provider answers with Friday's publication.
         vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ...providerPayload, date: '2026-09-04' }) })));
 
         const { prisma } = makePrisma(null);
@@ -225,7 +252,6 @@ describe('pullRatesForDay, waiting on a publication', () => {
         const fetchMock = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(providerPayload) }));
         vi.stubGlobal('fetch', fetchMock);
 
-        // Today, stored 40 minutes ago, still carrying yesterday's quote: its own rate is yet to come.
         const { prisma } = makePrisma({
             id: isoDay(0),
             quoteDate: isoDay(-1),
@@ -260,7 +286,6 @@ describe('pullRatesForDay, waiting on a publication', () => {
         const fetchMock = vi.fn();
         vi.stubGlobal('fetch', fetchMock);
 
-        // A past Saturday: answered by Friday, and no rate of its own will ever appear.
         const { prisma } = makePrisma({
             id: '2026-09-05',
             quoteDate: '2026-09-04',

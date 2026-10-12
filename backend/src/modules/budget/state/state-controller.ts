@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { StatusCodes } from 'http-status-codes';
-import type { StatePushRequest } from 'src/modules/state/state-models';
-import { pullState, pushState } from 'src/modules/state/state-service';
+import type { StatePushRequest } from 'src/modules/budget/state/state-models';
+import { pullState, pushState } from 'src/modules/budget/state/state-service';
 
 /**
  * @function getState

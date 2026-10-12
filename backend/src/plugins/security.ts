@@ -27,8 +27,8 @@ export function allowedOrigins(value: string): string[] {
 /**
  * @function securityPlugin
  * @description Registers security-related plugins such as Helmet, CORS and rate limiting. CORS only opens the API to the
- * origins listed in `CORS_ORIGIN` (the web interface's) and to nothing at all when it is empty; the app isn't a
- * browser and needs none. It is registered before the rate limit so a refused request still reaches the page readable.
+ * origins listed in `CORS_ORIGIN` (the portal's) and to nothing at all when it is empty; the app isn't a browser and
+ * needs none. It is registered before the rate limit so a refused request still reaches the page readable.
  */
 export default fp(async function (fastify: FastifyInstance): Promise<void> {
     await fastify.register(fastifyHelmet);
@@ -38,7 +38,7 @@ export default fp(async function (fastify: FastifyInstance): Promise<void> {
     if (origins.length > 0) {
         await fastify.register(fastifyCors, {
             origin: origins,
-            methods: ['GET', 'POST', 'PUT'],
+            methods: ['GET', 'POST', 'PUT', 'DELETE'],
             allowedHeaders: ['Authorization', 'Content-Type'],
             maxAge: PREFLIGHT_CACHE
         });

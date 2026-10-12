@@ -62,6 +62,12 @@ export const RatesSchema = z.object({
 });
 
 /**
+ * @constant StoredRatesSchema
+ * @description Zod schema for the rates kept in a snapshot row's JSON column: euros per unit, by currency code.
+ */
+export const StoredRatesSchema = z.record(z.string(), z.number());
+
+/**
  * @constant RatesDayParamsSchema
  * @description Zod schema for the day a historical rate lookup asks about.
  */

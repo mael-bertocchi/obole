@@ -57,6 +57,12 @@ export const MonthlyBudgetSchema = z.object({
 });
 
 /**
+ * @constant StoredCategoryLimitsSchema
+ * @description Zod schema for the category limits kept in a history row's JSON column: a limit by category id.
+ */
+export const StoredCategoryLimitsSchema = z.record(z.string(), z.number());
+
+/**
  * @constant StateSchema
  * @description Zod schema for the whole budget document exchanged by the pull/push endpoints.
  */

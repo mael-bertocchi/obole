@@ -3,10 +3,10 @@ import Fastify from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { hasZodFastifySchemaValidationErrors, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { StatusCodes } from 'http-status-codes';
+import ratesRoutes from 'src/modules/budget/rates/rates-routes';
+import stateRoutes from 'src/modules/budget/state/state-routes';
 import healthRoutes from 'src/modules/health/health-routes';
 import identityRoutes from 'src/modules/identity/identity-routes';
-import ratesRoutes from 'src/modules/rates/rates-routes';
-import stateRoutes from 'src/modules/state/state-routes';
 import databasePlugin from 'src/plugins/database';
 import environmentPlugin from 'src/plugins/environment';
 import identityPlugin from 'src/plugins/identity';
@@ -113,8 +113,8 @@ async function startServer(): Promise<void> {
 
     await fastify.register(healthRoutes, { prefix: '/v1/health' });
     await fastify.register(identityRoutes, { prefix: '/v1/identity' });
-    await fastify.register(ratesRoutes, { prefix: '/v1/rates' });
-    await fastify.register(stateRoutes, { prefix: '/v1/state' });
+    await fastify.register(ratesRoutes, { prefix: '/v1/budget/rates' });
+    await fastify.register(stateRoutes, { prefix: '/v1/budget/state' });
 
     fastify.setNotFoundHandler(handleNotFound);
 

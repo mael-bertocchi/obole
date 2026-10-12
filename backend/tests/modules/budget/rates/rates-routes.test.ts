@@ -2,10 +2,18 @@ import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
 import { hasZodFastifySchemaValidationErrors, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { StatusCodes } from 'http-status-codes';
-import ratesRoutes from 'src/modules/rates/rates-routes';
+import type { PrismaClient } from 'prisma/generated/prisma/client';
+import ratesRoutes from 'src/modules/budget/rates/rates-routes';
+import type { IdentityService } from 'src/plugins/identity';
 import { RequestError } from 'src/shared/models';
 import { describe, expect, it, vi } from 'vitest';
 
+import { standIn } from '../../../support/stand-in';
+
+/**
+ * @constant storedSnapshot
+ * @description The snapshot row the stand-in database holds
+ */
 const storedSnapshot = {
     id: 'latest',
     quoteDate: '2026-09-08',
@@ -25,10 +33,9 @@ async function buildApp(authenticate: () => Promise<void>): Promise<{ app: Fasti
     app.setValidatorCompiler(validatorCompiler);
     app.setSerializerCompiler(serializerCompiler);
 
-    app.decorate('prisma', { exchangeRateSnapshot: { findUnique, upsert: vi.fn() } } as never);
-    app.decorate('identity', { authenticate } as never);
+    app.decorate('prisma', standIn<PrismaClient>({ budgetExchangeRateSnapshot: { findUnique, upsert: vi.fn() } }));
+    app.decorate('identity', standIn<IdentityService>({ authenticate }));
 
-    // Mirrors how the application maps errors, so the statuses here are the ones a client would see.
     app.setErrorHandler((error: Error, _request, reply) => {
         let code = StatusCodes.INTERNAL_SERVER_ERROR;
 
@@ -41,7 +48,7 @@ async function buildApp(authenticate: () => Promise<void>): Promise<{ app: Fasti
         return reply.status(code).send({ message: error.message, data: undefined });
     });
 
-    await app.register(ratesRoutes, { prefix: '/v1/rates' });
+    await app.register(ratesRoutes, { prefix: '/v1/budget/rates' });
 
     return { app, findUnique };
 }
@@ -62,10 +69,10 @@ function deny(): Promise<void> {
     return Promise.reject(new RequestError(StatusCodes.UNAUTHORIZED, 'Invalid or expired access token'));
 }
 
-describe('GET /v1/rates', () => {
+describe('GET /v1/budget/rates', () => {
     it('serves the snapshot inside the standard envelope', async () => {
         const { app } = await buildApp(allow);
-        const response = await app.inject({ method: 'GET', url: '/v1/rates' });
+        const response = await app.inject({ method: 'GET', url: '/v1/budget/rates' });
 
         expect(response.statusCode).toBe(StatusCodes.OK);
 
@@ -80,7 +87,7 @@ describe('GET /v1/rates', () => {
 
     it('is guarded by the identity plugin', async () => {
         const { app, findUnique } = await buildApp(deny);
-        const response = await app.inject({ method: 'GET', url: '/v1/rates' });
+        const response = await app.inject({ method: 'GET', url: '/v1/budget/rates' });
 
         expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
         expect(findUnique).not.toHaveBeenCalled();
@@ -89,10 +96,10 @@ describe('GET /v1/rates', () => {
     });
 });
 
-describe('GET /v1/rates/:date', () => {
+describe('GET /v1/budget/rates/:date', () => {
     it('serves the rates stored for that day', async () => {
         const { app } = await buildApp(allow);
-        const response = await app.inject({ method: 'GET', url: '/v1/rates/2026-09-08' });
+        const response = await app.inject({ method: 'GET', url: '/v1/budget/rates/2026-09-08' });
 
         expect(response.statusCode).toBe(StatusCodes.OK);
         expect(response.json<{ data: { quoteDate: string } }>().data.quoteDate).toBe('2026-09-08');
@@ -102,7 +109,7 @@ describe('GET /v1/rates/:date', () => {
 
     it('rejects a day that is not a calendar date', async () => {
         const { app, findUnique } = await buildApp(allow);
-        const response = await app.inject({ method: 'GET', url: '/v1/rates/08-09-2026' });
+        const response = await app.inject({ method: 'GET', url: '/v1/budget/rates/08-09-2026' });
 
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST);
         expect(findUnique).not.toHaveBeenCalled();
@@ -112,7 +119,7 @@ describe('GET /v1/rates/:date', () => {
 
     it('is guarded by the identity plugin', async () => {
         const { app, findUnique } = await buildApp(deny);
-        const response = await app.inject({ method: 'GET', url: '/v1/rates/2026-09-08' });
+        const response = await app.inject({ method: 'GET', url: '/v1/budget/rates/2026-09-08' });
 
         expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
         expect(findUnique).not.toHaveBeenCalled();

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import stateController from 'src/modules/state/state-controller';
-import type { StatePushRequest } from 'src/modules/state/state-models';
-import { StatePushSchema } from 'src/modules/state/state-models';
+import stateController from 'src/modules/budget/state/state-controller';
+import type { StatePushRequest } from 'src/modules/budget/state/state-models';
+import { StatePushSchema } from 'src/modules/budget/state/state-models';
 
 /**
  * @function stateRoutes

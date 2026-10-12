@@ -17,8 +17,8 @@ export type Perhaps<T> = T | undefined;
  * @description Defines the structure of an error response
  */
 export interface RequestErrorResponse {
-    message: string; /*!> The error message */
-    data: unknown; /*!> Additional error data */
+    message: string; /*!< The error message */
+    data: unknown; /*!< Additional error data */
 }
 
 /**
@@ -28,8 +28,8 @@ export interface RequestErrorResponse {
  * @extends Error
  */
 export class RequestError extends Error {
-    public data: Maybe<object>; /*!> Additional error data */
-    public code: StatusCodes; /*!> The error code */
+    public data: Maybe<object>; /*!< Additional error data */
+    public code: StatusCodes; /*!< The error code */
 
     /**
      * @constructor

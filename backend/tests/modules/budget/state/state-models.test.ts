@@ -1,6 +1,10 @@
-import { CategorySchema, OperationSchema, StatePushSchema, StateSchema } from 'src/modules/state/state-models';
+import { CategorySchema, OperationSchema, StatePushSchema, StateSchema } from 'src/modules/budget/state/state-models';
 import { describe, expect, it } from 'vitest';
 
+/**
+ * @constant validCategory
+ * @description A category as the client sends it
+ */
 const validCategory = {
     id: 'groceries',
     name: 'Groceries',
@@ -9,6 +13,10 @@ const validCategory = {
     monthlyLimit: 400
 };
 
+/**
+ * @constant validOperation
+ * @description An operation as the client sends it
+ */
 const validOperation = {
     id: '5f1b2c3d-4e5f-4a1b-8c2d-3e4f5a6b7c8d',
     date: '2026-07-24T18:00:00.000Z',

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import ratesController from 'src/modules/rates/rates-controller';
-import type { RatesDayRequest } from 'src/modules/rates/rates-models';
-import { RatesDayParamsSchema } from 'src/modules/rates/rates-models';
+import ratesController from 'src/modules/budget/rates/rates-controller';
+import type { RatesDayRequest } from 'src/modules/budget/rates/rates-models';
+import { RatesDayParamsSchema } from 'src/modules/budget/rates/rates-models';
 
 /**
  * @function ratesRoutes

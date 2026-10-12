@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import type { Prisma, PrismaClient } from 'prisma/generated/prisma/client';
-import type { StatePushBody, StoredStateBody } from 'src/modules/state/state-models';
+import type { StatePushBody, StoredStateBody } from 'src/modules/budget/state/state-models';
+import { StoredCategoryLimitsSchema } from 'src/modules/budget/state/state-models';
 import { OWNER_ID } from 'src/plugins/identity';
 import type { Perhaps } from 'src/shared/models';
 import { RequestError } from 'src/shared/models';
@@ -28,8 +29,8 @@ const TRANSACTION_TIMEOUT = 30 * 1000;
  */
 export async function pullState(prisma: PrismaClient): Promise<StoredStateBody> {
     const [categories, operations, history, state] = await Promise.all([
-        prisma.category.findMany({ orderBy: { position: 'asc' } }),
-        prisma.operation.findMany({ orderBy: { date: 'desc' } }),
+        prisma.budgetCategory.findMany({ orderBy: { position: 'asc' } }),
+        prisma.budgetOperation.findMany({ orderBy: { date: 'desc' } }),
         prisma.budgetHistory.findMany({ orderBy: { month: 'asc' } }),
         prisma.budgetState.findUnique({ where: { id: OWNER_ID } })
     ]);
@@ -62,7 +63,7 @@ export async function pullState(prisma: PrismaClient): Promise<StoredStateBody> 
                 entry.month,
                 {
                     monthlyLimit: entry.monthlyLimit,
-                    categoryLimits: entry.categoryLimits as Record<string, number>
+                    categoryLimits: StoredCategoryLimitsSchema.parse(entry.categoryLimits)
                 }
             ])
         ),
@@ -72,9 +73,7 @@ export async function pullState(prisma: PrismaClient): Promise<StoredStateBody> 
 
 /**
  * @function claimRevision
- * @description Moves the document on to its next revision, provided it still sits at the one the push was edited
- * from. The conditional update takes the row lock, so of two pushes racing from the same revision the second waits
- * for the first to commit, then finds the revision moved on and is turned away.
+ * @description Moves the document on to its next revision, provided it still sits at the one the push was edited from.
  *
  * @param {Prisma.TransactionClient} transaction The open transaction.
  * @param {Perhaps<number>} expected The revision the push was edited from, or undefined to overwrite unconditionally.
@@ -113,11 +112,11 @@ export async function pushState(prisma: PrismaClient, body: StatePushBody): Prom
     await prisma.$transaction(async (transaction) => {
         await claimRevision(transaction, body.revision, body.budget.monthlyLimit);
 
-        await transaction.category.deleteMany();
-        await transaction.operation.deleteMany();
+        await transaction.budgetCategory.deleteMany();
+        await transaction.budgetOperation.deleteMany();
         await transaction.budgetHistory.deleteMany();
 
-        await transaction.category.createMany({
+        await transaction.budgetCategory.createMany({
             data: body.categories.map((category, index) => ({
                 id: category.id,
                 name: category.name,
@@ -128,7 +127,7 @@ export async function pushState(prisma: PrismaClient, body: StatePushBody): Prom
             }))
         });
 
-        await transaction.operation.createMany({
+        await transaction.budgetOperation.createMany({
             data: body.operations.map((operation) => ({
                 id: operation.id,
                 date: operation.date,

@@ -49,6 +49,15 @@ export default tseslint.config(
       ],
       "import-x/no-duplicates": "error",
 
+      // House rules (CLAUDE.md)
+      curly: ["error", "all"],
+      "@typescript-eslint/explicit-function-return-type": [
+        "error",
+        { allowExpressions: true, allowTypedFunctionExpressions: true, allowHigherOrderFunctions: true },
+      ],
+      "@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "never" }],
+      "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+
       // General
       "no-console": ["warn", { allow: ["warn", "error"] }],
       eqeqeq: ["error", "always"],

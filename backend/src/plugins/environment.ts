@@ -12,7 +12,9 @@ export const variables = Type.Object({
     NODE_ENV: Type.Union([Type.Literal('development'), Type.Literal('production'), Type.Literal('test')]),
     PORT: Type.Number(),
     DATABASE_URL: Type.String({ minLength: 1 }),
-    IDENTITY_CODE: Type.String({ pattern: '^\\d{6}$' }),
+    IDENTITY_ORIGIN: Type.String({ pattern: '^https?://[^/]+$' }),
+    IDENTITY_OWNER_NAME: Type.String({ minLength: 1, default: 'Owner' }),
+    IDENTITY_ENROLLMENT_TOKEN: Type.String({ pattern: '^(.{32,})?$', default: '' }),
     CORS_ORIGIN: Type.String({ default: '' }),
     JWT_SECRET: Type.String({ minLength: 32 }),
     JWT_ACCESS_EXPIRY: Type.String({ minLength: 1 }),
@@ -33,6 +35,10 @@ export default fp(async function (fastify: FastifyInstance): Promise<void> {
     await fastify.register(fastifyEnv, {
         confKey: 'variables',
         ajv: {
+            /**
+             * @method customOptions
+             * @description Teaches the validator the standard string formats
+             */
             customOptions(ajvInstance) {
                 addFormats(ajvInstance);
                 return ajvInstance;

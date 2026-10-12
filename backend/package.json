@@ -1,6 +1,6 @@
 {
   "name": "@obole/backend",
-  "description": "The Fastify backend for Obole, a personal budget tracker.",
+  "description": "The Fastify backend for Obole, a personal portal: its passkey identity and the data of its apps.",
   "version": "4.1.1",
   "private": true,
   "type": "module",
@@ -28,6 +28,7 @@
     "@fastify/rate-limit": "^10.3.0",
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
+    "@simplewebauthn/server": "^14.0.3",
     "@sinclair/typebox": "^0.34.49",
     "ajv-formats": "^3.0.1",
     "dotenv": "^17.3.1",

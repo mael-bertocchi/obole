@@ -1,12 +1,20 @@
-import { ProviderPayloadSchema, RatesSchema, toIsoDay } from 'src/modules/rates/rates-models';
+import { ProviderPayloadSchema, RatesSchema, toIsoDay } from 'src/modules/budget/rates/rates-models';
 import { describe, expect, it } from 'vitest';
 
+/**
+ * @constant validProviderPayload
+ * @description A payload as the upstream provider answers it
+ */
 const validProviderPayload = {
     base: 'EUR',
     date: '2026-09-07',
     rates: { CHF: 0.9405, KRW: 1566.56, USD: 1.1622 }
 };
 
+/**
+ * @constant validRates
+ * @description A rate snapshot as the server serves it
+ */
 const validRates = {
     base: 'EUR',
     quoteDate: '2026-09-07',
