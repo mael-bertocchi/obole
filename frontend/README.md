@@ -10,7 +10,7 @@ The native **iOS** app, built entirely in SwiftUI against the iOS 26 "Liquid Gla
 - **History ledger** • day groups with day totals, each operation at the time it happened (latest first, read in the time zone the phone is in now), a search field, and filter chips for each category.
 - **Multi-currency** • pick the entry currency; the euro equivalent recomputes live and is stored with the operation, so past entries keep the rate they were logged at. Every rate carries the 1% a bank adds on top of the reference rate, so the euro figure matches the statement rather than the mid-market quote.
 - **English & French** • the language follows the device, or the one picked in Settings, and switches on the spot. Amounts and dates follow it too: `€1,234.50` in English, `1 234,50 €` in French.
-- **Sign in & sync** • one account, opened with a six-digit code that lives in the backend's environment; every change is pushed to the server and restored on a fresh device. Offline changes stay local and reconcile when the connection returns, and edits made in the web interface merge in rather than being overwritten.
+- **Sign in & sync** • one account, opened with the passkey of the Obole portal, behind Face ID; every change is pushed to the server and restored on a fresh device. Offline changes stay local and reconcile when the connection returns, and edits made in the web interface merge in rather than being overwritten.
 
 ## Screens
 
@@ -33,7 +33,7 @@ Obole/
 │  ├─ Money/       Currencies and euro exchange rates
 │  ├─ Networking/  APIClient (bearer + refresh-on-401), Keychain token store
 │  ├─ Preferences/ Last-used currency, haptics, language
-│  ├─ Session/     ApplicationSession: auth state + pull/push sync
+│  ├─ Session/     ApplicationSession: auth state + pull/push sync; PortalConnection: sign-in through the portal (PKCE)
 │  ├─ Storage/     LocalStore (JSON snapshot), BudgetDocument, sync base & merge, debug seed
 │  └─ Theme/       Design tokens, haptics
 ├─ Features/       One folder per screen (Identity, Budget, History, Operations, Settings)
@@ -50,7 +50,7 @@ State lives in `@Observable` objects injected through the environment: `LocalSto
 
 The local JSON store is the working copy; the server holds the durable one, and the app is not its only writer: the web interface writes to it too. The app keeps the last document both sides agreed on, and its revision, as a *base* (`sync-base.json`).
 
-- Every mutation debounces a full-document `PUT /v1/state` naming the base's revision. If someone else wrote since, the server answers `409` and the push turns into a reconcile.
+- Every mutation debounces a full-document `PUT /v1/budget/state` naming the base's revision. If someone else wrote since, the server answers `409` and the push turns into a reconcile.
 - On launch, on sign-in and each time the app becomes active, it **reconciles**: it pulls the server's document, merges it with the local one against the base (`DocumentMerge`), applies the result and pushes it back if the server lacks anything. Each side's edits are kept; only when both changed the same entry does the device win, and an edit always beats a deletion.
 - Without a base (a first sign-in, or a server that was reset), the server wins, unless it is empty, in which case the device's budget seeds it.
 
@@ -96,7 +96,13 @@ If the profile has already expired, the reinstall works but the launch is refuse
 
 ## Signing in
 
-The app needs the backend running at `https://api-obole.mael-bertocchi.fr`. Sign in with the six-digit code set in the backend's environment (`IDENTITY_CODE`); the sixth digit submits it.
+The only way in is the owner's **passkey**, which belongs to the Obole portal's site (`obole.mael-bertocchi.fr`). An app can only use a site's passkeys with the *Associated Domains* capability, which a free developer team doesn't get, so the app signs in **through the portal**, the way an app offers "Sign in with Apple":
+
+1. **Sign in with a passkey** opens the portal's `/connect` page in an ephemeral browser sheet (`ASWebAuthenticationSession`), with a fresh PKCE challenge (`PortalConnection`).
+2. The page asks for the passkey (Face ID); the backend checks it and hands back a one-time code, bound to that challenge, through the `obole://` scheme.
+3. The app trades the code, with the PKCE verifier only it knows, for its tokens (`POST /v1/identity/connect/token`).
+
+Closing the sheet simply cancels. The app needs the backend at `https://api-obole.mael-bertocchi.fr` and the portal at `https://obole.mael-bertocchi.fr` (`ApplicationSession.portalURL`).
 
 ## Running Demonstration
 

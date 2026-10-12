@@ -1,18 +1,22 @@
+import AuthenticationServices
 import SwiftUI
 
+/**
+ * @class SignInView
+ * @description The sign-in screen: one button opening the Obole portal in a secure sheet, where the passkey lives
+ */
 struct SignInView: View {
-    @Environment(ApplicationSession.self) private var session
-    @Environment(Preferences.self) private var preferences
+    @Environment(ApplicationSession.self) private var session /*!< The session to open */
+    @Environment(Preferences.self) private var preferences /*!< The device's settings, for the haptics */
+    @Environment(\.webAuthenticationSession) private var webAuthenticationSession /*!< Opens the portal's connect page in a browser sheet */
 
-    @State private var code = ""
-    @State private var isSubmitting = false
-    @State private var errorMessage: String?
-    @State private var failures = 0
+    @State private var isSigningIn = false /*!< Whether a sign-in is under way */
+    @State private var errorMessage: String? /*!< Why the last sign-in failed, if it did */
 
-    @FocusState private var isFocused: Bool
-
-    private static let length = 6
-
+    /**
+     * @method body
+     * @description The screen
+     */
     var body: some View {
         ZStack {
             AmbientBackground()
@@ -22,32 +26,35 @@ struct SignInView: View {
                     header
                         .padding(.bottom, 32)
 
-                    codeField
-                        .modifier(Shake(animatableData: CGFloat(failures)))
+                    PrimaryButton(title: String(appLocalized: "Sign in with a passkey"), systemImage: "person.badge.key", isDisabled: isSigningIn) {
+                        signIn()
+                    }
 
-                    if let errorMessage {
+                    if isSigningIn {
+                        ProgressView()
+                            .tint(Theme.accent)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 18)
+                    } else if let errorMessage {
                         Text(errorMessage)
                             .font(Theme.font(13))
                             .foregroundStyle(Theme.negative)
                             .padding(.top, 14)
                             .transition(.opacity)
                     }
-
-                    PrimaryButton(title: String(appLocalized: "Sign in"), isDisabled: code.count < Self.length || isSubmitting) {
-                        submit()
-                    }
-                    .padding(.top, 22)
                 }
                 .padding(.horizontal, Theme.screenPadding)
                 .padding(.top, 80)
                 .padding(.bottom, 40)
             }
             .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.interactively)
         }
-        .onAppear { isFocused = true }
     }
 
+    /**
+     * @method header
+     * @description Obole's mark, its name and what signing in takes
+     */
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
             ZStack {
@@ -63,95 +70,46 @@ struct SignInView: View {
                 .font(Theme.font(30, .semibold))
                 .tracking(-0.5)
                 .foregroundStyle(Theme.text)
-            Text("Enter your code to open your budget.")
+            Text("Sign in with your passkey to open your budget. The Obole portal opens in a secure sheet to ask for it.")
                 .font(Theme.font(14))
                 .foregroundStyle(Theme.muted)
         }
     }
 
-    /// Six boxes drawn over one hidden field. The field owns the keyboard, pasting and one-time-code autofill;
-    /// the boxes only show how many digits it holds, as dots like a passcode, and where the next one goes.
-    private var codeField: some View {
-        ZStack {
-            TextField("", text: digitsOnly)
-                .keyboardType(.numberPad)
-                .textContentType(.oneTimeCode)
-                .focused($isFocused)
-                .opacity(0.001)
-                .accessibilityLabel("Code")
-
-            HStack(spacing: 10) {
-                ForEach(0..<Self.length, id: \.self) { index in
-                    digitBox(index)
-                }
-            }
-            .contentShape(Rectangle())
-            .onTapGesture { isFocused = true }
-            .accessibilityHidden(true)
+    /**
+     * @method signIn
+     * @description Opens the portal's connect page in an ephemeral browser sheet and trades the one-time code it hands
+     * back for a session. Dismissing the sheet is not an error
+     */
+    private func signIn() {
+        guard !isSigningIn else {
+            return
         }
-    }
-
-    /// Keeps the field to six digits and submits as the sixth arrives. It runs on every edit, however fast the digits
-    /// come: typed, pasted or autofilled all at once.
-    private var digitsOnly: Binding<String> {
-        Binding(
-            get: { code },
-            set: { typed in
-                code = String(typed.filter(\.isNumber).prefix(Self.length))
-
-                if code.count == Self.length {
-                    submit()
-                }
-            }
-        )
-    }
-
-    private func digitBox(_ index: Int) -> some View {
-        let digits = Array(code)
-        let isNext = isFocused && !isSubmitting && index == min(digits.count, Self.length - 1)
-
-        return Circle()
-            .fill(Theme.text)
-            .frame(width: 12, height: 12)
-            .opacity(index < digits.count ? 1 : 0)
-            .frame(maxWidth: .infinity)
-            .frame(height: 60)
-            .glassInput(radius: Theme.controlRadius)
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.controlRadius, style: .continuous)
-                    .strokeBorder(isNext ? Theme.accent : .clear, lineWidth: 1.5)
-            )
-            .animation(.easeOut(duration: 0.12), value: isNext)
-    }
-
-    private func submit() {
-        guard code.count == Self.length, !isSubmitting else { return }
         preferences.tap()
-        isSubmitting = true
+        isSigningIn = true
         withAnimation { errorMessage = nil }
 
+        let connection = PortalConnection()
+
         Task {
+            defer { isSigningIn = false }
+
             do {
-                try await session.signIn(code: code)
+                let callback = try await webAuthenticationSession.authenticate(
+                    using: connection.url(portal: ApplicationSession.portalURL),
+                    callback: .customScheme(PortalConnection.callbackScheme),
+                    preferredBrowserSession: .ephemeral,
+                    additionalHeaderFields: [:]
+                )
+                try await session.signIn(code: connection.code(from: callback), verifier: connection.verifier)
                 preferences.success()
+            } catch let error as ASWebAuthenticationSessionError where error.code == .canceledLogin {
+                return
+            } catch let error as APIError {
+                withAnimation { errorMessage = error.errorDescription }
             } catch {
-                let message = (error as? APIError)?.errorDescription ?? error.localizedDescription
-                withAnimation(.default) {
-                    failures += 1
-                    errorMessage = message
-                }
-                code = ""
-                isSubmitting = false
-                isFocused = true
+                withAnimation { errorMessage = String(appLocalized: "The sign-in didn't go through. Try again.") }
             }
         }
-    }
-}
-
-private struct Shake: GeometryEffect {
-    var animatableData: CGFloat
-
-    func effectValue(size: CGSize) -> ProjectionTransform {
-        ProjectionTransform(CGAffineTransform(translationX: 8 * sin(animatableData * .pi * 3), y: 0))
     }
 }

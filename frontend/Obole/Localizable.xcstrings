@@ -224,16 +224,6 @@
         }
       }
     },
-    "Code" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Code"
-          }
-        }
-      }
-    },
     "Coffee" : {
       "localizations" : {
         "fr" : {
@@ -370,16 +360,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modifier les limites"
-          }
-        }
-      }
-    },
-    "Enter your code to open your budget." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Saisissez votre code pour ouvrir votre budget."
           }
         }
       }
@@ -924,12 +904,22 @@
         }
       }
     },
-    "Sign in" : {
+    "Sign in with a passkey" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Se connecter"
+            "value" : "Se connecter avec une clé d’accès"
+          }
+        }
+      }
+    },
+    "Sign in with your passkey to open your budget. The Obole portal opens in a secure sheet to ask for it." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connectez-vous avec votre clé d’accès pour ouvrir votre budget. Le portail Obole s’ouvre dans une feuille sécurisée pour la demander."
           }
         }
       }
@@ -1054,6 +1044,16 @@
         }
       }
     },
+    "The sign-in didn't go through. Try again." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La connexion n’a pas abouti. Réessayez."
+          }
+        }
+      }
+    },
     "To" : {
       "localizations" : {
         "fr" : {
@@ -1090,16 +1090,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trop de tentatives. Réessayez dans un instant."
-          }
-        }
-      }
-    },
-    "Too many wrong codes. Try again in %lld min." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trop de codes incorrects. Réessayez dans %lld min."
           }
         }
       }
@@ -1160,16 +1150,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Monoprix"
-          }
-        }
-      }
-    },
-    "Wrong code." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Code incorrect."
           }
         }
       }
