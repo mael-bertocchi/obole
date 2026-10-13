@@ -6,17 +6,17 @@ import type { WatchlistMessages } from 'modules/watchlist/watchlist-language-en'
  * line of the word it follows, and inside French quotes.
  */
 export const watchlistFr: WatchlistMessages = {
-    'watchlist.appName': 'Ma liste',
+    'watchlist.appName': 'Watchlist',
     'watchlist.appSummary': 'Films et séries à voir, notés une fois vus',
 
-    'watchlist.eyebrow': 'Ma liste',
+    'watchlist.eyebrow': 'Watchlist',
     'watchlist.toWatch': 'À voir',
     'watchlist.watched': 'Vus',
     'watchlist.toWatchTitle': 'À voir',
     'watchlist.watchedTitle': 'Vus',
     'watchlist.add': 'Ajouter',
     'watchlist.addFirst': 'Trouver un film ou une série',
-    'watchlist.loadFailed': 'Votre liste n’a pas pu être chargée',
+    'watchlist.loadFailed': 'Votre watchlist n’a pas pu être chargée',
     'watchlist.tryAgain': 'Réessayer',
 
     'watchlist.countOne': '1 titre',
@@ -71,12 +71,12 @@ export const watchlistFr: WatchlistMessages = {
     'watchlist.editReview': 'Modifier l’avis',
     'watchlist.watchAgain': 'Remettre à voir',
     'watchlist.remove': 'Retirer',
-    'watchlist.confirmRemove': 'Retirer de votre liste ?',
+    'watchlist.confirmRemove': 'Retirer de votre watchlist ?',
     'watchlist.removeMessage': 'Votre note et votre commentaire seront aussi supprimés.',
     'watchlist.added': '« {title} » est dans la liste.',
     'watchlist.removed': '« {title} » n’est plus dans la liste.',
     'watchlist.backOnList': '« {title} » est de nouveau à voir.',
-    'watchlist.alreadyAdded': 'Ce titre est déjà dans votre liste.',
+    'watchlist.alreadyAdded': 'Ce titre est déjà dans votre watchlist.',
     'watchlist.yourRating': 'Votre note',
     'watchlist.clearRating': 'Effacer',
     'watchlist.comment': 'Commentaire',
