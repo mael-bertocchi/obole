@@ -72,8 +72,22 @@ if (x) {
 
 ### HTML and JSX
 
-- Keep simple tags on one line.
-- Split a tag across multiple indented lines when it has more than two attributes or exceeds the standard line length.
+- Keep each tag on one line with all its attributes, whatever their number or the line's length.
+- When an attribute's value would span several lines (a callback with a body, a block of JSX), move it out of the tag into a named function or constant, so the tag stays on one line.
+
+```tsx
+// Bad
+<AlertComponent
+    open={isOpen}
+    onConfirm={() => {
+        close();
+        void signOut();
+    }}
+/>
+
+// Good
+<AlertComponent open={isOpen} onConfirm={confirmSignOut} />
+```
 
 ## Commit and push workflow
 
