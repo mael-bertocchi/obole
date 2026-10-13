@@ -6,9 +6,14 @@ import { CatalogCollectionParamsSchema, CatalogLanguageQuerySchema, CatalogSearc
 /**
  * @function catalogRoutes
  * @description Defines the catalog routes of the watchlist: searching films and series, a title's details and where to
- * watch it, a saga, and the genres. The catalog is TMDB; the server asks it, so its token never leaves the server.
+ * watch it, a saga, and the genres. The catalog is TMDB; the server asks it, so its token never leaves the server. Without
+ * a token, the server says so once as it starts, and every catalog route answers 503.
  */
 export default function (fastify: FastifyInstance): void {
+    if (fastify.variables.WATCHLIST_TMDB_TOKEN === '') {
+        fastify.log.warn('WATCHLIST_TMDB_TOKEN is not set: the watchlist lists its titles, but searching and opening one answer 503');
+    }
+
     fastify.get<CatalogSearchRequest>('/search', {
         preHandler: [fastify.identity.authenticate],
         schema: {

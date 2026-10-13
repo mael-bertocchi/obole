@@ -1,6 +1,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { StatusCodes } from 'http-status-codes';
 import { collectionDetails, forgetCatalog, genreList, searchCatalog, titleDetails } from 'src/modules/watchlist/catalog/catalog-service';
+import type { Maybe } from 'src/shared/models';
 import { RequestError } from 'src/shared/models';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -21,16 +22,24 @@ const variables = testVariables();
 const logger = standIn<FastifyBaseLogger>({ error: vi.fn(), warn: vi.fn() });
 
 /**
+ * @function failureOf
+ * @description The `RequestError` a call rejected with, or null when it did not.
+ */
+async function failureOf(call: Promise<unknown>): Promise<Maybe<RequestError>> {
+    try {
+        await call;
+        return null;
+    } catch (error: unknown) {
+        return error instanceof RequestError ? error : null;
+    }
+}
+
+/**
  * @function statusOf
  * @description The status a rejected call carries, or 0 when it did not reject with a `RequestError`.
  */
 async function statusOf(call: Promise<unknown>): Promise<number> {
-    try {
-        await call;
-        return 0;
-    } catch (error: unknown) {
-        return error instanceof RequestError ? error.code : 0;
-    }
+    return (await failureOf(call))?.code ?? 0;
 }
 
 beforeEach(() => {
@@ -110,10 +119,20 @@ describe('titleDetails', () => {
         expect(await statusOf(titleDetails(variables, logger, 'movie', 7, 'fr'))).toBe(StatusCodes.NOT_FOUND);
     });
 
-    it('turns a refusal from the catalog into a 503', async () => {
-        stubCatalog(variables.WATCHLIST_TMDB_URL, { '/movie/120': 401 });
+    it('turns a failure of the catalog into a 503 with no reason to give', async () => {
+        stubCatalog(variables.WATCHLIST_TMDB_URL, { '/movie/120': 500 });
+        const failure = await failureOf(titleDetails(variables, logger, 'movie', 120, 'fr'));
 
-        expect(await statusOf(titleDetails(variables, logger, 'movie', 120, 'fr'))).toBe(StatusCodes.SERVICE_UNAVAILABLE);
+        expect(failure?.code).toBe(StatusCodes.SERVICE_UNAVAILABLE);
+        expect(failure?.data).toBeNull();
+    });
+
+    it('says when the catalog refuses the token, which only the owner can fix', async () => {
+        stubCatalog(variables.WATCHLIST_TMDB_URL, { '/movie/120': 401 });
+        const failure = await failureOf(titleDetails(variables, logger, 'movie', 120, 'fr'));
+
+        expect(failure?.code).toBe(StatusCodes.SERVICE_UNAVAILABLE);
+        expect(failure?.data).toEqual({ reason: 'catalog-refused' });
     });
 
     it('turns an unreachable catalog into a 503', async () => {
@@ -122,10 +141,12 @@ describe('titleDetails', () => {
         expect(await statusOf(titleDetails(variables, logger, 'tv', 1399, 'fr'))).toBe(StatusCodes.SERVICE_UNAVAILABLE);
     });
 
-    it('answers 503 without asking when no token is set', async () => {
+    it('answers 503 without asking when no token is set, and says so', async () => {
         const calls = stubCatalog(variables.WATCHLIST_TMDB_URL);
+        const failure = await failureOf(titleDetails(testVariables({ WATCHLIST_TMDB_TOKEN: '' }), logger, 'movie', 120, 'fr'));
 
-        expect(await statusOf(titleDetails(testVariables({ WATCHLIST_TMDB_TOKEN: '' }), logger, 'movie', 120, 'fr'))).toBe(StatusCodes.SERVICE_UNAVAILABLE);
+        expect(failure?.code).toBe(StatusCodes.SERVICE_UNAVAILABLE);
+        expect(failure?.data).toEqual({ reason: 'catalog-not-configured' });
         expect(calls).toHaveLength(0);
     });
 });

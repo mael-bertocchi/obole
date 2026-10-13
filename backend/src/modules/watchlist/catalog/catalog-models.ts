@@ -9,6 +9,18 @@ import { z } from 'zod';
 export const WATCH_REGION = 'FR';
 
 /**
+ * @constant CATALOG_NOT_CONFIGURED
+ * @description Why the catalog routes answer 503 when the server has no token for TMDB, in the error's `data.reason`.
+ */
+export const CATALOG_NOT_CONFIGURED = 'catalog-not-configured';
+
+/**
+ * @constant CATALOG_REFUSED
+ * @description Why the catalog routes answer 503 when TMDB refuses the server's token, in the error's `data.reason`.
+ */
+export const CATALOG_REFUSED = 'catalog-refused';
+
+/**
  * @constant MediaTypeSchema
  * @description Zod schema for what a title is: a film, or a series as a whole.
  */

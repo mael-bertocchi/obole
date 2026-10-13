@@ -36,7 +36,8 @@ fastify.setSerializerCompiler(serializerCompiler);
 
 /**
  * @function handleGlobalError
- * @description Handles all unhandled route and runtime errors
+ * @description Handles all unhandled route and runtime errors. A failure the server raises on purpose (`RequestError`)
+ * keeps its message and data even as a server error, so the client can tell why; any other one is masked in production.
  */
 function handleGlobalError(err: Error, request: FastifyRequest, reply: FastifyReply): FastifyReply {
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
@@ -73,10 +74,13 @@ function handleGlobalError(err: Error, request: FastifyRequest, reply: FastifyRe
 
     if (statusCode >= StatusCodes.INTERNAL_SERVER_ERROR) {
         request.log.error({ error: { message: err.message, stack: err.stack, type: err.name }, path: request.url }, 'Server Error');
-        if (process.env.NODE_ENV !== 'production') {
-            response.data = err.stack;
-        } else {
-            response.message = 'Server Error';
+
+        if (!(err instanceof RequestError)) {
+            if (process.env.NODE_ENV === 'production') {
+                response.message = 'Server Error';
+            } else {
+                response.data = err.stack;
+            }
         }
     } else {
         request.log.warn({ message: err.message, code: statusCode, path: request.url }, 'Client Error');

@@ -1,7 +1,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { StatusCodes } from 'http-status-codes';
 import type { CatalogCollection, CatalogDetails, CatalogGenre, CatalogLanguage, CatalogOffers, CatalogProvider, CatalogTitle, MediaType, TmdbProvider } from 'src/modules/watchlist/catalog/catalog-models';
-import { TMDB_LANGUAGES, TmdbCollectionSchema, TmdbGenreListSchema, TmdbMovieSchema, TmdbProvidersPayloadSchema, TmdbSearchPayloadSchema, TmdbSearchResultSchema, TmdbShowSchema, WATCH_REGION } from 'src/modules/watchlist/catalog/catalog-models';
+import { CATALOG_NOT_CONFIGURED, CATALOG_REFUSED, TMDB_LANGUAGES, TmdbCollectionSchema, TmdbGenreListSchema, TmdbMovieSchema, TmdbProvidersPayloadSchema, TmdbSearchPayloadSchema, TmdbSearchResultSchema, TmdbShowSchema, WATCH_REGION } from 'src/modules/watchlist/catalog/catalog-models';
 import type { Variables } from 'src/plugins/environment';
 import { ExpiringCache } from 'src/shared/expiring-cache';
 import { RequestError } from 'src/shared/models';
@@ -64,11 +64,12 @@ export function forgetCatalog(): void {
  * @param {Record<string, string>} query Its parameters.
  * @param {T} schema What the answer must look like.
  *
- * @returns {Promise<z.infer<T>>} The answer. Rejects with 404 for an unknown title and 503 when the catalog can't help.
+ * @returns {Promise<z.infer<T>>} The answer. Rejects with 404 for an unknown title and 503 when the catalog can't help,
+ * saying why in `data.reason` when the token is missing or refused, since only the owner can fix that.
  */
 async function ask<T extends z.ZodType>(variables: Variables, logger: FastifyBaseLogger, path: string, query: Record<string, string>, schema: T): Promise<z.infer<T>> {
     if (variables.WATCHLIST_TMDB_TOKEN === '') {
-        throw new RequestError(StatusCodes.SERVICE_UNAVAILABLE, 'The catalog is not configured');
+        throw new RequestError(StatusCodes.SERVICE_UNAVAILABLE, 'The catalog is not configured', { reason: CATALOG_NOT_CONFIGURED });
     }
 
     let response: Response;
@@ -86,6 +87,12 @@ async function ask<T extends z.ZodType>(variables: Variables, logger: FastifyBas
 
     if (response.status === Number(StatusCodes.NOT_FOUND)) {
         throw new RequestError(StatusCodes.NOT_FOUND, 'Unknown title');
+    }
+
+    if (response.status === Number(StatusCodes.UNAUTHORIZED)) {
+        logger.error({ path }, 'Catalog refused the token: check WATCHLIST_TMDB_TOKEN');
+
+        throw new RequestError(StatusCodes.SERVICE_UNAVAILABLE, 'The catalog refused the token', { reason: CATALOG_REFUSED });
     }
 
     if (!response.ok) {
