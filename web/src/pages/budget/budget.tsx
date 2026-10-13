@@ -1,7 +1,8 @@
+import FrameActionComponent from 'components/frame-action/frame-action';
 import type { FrameTab } from 'components/frame/frame';
 import FrameComponent from 'components/frame/frame';
 import LoadingScreenComponent from 'components/loading-screen/loading-screen';
-import { ChartPie, History as HistoryIcon, Plus, Settings } from 'lucide-react';
+import { ChartPie, History as HistoryIcon, Settings } from 'lucide-react';
 import { useBudgetEditorContext } from 'modules/budget/budget-editor-hooks';
 import { BudgetEditorProvider } from 'modules/budget/budget-editor-provider';
 import { useBudget, useBudgetContext, useCatchUp } from 'modules/budget/budget-hooks';
@@ -38,15 +39,10 @@ function NewOperationButtonComponent(): JSX.Element {
     const { openNew }: BudgetEditorContextProps = useBudgetEditorContext();
 
     return (
-        <button
-            type='button'
+        <FrameActionComponent
+            label={t('navigation.newOperation')}
             onClick={openNew}
-            className='flex h-9 items-center gap-1.5 rounded-full bg-accent pl-2.5 pr-2.5 text-[14px] font-semibold text-white transition hover:bg-accent-strong active:scale-95 sm:pl-3 sm:pr-4'
-            aria-label={t('navigation.newOperation')}
-        >
-            <Plus size={18} strokeWidth={2.6} />
-            <span className='hidden sm:inline'>{t('navigation.newOperation')}</span>
-        </button>
+        />
     );
 }
 

@@ -1,8 +1,9 @@
+import FrameActionComponent from 'components/frame-action/frame-action';
 import type { FrameTab } from 'components/frame/frame';
 import FrameComponent from 'components/frame/frame';
 import LoadingScreenComponent from 'components/loading-screen/loading-screen';
 import SheetComponent from 'components/sheet/sheet';
-import { Bookmark, CircleCheckBig, Plus } from 'lucide-react';
+import { Bookmark, CircleCheckBig } from 'lucide-react';
 import { t } from 'modules/language/language-service';
 import { useCatchUp, useWatchlist, useWatchlistContext, useWatchlistSheetContext } from 'modules/watchlist/watchlist-hooks';
 import { watchlist } from 'modules/watchlist/watchlist-manifest';
@@ -34,15 +35,10 @@ function AddButtonComponent(): JSX.Element {
     const { openSearch }: WatchlistSheetContextProps = useWatchlistSheetContext();
 
     return (
-        <button
-            type='button'
+        <FrameActionComponent
+            label={t('watchlist.add')}
             onClick={openSearch}
-            className='flex h-9 items-center gap-1.5 rounded-full bg-accent pl-2.5 pr-2.5 text-[14px] font-semibold text-white transition hover:bg-accent-strong active:scale-95 sm:pl-3 sm:pr-4'
-            aria-label={t('watchlist.add')}
-        >
-            <Plus size={18} strokeWidth={2.6} />
-            <span className='hidden sm:inline'>{t('watchlist.add')}</span>
-        </button>
+        />
     );
 }
 
