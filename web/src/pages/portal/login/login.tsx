@@ -94,12 +94,7 @@ function LoginPage(): JSX.Element {
                 {mode === 'signIn' ? (
                     <div className='mt-10'>
                         <p className='text-[15px] text-ink-secondary'>{t('signIn.prompt')}</p>
-                        <button
-                            type='button'
-                            className='button-primary mt-5'
-                            disabled={isWorking}
-                            onClick={() => void attempt(signIn)}
-                        >
+                        <button type='button' className='button-primary mt-5' disabled={isWorking} onClick={() => void attempt(signIn)}>
                             <KeyRound size={19} strokeWidth={2.3} />
                             {t('signIn.action')}
                         </button>
@@ -120,21 +115,8 @@ function LoginPage(): JSX.Element {
                     <form className='mt-10 text-left' onSubmit={submitToken}>
                         <p className='text-center text-[15px] text-ink-secondary'>{t('signIn.setUpPrompt')}</p>
                         <label htmlFor='enrollment-token' className='field-label mt-6'>{t('signIn.token')}</label>
-                        <input
-                            id='enrollment-token'
-                            type='password'
-                            autoComplete='off'
-                            spellCheck={false}
-                            value={token}
-                            disabled={isWorking}
-                            onChange={(event) => setToken(event.target.value)}
-                            className='field font-mono'
-                        />
-                        <button
-                            type='submit'
-                            className='button-primary mt-5'
-                            disabled={isWorking || token.trim() === ''}
-                        >
+                        <input id='enrollment-token' type='password' autoComplete='off' spellCheck={false} value={token} disabled={isWorking} onChange={(event) => setToken(event.target.value)} className='field font-mono' />
+                        <button type='submit' className='button-primary mt-5' disabled={isWorking || token.trim() === ''}>
                             <KeyRound size={19} strokeWidth={2.3} />
                             {t('signIn.create')}
                         </button>

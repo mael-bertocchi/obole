@@ -28,11 +28,7 @@ function PosterComponent(props: PosterComponentProps): JSX.Element {
 
     if (props.path === null || hasFailed) {
         return (
-            <span
-                className={`${className} flex items-center justify-center text-ink-quaternary`}
-                role='img'
-                aria-label={props.title}
-            >
+            <span className={`${className} flex items-center justify-center text-ink-quaternary`} role='img' aria-label={props.title}>
                 <Clapperboard size='38%' strokeWidth={1.6} />
             </span>
         );
@@ -40,13 +36,7 @@ function PosterComponent(props: PosterComponentProps): JSX.Element {
 
     return (
         <span className={className}>
-            <img
-                src={imageUrl(props.path, props.width ?? 'w342')}
-                alt={props.title}
-                loading='lazy'
-                onError={() => setHasFailed(true)}
-                className='h-full w-full object-cover'
-            />
+            <img src={imageUrl(props.path, props.width ?? 'w342')} alt={props.title} loading='lazy' onError={() => setHasFailed(true)} className='h-full w-full object-cover' />
             <span className='pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_0_0_0.5px_rgb(0_0_0/0.1)]' />
         </span>
     );

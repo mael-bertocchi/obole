@@ -103,20 +103,9 @@ function DateFormComponent(props: DateFormComponentProps): JSX.Element {
             }}
             className='space-y-5'
         >
-            <div
-                role='radiogroup'
-                aria-label={t('history.dateFilter')}
-                className='grid grid-cols-2 rounded-full bg-fill-strong/80 p-1'
-            >
+            <div role='radiogroup' aria-label={t('history.dateFilter')} className='grid grid-cols-2 rounded-full bg-fill-strong/80 p-1'>
                 {MODES.map(({ id, label }) => (
-                    <button
-                        key={id}
-                        type='button'
-                        role='radio'
-                        aria-checked={mode === id}
-                        onClick={() => setMode(id)}
-                        className={`rounded-full py-1.5 text-[14px] font-medium transition ${mode === id ? 'bg-white text-ink shadow-control' : 'text-ink-secondary hover:text-ink'}`}
-                    >
+                    <button key={id} type='button' role='radio' aria-checked={mode === id} onClick={() => setMode(id)} className={`rounded-full py-1.5 text-[14px] font-medium transition ${mode === id ? 'bg-white text-ink shadow-control' : 'text-ink-secondary hover:text-ink'}`}>
                         {t(label)}
                     </button>
                 ))}
@@ -146,35 +135,17 @@ function DateFormComponent(props: DateFormComponentProps): JSX.Element {
                 <div className='grid grid-cols-2 gap-3'>
                     <div>
                         <label className='field-label' htmlFor='filter-from'>{t('history.from')}</label>
-                        <input
-                            id='filter-from'
-                            type='date'
-                            className='field'
-                            value={dayKey(start)}
-                            max={max}
-                            onChange={(event) => pickStart(event.target.value)}
-                        />
+                        <input id='filter-from' type='date' className='field' value={dayKey(start)} max={max} onChange={(event) => pickStart(event.target.value)} />
                     </div>
                     <div>
                         <label className='field-label' htmlFor='filter-to'>{t('history.to')}</label>
-                        <input
-                            id='filter-to'
-                            type='date'
-                            className='field'
-                            value={dayKey(end)}
-                            max={max}
-                            onChange={(event) => pickEnd(event.target.value)}
-                        />
+                        <input id='filter-to' type='date' className='field' value={dayKey(end)} max={max} onChange={(event) => pickEnd(event.target.value)} />
                     </div>
                 </div>
             )}
 
             {range !== null && (
-                <button
-                    type='button'
-                    onClick={props.onClear}
-                    className='w-full py-2 text-[15px] font-medium text-accent transition hover:opacity-70'
-                >
+                <button type='button' onClick={props.onClear} className='w-full py-2 text-[15px] font-medium text-accent transition hover:opacity-70'>
                     {t('history.allDates')}
                 </button>
             )}
@@ -195,20 +166,12 @@ function BudgetDatesComponent(props: BudgetDatesComponentProps): JSX.Element {
             title={t('history.dateFilter')}
             onClose={props.onClose}
             footer={
-                <button
-                    type='submit'
-                    form={FORM_ID}
-                    className='button-primary'
-                >
+                <button type='submit' form={FORM_ID} className='button-primary'>
                     {t('history.apply')}
                 </button>
             }
         >
-            <DateFormComponent
-                range={props.range}
-                onApply={props.onApply}
-                onClear={props.onClear}
-            />
+            <DateFormComponent range={props.range} onApply={props.onApply} onClear={props.onClear} />
         </SheetComponent>
     );
 }

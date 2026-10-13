@@ -34,26 +34,10 @@ function SearchFieldComponent(props: SearchFieldComponentProps): JSX.Element {
 
     return (
         <label className={`relative block ${props.className ?? ''}`}>
-            <Search
-                size={17}
-                className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-tertiary'
-            />
-            <input
-                ref={input}
-                type='search'
-                value={props.value}
-                onChange={(event) => props.onChange(event.target.value)}
-                placeholder={props.placeholder}
-                aria-label={props.label}
-                className='h-11 w-full rounded-xl bg-fill-strong/70 pl-10 pr-10 text-[16px] outline-none transition placeholder:text-ink-tertiary focus:bg-white focus:shadow-control focus:ring-2 focus:ring-accent/40 [&::-webkit-search-cancel-button]:hidden'
-            />
+            <Search size={17} className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-tertiary' />
+            <input ref={input} type='search' value={props.value} onChange={(event) => props.onChange(event.target.value)} placeholder={props.placeholder} aria-label={props.label} className='h-11 w-full rounded-xl bg-fill-strong/70 pl-10 pr-10 text-[16px] outline-none transition placeholder:text-ink-tertiary focus:bg-white focus:shadow-control focus:ring-2 focus:ring-accent/40 [&::-webkit-search-cancel-button]:hidden' />
             {props.value !== '' && (
-                <button
-                    type='button'
-                    aria-label={props.clearLabel}
-                    onClick={() => props.onChange('')}
-                    className='absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-ink-quaternary text-white'
-                >
+                <button type='button' aria-label={props.clearLabel} onClick={() => props.onChange('')} className='absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-ink-quaternary text-white'>
                     <X size={12} strokeWidth={3} />
                 </button>
             )}

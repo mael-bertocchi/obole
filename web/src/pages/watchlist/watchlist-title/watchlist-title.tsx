@@ -141,55 +141,22 @@ function ReviewFormComponent(props: ReviewFormComponentProps): JSX.Element {
         >
             <p className='field-label'>{t('watchlist.yourRating')}</p>
             <div className='flex items-center gap-3'>
-                <RatingComponent
-                    value={rating}
-                    label={t('watchlist.yourRating')}
-                    onChange={setRating}
-                    size={30}
-                />
+                <RatingComponent value={rating} label={t('watchlist.yourRating')} onChange={setRating} size={30} />
                 {rating !== null && (
-                    <button
-                        type='button'
-                        onClick={() => setRating(null)}
-                        className='text-[13px] font-medium text-ink-tertiary hover:text-ink'
-                    >
+                    <button type='button' onClick={() => setRating(null)} className='text-[13px] font-medium text-ink-tertiary hover:text-ink'>
                         {t('watchlist.clearRating')}
                     </button>
                 )}
             </div>
             <label htmlFor='watchlist-comment' className='field-label mt-4'>{t('watchlist.comment')}</label>
-            <textarea
-                id='watchlist-comment'
-                value={comment}
-                onChange={(event) => setComment(event.target.value)}
-                maxLength={2000}
-                rows={3}
-                placeholder={t('watchlist.commentPlaceholder')}
-                className='w-full resize-y rounded-xl bg-white px-3.5 py-2.5 text-[15px] text-ink outline-none transition placeholder:text-ink-quaternary focus:ring-2 focus:ring-accent/40'
-            />
+            <textarea id='watchlist-comment' value={comment} onChange={(event) => setComment(event.target.value)} maxLength={2000} rows={3} placeholder={t('watchlist.commentPlaceholder')} className='w-full resize-y rounded-xl bg-white px-3.5 py-2.5 text-[15px] text-ink outline-none transition placeholder:text-ink-quaternary focus:ring-2 focus:ring-accent/40' />
             <label htmlFor='watchlist-day' className='field-label mt-4'>{t('watchlist.watchedDay')}</label>
-            <input
-                id='watchlist-day'
-                type='date'
-                value={day}
-                max={dayInput(new Date())}
-                required
-                onChange={(event) => setDay(event.target.value)}
-                className='field bg-white'
-            />
+            <input id='watchlist-day' type='date' value={day} max={dayInput(new Date())} required onChange={(event) => setDay(event.target.value)} className='field bg-white' />
             <div className='mt-5 flex gap-3'>
-                <button
-                    type='button'
-                    onClick={props.onDone}
-                    className='h-11 flex-1 rounded-2xl bg-white text-[15px] font-semibold text-ink shadow-control transition hover:bg-fill-strong'
-                >
+                <button type='button' onClick={props.onDone} className='h-11 flex-1 rounded-2xl bg-white text-[15px] font-semibold text-ink shadow-control transition hover:bg-fill-strong'>
                     {t('common.cancel')}
                 </button>
-                <button
-                    type='submit'
-                    disabled={isSaving}
-                    className='flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-accent text-[15px] font-semibold text-white transition hover:bg-accent-strong disabled:opacity-60'
-                >
+                <button type='submit' disabled={isSaving} className='flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-accent text-[15px] font-semibold text-white transition hover:bg-accent-strong disabled:opacity-60'>
                     {isSaving && <SpinnerComponent size={16} />}
                     {t('watchlist.save')}
                 </button>
@@ -210,12 +177,7 @@ function ProviderComponent(props: ProviderComponentProps): JSX.Element {
             {props.provider.logoPath === null ? (
                 <span className='h-7 w-7 rounded-lg bg-fill-strong' />
             ) : (
-                <img
-                    src={imageUrl(props.provider.logoPath, 'w92')}
-                    alt=''
-                    loading='lazy'
-                    className='h-7 w-7 rounded-lg object-cover'
-                />
+                <img src={imageUrl(props.provider.logoPath, 'w92')} alt='' loading='lazy' className='h-7 w-7 rounded-lg object-cover' />
             )}
             <span className='text-[13px] font-medium'>{props.provider.name}</span>
         </li>
@@ -248,12 +210,7 @@ function OffersComponent(props: OffersComponentProps): JSX.Element {
             <p className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-quaternary'>
                 <span>{t('watchlist.offersSource')}</span>
                 {props.offers.link !== null && (
-                    <a
-                        href={props.offers.link}
-                        target='_blank'
-                        rel='noreferrer'
-                        className='inline-flex items-center gap-1 font-medium text-accent hover:underline'
-                    >
+                    <a href={props.offers.link} target='_blank' rel='noreferrer' className='inline-flex items-center gap-1 font-medium text-accent hover:underline'>
                         {t('watchlist.allOffers')}
                         <ExternalLink size={12} />
                     </a>
@@ -342,18 +299,8 @@ function SagaComponent(props: SagaComponentProps): JSX.Element {
                     return (
                         <li key={part.tmdbId} className='flex items-center gap-3 px-3 py-2'>
                             <span className='w-5 text-center text-[13px] font-semibold tabular-nums text-ink-tertiary'>{index + 1}</span>
-                            <button
-                                type='button'
-                                disabled={isCurrent}
-                                onClick={() => props.onOpen({ mediaType: part.mediaType, tmdbId: part.tmdbId })}
-                                className='flex min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default'
-                            >
-                                <PosterComponent
-                                    path={part.posterPath}
-                                    title={part.title}
-                                    width='w92'
-                                    className='w-8 rounded'
-                                />
+                            <button type='button' disabled={isCurrent} onClick={() => props.onOpen({ mediaType: part.mediaType, tmdbId: part.tmdbId })} className='flex min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default'>
+                                <PosterComponent path={part.posterPath} title={part.title} width='w92' className='w-8 rounded' />
                                 <span className='min-w-0'>
                                     <span className={`block truncate text-[14px] ${isCurrent ? 'font-semibold' : 'font-medium'}`}>{part.title}</span>
                                     <span className='block text-[12px] text-ink-tertiary'>{releaseYear(part.releaseDate) ?? t('watchlist.unreleased')}</span>
@@ -430,11 +377,7 @@ function WatchlistTitleComponent(props: WatchlistTitleComponentProps): JSX.Eleme
     };
 
     const back = props.onBack !== undefined && (
-        <button
-            type='button'
-            onClick={props.onBack}
-            className='-ml-1 mb-3 inline-flex items-center gap-0.5 text-[15px] font-medium text-accent'
-        >
+        <button type='button' onClick={props.onBack} className='-ml-1 mb-3 inline-flex items-center gap-0.5 text-[15px] font-medium text-accent'>
             <ChevronLeft size={19} strokeWidth={2.4} />
             {t('watchlist.backToResults')}
         </button>
@@ -449,11 +392,7 @@ function WatchlistTitleComponent(props: WatchlistTitleComponentProps): JSX.Eleme
                 ) : (
                     <div className='py-12 text-center'>
                         <p className='text-[15px] text-ink-secondary'>{error}</p>
-                        <button
-                            type='button'
-                            onClick={() => setAttempt((current) => current + 1)}
-                            className='mt-4 rounded-full bg-accent px-5 py-2 text-[15px] font-semibold text-white'
-                        >
+                        <button type='button' onClick={() => setAttempt((current) => current + 1)} className='mt-4 rounded-full bg-accent px-5 py-2 text-[15px] font-semibold text-white'>
                             {t('watchlist.tryAgain')}
                         </button>
                     </div>
@@ -469,20 +408,11 @@ function WatchlistTitleComponent(props: WatchlistTitleComponentProps): JSX.Eleme
     if (entry === null) {
         actions = (
             <div className='mt-5 grid grid-cols-[1fr_auto] gap-3'>
-                <button
-                    type='button'
-                    disabled={isBusy}
-                    onClick={() => void run(() => store.add(props.title), t('watchlist.added', { title: details.title }))}
-                    className={primary}
-                >
+                <button type='button' disabled={isBusy} onClick={() => void run(() => store.add(props.title), t('watchlist.added', { title: details.title }))} className={primary}>
                     <Plus size={18} strokeWidth={2.6} />
                     {t('watchlist.addToWatch')}
                 </button>
-                <button
-                    type='button'
-                    onClick={() => setIsReviewing(true)}
-                    className={secondary}
-                >
+                <button type='button' onClick={() => setIsReviewing(true)} className={secondary}>
                     <Check size={18} strokeWidth={2.6} />
                     {t('watchlist.alreadySeen')}
                 </button>
@@ -491,20 +421,11 @@ function WatchlistTitleComponent(props: WatchlistTitleComponentProps): JSX.Eleme
     } else if (entry.watchedAt === null) {
         actions = (
             <div className='mt-5 grid grid-cols-[1fr_auto] gap-3'>
-                <button
-                    type='button'
-                    onClick={() => setIsReviewing(true)}
-                    className={primary}
-                >
+                <button type='button' onClick={() => setIsReviewing(true)} className={primary}>
                     <Check size={18} strokeWidth={2.6} />
                     {t('watchlist.markWatched')}
                 </button>
-                <button
-                    type='button'
-                    disabled={isBusy}
-                    onClick={() => setIsConfirmingRemoval(true)}
-                    className={`${secondary} text-negative-text`}
-                >
+                <button type='button' disabled={isBusy} onClick={() => setIsConfirmingRemoval(true)} className={`${secondary} text-negative-text`}>
                     <Trash2 size={17} />
                     {t('watchlist.remove')}
                 </button>
@@ -514,38 +435,20 @@ function WatchlistTitleComponent(props: WatchlistTitleComponentProps): JSX.Eleme
         actions = (
             <div className='mt-5 rounded-2xl bg-fill p-4'>
                 <div className='flex flex-wrap items-center justify-between gap-2'>
-                    <RatingComponent
-                        value={entry.rating}
-                        label={ratingText(entry.rating)}
-                        size={22}
-                    />
+                    <RatingComponent value={entry.rating} label={ratingText(entry.rating)} size={22} />
                     <span className='text-[13px] text-ink-tertiary'>{t('watchlist.watchedOn', { date: dayText(entry.watchedAt) })}</span>
                 </div>
                 {entry.comment !== null && <p className='mt-3 whitespace-pre-line text-[15px] leading-relaxed'>{entry.comment}</p>}
                 <div className='mt-4 flex flex-wrap gap-2'>
-                    <button
-                        type='button'
-                        onClick={() => setIsReviewing(true)}
-                        className={`${secondary} h-9 bg-white px-3 text-[14px] shadow-control`}
-                    >
+                    <button type='button' onClick={() => setIsReviewing(true)} className={`${secondary} h-9 bg-white px-3 text-[14px] shadow-control`}>
                         <SquarePen size={15} />
                         {t('watchlist.editReview')}
                     </button>
-                    <button
-                        type='button'
-                        disabled={isBusy}
-                        onClick={() => void run(() => store.update(entry.id, { watchedAt: null }), t('watchlist.backOnList', { title: details.title }))}
-                        className={`${secondary} h-9 bg-white px-3 text-[14px] shadow-control`}
-                    >
+                    <button type='button' disabled={isBusy} onClick={() => void run(() => store.update(entry.id, { watchedAt: null }), t('watchlist.backOnList', { title: details.title }))} className={`${secondary} h-9 bg-white px-3 text-[14px] shadow-control`}>
                         <RotateCcw size={15} />
                         {t('watchlist.watchAgain')}
                     </button>
-                    <button
-                        type='button'
-                        disabled={isBusy}
-                        onClick={() => setIsConfirmingRemoval(true)}
-                        className={`${secondary} h-9 bg-white px-3 text-[14px] text-negative-text shadow-control`}
-                    >
+                    <button type='button' disabled={isBusy} onClick={() => setIsConfirmingRemoval(true)} className={`${secondary} h-9 bg-white px-3 text-[14px] text-negative-text shadow-control`}>
                         <Trash2 size={15} />
                         {t('watchlist.remove')}
                     </button>
@@ -558,12 +461,7 @@ function WatchlistTitleComponent(props: WatchlistTitleComponentProps): JSX.Eleme
         <div>
             {back}
             <div className='flex gap-4'>
-                <PosterComponent
-                    path={details.posterPath}
-                    title={details.title}
-                    width='w185'
-                    className='w-28 rounded-xl shadow-control'
-                />
+                <PosterComponent path={details.posterPath} title={details.title} width='w185' className='w-28 rounded-xl shadow-control' />
                 <div className='min-w-0 flex-1'>
                     <h3 className='text-[22px] font-semibold leading-tight tracking-tight'>{details.title}</h3>
                     {details.originalTitle !== details.title && (
@@ -583,11 +481,7 @@ function WatchlistTitleComponent(props: WatchlistTitleComponentProps): JSX.Eleme
             </div>
 
             {isReviewing ? (
-                <ReviewFormComponent
-                    entry={entry}
-                    title={props.title}
-                    onDone={() => setIsReviewing(false)}
-                />
+                <ReviewFormComponent entry={entry} title={props.title} onDone={() => setIsReviewing(false)} />
             ) : actions}
 
             {details.overview !== '' && <p className='mt-6 text-[15px] leading-relaxed text-ink'>{details.overview}</p>}
@@ -595,11 +489,7 @@ function WatchlistTitleComponent(props: WatchlistTitleComponentProps): JSX.Eleme
             <OffersComponent offers={details.offers} />
 
             {details.collection !== null && (
-                <SagaComponent
-                    collectionId={details.collection.id}
-                    current={props.title}
-                    onOpen={props.onOpen}
-                />
+                <SagaComponent collectionId={details.collection.id} current={props.title} onOpen={props.onOpen} />
             )}
 
             <AlertComponent

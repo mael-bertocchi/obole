@@ -56,11 +56,7 @@ function WatchlistGlanceComponent(): JSX.Element {
                     <div className='mt-1'>
                         <p className='truncate text-[13px] text-ink-tertiary'>{t('watchlist.lastWatched', { title: localized(lastWatched.title) })}</p>
                         {lastWatched.rating !== null && (
-                            <RatingComponent
-                                value={lastWatched.rating}
-                                label={ratingText(lastWatched.rating)}
-                                size={13}
-                            />
+                            <RatingComponent value={lastWatched.rating} label={ratingText(lastWatched.rating)} size={13} />
                         )}
                     </div>
                 )}
@@ -68,13 +64,7 @@ function WatchlistGlanceComponent(): JSX.Element {
             {latest.length > 0 && (
                 <div className='flex shrink-0 -space-x-5' aria-hidden='true'>
                     {latest.map((entry, index) => (
-                        <PosterComponent
-                            key={entry.id}
-                            path={entry.posterPath}
-                            title={localized(entry.title)}
-                            width='w92'
-                            className={`w-12 rounded-md shadow-control ring-2 ring-white ${index === 0 ? '' : 'mt-2'}`}
-                        />
+                        <PosterComponent key={entry.id} path={entry.posterPath} title={localized(entry.title)} width='w92' className={`w-12 rounded-md shadow-control ring-2 ring-white ${index === 0 ? '' : 'mt-2'}`} />
                     ))}
                 </div>
             )}

@@ -50,17 +50,8 @@ function PosterCardComponent(props: PosterCardComponentProps): JSX.Element {
     const year = releaseYear(props.entry.releaseDate);
 
     return (
-        <button
-            type='button'
-            onClick={props.onOpen}
-            className='group flex flex-col text-left'
-        >
-            <PosterComponent
-                path={props.entry.posterPath}
-                title={localized(props.entry.title)}
-                width='w342'
-                className='w-full rounded-xl shadow-control transition group-hover:-translate-y-0.5 group-hover:shadow-card'
-            />
+        <button type='button' onClick={props.onOpen} className='group flex flex-col text-left'>
+            <PosterComponent path={props.entry.posterPath} title={localized(props.entry.title)} width='w342' className='w-full rounded-xl shadow-control transition group-hover:-translate-y-0.5 group-hover:shadow-card' />
             <span className='mt-2 line-clamp-2 text-[14px] font-medium leading-snug'>{localized(props.entry.title)}</span>
             <span className='text-[12px] text-ink-tertiary'>
                 {[year, props.entry.mediaType === 'tv' ? t('watchlist.series') : null].filter((part) => part !== null).join(' • ')}
@@ -123,45 +114,19 @@ function WatchlistQueueComponent(): JSX.Element {
                 {titlesText(total)}
             </p>
 
-            <SearchFieldComponent
-                value={query}
-                onChange={(next) => update('q', next, '')}
-                placeholder={t('watchlist.filter')}
-                clearLabel={t('watchlist.clearSearch')}
-                className='mt-6'
-            />
+            <SearchFieldComponent value={query} onChange={(next) => update('q', next, '')} placeholder={t('watchlist.filter')} clearLabel={t('watchlist.clearSearch')} className='mt-6' />
 
             <div className='mt-4 flex flex-wrap items-center gap-3'>
-                <div
-                    className='flex rounded-full bg-fill-strong/80 p-1'
-                    role='group'
-                    aria-label={t('watchlist.shelving')}
-                >
+                <div className='flex rounded-full bg-fill-strong/80 p-1' role='group' aria-label={t('watchlist.shelving')}>
                     {SHELF_ORDERS.map((option) => (
-                        <button
-                            key={option}
-                            type='button'
-                            aria-pressed={option === order}
-                            onClick={() => update('by', option, 'genre')}
-                            className={`rounded-full px-3.5 py-1.5 text-[14px] font-medium transition ${option === order ? 'bg-white text-ink shadow-control' : 'text-ink-secondary hover:text-ink'}`}
-                        >
+                        <button key={option} type='button' aria-pressed={option === order} onClick={() => update('by', option, 'genre')} className={`rounded-full px-3.5 py-1.5 text-[14px] font-medium transition ${option === order ? 'bg-white text-ink shadow-control' : 'text-ink-secondary hover:text-ink'}`}>
                             {t(ORDER_NAMES[option])}
                         </button>
                     ))}
                 </div>
-                <div
-                    className='flex gap-2'
-                    role='group'
-                    aria-label={t('watchlist.kind')}
-                >
+                <div className='flex gap-2' role='group' aria-label={t('watchlist.kind')}>
                     {KIND_FILTERS.map((option) => (
-                        <button
-                            key={option}
-                            type='button'
-                            aria-pressed={option === kind}
-                            onClick={() => update('kind', option, 'all')}
-                            className={`h-8 shrink-0 rounded-full px-3.5 text-[14px] font-medium transition ${option === kind ? 'bg-ink text-white' : 'bg-white text-ink shadow-control hover:bg-fill'}`}
-                        >
+                        <button key={option} type='button' aria-pressed={option === kind} onClick={() => update('kind', option, 'all')} className={`h-8 shrink-0 rounded-full px-3.5 text-[14px] font-medium transition ${option === kind ? 'bg-ink text-white' : 'bg-white text-ink shadow-control hover:bg-fill'}`}>
                             {t(KIND_NAMES[option])}
                         </button>
                     ))}
@@ -174,11 +139,7 @@ function WatchlistQueueComponent(): JSX.Element {
                         {emptyMessage}
                     </p>
                     {total === 0 && (
-                        <button
-                            type='button'
-                            onClick={openSearch}
-                            className='mt-4 inline-flex h-10 items-center gap-1.5 rounded-full bg-accent px-4 text-[15px] font-semibold text-white transition hover:bg-accent-strong'
-                        >
+                        <button type='button' onClick={openSearch} className='mt-4 inline-flex h-10 items-center gap-1.5 rounded-full bg-accent px-4 text-[15px] font-semibold text-white transition hover:bg-accent-strong'>
                             <Plus size={17} strokeWidth={2.6} />
                             {t('watchlist.addFirst')}
                         </button>
@@ -194,11 +155,7 @@ function WatchlistQueueComponent(): JSX.Element {
                     )}
                     <div className='grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 sm:gap-x-4 lg:grid-cols-6'>
                         {shelf.entries.map((entry) => (
-                            <PosterCardComponent
-                                key={entry.id}
-                                entry={entry}
-                                onOpen={() => openTitle({ mediaType: entry.mediaType, tmdbId: entry.tmdbId })}
-                            />
+                            <PosterCardComponent key={entry.id} entry={entry} onOpen={() => openTitle({ mediaType: entry.mediaType, tmdbId: entry.tmdbId })} />
                         ))}
                     </div>
                 </section>

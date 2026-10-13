@@ -77,19 +77,10 @@ function LimitsFormComponent(props: LimitsFormComponentProps): JSX.Element {
         >
             <label className='field-label' htmlFor='monthly-limit'>{t('limits.monthly')}</label>
             <div className='relative'>
-                <span
-                    className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[15px] text-ink-tertiary'
-                >
+                <span className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[15px] text-ink-tertiary'>
                     €
                 </span>
-                <input
-                    id='monthly-limit'
-                    className='field pl-8 text-[17px] font-semibold tabular-nums'
-                    inputMode='decimal'
-                    value={monthly}
-                    onChange={(event) => setMonthly(groupAmountInput(sanitizeAmountInput(event.target.value)))}
-                    placeholder='3000'
-                />
+                <input id='monthly-limit' className='field pl-8 text-[17px] font-semibold tabular-nums' inputMode='decimal' value={monthly} onChange={(event) => setMonthly(groupAmountInput(sanitizeAmountInput(event.target.value)))} placeholder='3000' />
             </div>
 
             <div className='mb-2 mt-7 flex items-baseline justify-between'>
@@ -102,14 +93,7 @@ function LimitsFormComponent(props: LimitsFormComponentProps): JSX.Element {
                         <CategoryIconComponent category={category} size={30} />
                         <span className='flex-1 text-[15px]'>{categoryName(category)}</span>
                         <span className='text-[15px] text-ink-tertiary'>€</span>
-                        <input
-                            className='h-9 w-24 rounded-lg bg-white px-2.5 text-right text-[15px] font-medium tabular-nums outline-none ring-1 ring-hairline transition focus:ring-2 focus:ring-accent/50'
-                            inputMode='decimal'
-                            value={limits[category.id] ?? ''}
-                            placeholder='0'
-                            aria-label={t('limits.categoryLimit', { category: categoryName(category) })}
-                            onChange={(event) => setLimits({ ...limits, [category.id]: groupAmountInput(sanitizeAmountInput(event.target.value)) })}
-                        />
+                        <input className='h-9 w-24 rounded-lg bg-white px-2.5 text-right text-[15px] font-medium tabular-nums outline-none ring-1 ring-hairline transition focus:ring-2 focus:ring-accent/50' inputMode='decimal' value={limits[category.id] ?? ''} placeholder='0' aria-label={t('limits.categoryLimit', { category: categoryName(category) })} onChange={(event) => setLimits({ ...limits, [category.id]: groupAmountInput(sanitizeAmountInput(event.target.value)) })} />
                     </label>
                 ))}
             </div>
@@ -139,11 +123,7 @@ function BudgetLimitsComponent(props: BudgetLimitsComponentProps): JSX.Element {
             title={t('limits.title')}
             onClose={props.onClose}
             footer={
-                <button
-                    type='submit'
-                    form='limits-form'
-                    className='button-primary'
-                >
+                <button type='submit' form='limits-form' className='button-primary'>
                     {t('limits.save')}
                 </button>
             }

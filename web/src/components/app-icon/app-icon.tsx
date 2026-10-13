@@ -23,11 +23,7 @@ function AppIconComponent(props: AppIconComponentProps): JSX.Element {
     const [top, bottom] = props.app.colors;
 
     return (
-        <span
-            className='inline-flex shrink-0 items-center justify-center text-white shadow-[inset_0_0_0_0.5px_rgb(0_0_0/0.08)]'
-            style={{ width: size, height: size, borderRadius: size * 0.235, backgroundImage: `linear-gradient(160deg, ${top}, ${bottom})` }}
-            aria-hidden='true'
-        >
+        <span className='inline-flex shrink-0 items-center justify-center text-white shadow-[inset_0_0_0_0.5px_rgb(0_0_0/0.08)]' style={{ width: size, height: size, borderRadius: size * 0.235, backgroundImage: `linear-gradient(160deg, ${top}, ${bottom})` }} aria-hidden='true'>
             <Icon size={size * 0.55} strokeWidth={2} />
         </span>
     );

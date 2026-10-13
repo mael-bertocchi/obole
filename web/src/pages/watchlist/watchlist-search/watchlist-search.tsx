@@ -96,13 +96,7 @@ function ResultRowComponent(props: ResultRowComponentProps): JSX.Element {
         );
     } else {
         status = (
-            <button
-                type='button'
-                onClick={() => void add()}
-                disabled={isAdding}
-                aria-label={t('watchlist.addTitle', { title: props.result.title })}
-                className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent transition hover:bg-accent hover:text-white disabled:opacity-60'
-            >
+            <button type='button' onClick={() => void add()} disabled={isAdding} aria-label={t('watchlist.addTitle', { title: props.result.title })} className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent transition hover:bg-accent hover:text-white disabled:opacity-60'>
                 {isAdding ? <SpinnerComponent size={16} /> : <Plus size={19} strokeWidth={2.6} />}
             </button>
         );
@@ -110,17 +104,8 @@ function ResultRowComponent(props: ResultRowComponentProps): JSX.Element {
 
     return (
         <li className='flex items-center gap-3 py-2.5'>
-            <button
-                type='button'
-                onClick={props.onOpen}
-                className='flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left'
-            >
-                <PosterComponent
-                    path={props.result.posterPath}
-                    title={props.result.title}
-                    width='w92'
-                    className='w-11 rounded-md'
-                />
+            <button type='button' onClick={props.onOpen} className='flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left'>
+                <PosterComponent path={props.result.posterPath} title={props.result.title} width='w92' className='w-11 rounded-md' />
                 <span className='min-w-0'>
                     <span className='block truncate text-[15px] font-semibold'>{props.result.title}</span>
                     {hasOriginal && <span className='block truncate text-[13px] text-ink-secondary'>{props.result.originalTitle}</span>}
@@ -186,12 +171,7 @@ function WatchlistSearchComponent(props: WatchlistSearchComponentProps): JSX.Ele
         body = (
             <ul className='divide-y divide-hairline'>
                 {search.results.map((result) => (
-                    <ResultRowComponent
-                        key={`${result.mediaType}:${result.tmdbId}`}
-                        result={result}
-                        entry={entries === null ? null : store.find(result)}
-                        onOpen={() => props.onOpen({ mediaType: result.mediaType, tmdbId: result.tmdbId })}
-                    />
+                    <ResultRowComponent key={`${result.mediaType}:${result.tmdbId}`} result={result} entry={entries === null ? null : store.find(result)} onOpen={() => props.onOpen({ mediaType: result.mediaType, tmdbId: result.tmdbId })} />
                 ))}
             </ul>
         );
@@ -199,14 +179,7 @@ function WatchlistSearchComponent(props: WatchlistSearchComponentProps): JSX.Ele
 
     return (
         <div>
-            <SearchFieldComponent
-                value={props.query}
-                onChange={props.onQueryChange}
-                placeholder={t('watchlist.searchPlaceholder')}
-                label={t('watchlist.searchTitle')}
-                clearLabel={t('watchlist.clearSearch')}
-                hasFocus
-            />
+            <SearchFieldComponent value={props.query} onChange={props.onQueryChange} placeholder={t('watchlist.searchPlaceholder')} label={t('watchlist.searchTitle')} clearLabel={t('watchlist.clearSearch')} hasFocus />
             <div className='mt-2'>{body}</div>
         </div>
     );

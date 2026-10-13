@@ -25,11 +25,7 @@ function ProtectedRouteComponent(props: ProtectedRouteComponentProps): JSX.Eleme
 
     if (status === 'signedOut') {
         return (
-            <Navigate
-                to='/login'
-                state={{ from: `${location.pathname}${location.search}` }}
-                replace
-            />
+            <Navigate to='/login' state={{ from: `${location.pathname}${location.search}` }} replace />
         );
     }
 

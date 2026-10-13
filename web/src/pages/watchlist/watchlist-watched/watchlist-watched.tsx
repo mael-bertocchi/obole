@@ -41,26 +41,13 @@ function WatchedRowComponent(props: WatchedRowComponentProps): JSX.Element {
     const facts = [releaseYear(props.entry.releaseDate), props.entry.mediaType === 'tv' ? t('watchlist.series') : t('watchlist.movie')];
 
     return (
-        <button
-            type='button'
-            onClick={props.onOpen}
-            className='flex w-full items-start gap-4 px-4 py-3.5 text-left transition hover:bg-fill/60'
-        >
-            <PosterComponent
-                path={props.entry.posterPath}
-                title={localized(props.entry.title)}
-                width='w92'
-                className='w-14 rounded-lg'
-            />
+        <button type='button' onClick={props.onOpen} className='flex w-full items-start gap-4 px-4 py-3.5 text-left transition hover:bg-fill/60'>
+            <PosterComponent path={props.entry.posterPath} title={localized(props.entry.title)} width='w92' className='w-14 rounded-lg' />
             <span className='min-w-0 flex-1'>
                 <span className='block truncate text-[16px] font-semibold tracking-tight'>{localized(props.entry.title)}</span>
                 <span className='block text-[13px] text-ink-tertiary'>{facts.filter((fact) => fact !== null).join(' • ')}</span>
                 <span className='mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1'>
-                    <RatingComponent
-                        value={props.entry.rating}
-                        label={ratingText(props.entry.rating)}
-                        size={15}
-                    />
+                    <RatingComponent value={props.entry.rating} label={ratingText(props.entry.rating)} size={15} />
                     {props.entry.watchedAt !== null && (
                         <span className='text-[12px] text-ink-tertiary'>
                             {t('watchlist.watchedOn', { date: dayText(props.entry.watchedAt) })}
@@ -116,27 +103,11 @@ function WatchlistWatchedComponent(): JSX.Element {
                 {watchedText(watched.length)}
             </p>
 
-            <SearchFieldComponent
-                value={query}
-                onChange={(next) => update('q', next, '')}
-                placeholder={t('watchlist.filter')}
-                clearLabel={t('watchlist.clearSearch')}
-                className='mt-6'
-            />
+            <SearchFieldComponent value={query} onChange={(next) => update('q', next, '')} placeholder={t('watchlist.filter')} clearLabel={t('watchlist.clearSearch')} className='mt-6' />
 
-            <div
-                className='mt-4 inline-flex rounded-full bg-fill-strong/80 p-1'
-                role='group'
-                aria-label={t('watchlist.order')}
-            >
+            <div className='mt-4 inline-flex rounded-full bg-fill-strong/80 p-1' role='group' aria-label={t('watchlist.order')}>
                 {ORDERS.map((option) => (
-                    <button
-                        key={option.order}
-                        type='button'
-                        aria-pressed={option.order === order}
-                        onClick={() => update('by', option.order, 'recent')}
-                        className={`rounded-full px-3.5 py-1.5 text-[14px] font-medium transition ${option.order === order ? 'bg-white text-ink shadow-control' : 'text-ink-secondary hover:text-ink'}`}
-                    >
+                    <button key={option.order} type='button' aria-pressed={option.order === order} onClick={() => update('by', option.order, 'recent')} className={`rounded-full px-3.5 py-1.5 text-[14px] font-medium transition ${option.order === order ? 'bg-white text-ink shadow-control' : 'text-ink-secondary hover:text-ink'}`}>
                         {t(option.name)}
                     </button>
                 ))}
@@ -148,11 +119,7 @@ function WatchlistWatchedComponent(): JSX.Element {
                 ) : (
                     <div className='card divide-y divide-hairline overflow-hidden'>
                         {shown.map((entry) => (
-                            <WatchedRowComponent
-                                key={entry.id}
-                                entry={entry}
-                                onOpen={() => openTitle({ mediaType: entry.mediaType, tmdbId: entry.tmdbId })}
-                            />
+                            <WatchedRowComponent key={entry.id} entry={entry} onOpen={() => openTitle({ mediaType: entry.mediaType, tmdbId: entry.tmdbId })} />
                         ))}
                     </div>
                 )}

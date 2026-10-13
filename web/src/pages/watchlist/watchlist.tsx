@@ -35,10 +35,7 @@ function AddButtonComponent(): JSX.Element {
     const { openSearch }: WatchlistSheetContextProps = useWatchlistSheetContext();
 
     return (
-        <FrameActionComponent
-            label={t('watchlist.add')}
-            onClick={openSearch}
-        />
+        <FrameActionComponent label={t('watchlist.add')} onClick={openSearch} />
     );
 }
 
@@ -70,19 +67,10 @@ function WatchlistSheetComponent(): JSX.Element {
             }}
         >
             {route.kind === 'search' && (
-                <WatchlistSearchComponent
-                    query={query}
-                    onQueryChange={setQuery}
-                    onOpen={(found) => openTitle(found, true)}
-                />
+                <WatchlistSearchComponent query={query} onQueryChange={setQuery} onOpen={(found) => openTitle(found, true)} />
             )}
             {route.kind === 'title' && (
-                <WatchlistTitleComponent
-                    key={`${route.title.mediaType}:${route.title.tmdbId}`}
-                    title={route.title}
-                    onBack={route.fromSearch ? openSearch : undefined}
-                    onOpen={(other) => openTitle(other, route.fromSearch)}
-                />
+                <WatchlistTitleComponent key={`${route.title.mediaType}:${route.title.tmdbId}`} title={route.title} onBack={route.fromSearch ? openSearch : undefined} onOpen={(other) => openTitle(other, route.fromSearch)} />
             )}
         </SheetComponent>
     );
@@ -100,19 +88,8 @@ function WatchlistCreditsComponent(): JSX.Element {
         <footer className='mx-auto mt-16 max-w-xl text-center text-[12px] leading-relaxed text-ink-quaternary'>
             <p>
                 {t('watchlist.creditsSource')}{' '}
-                <a
-                    href='https://www.themoviedb.org'
-                    target='_blank'
-                    rel='noreferrer'
-                    className='inline-block rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-accent/40'
-                >
-                    <img
-                        src='/tmdb.svg'
-                        alt='TMDB'
-                        width={69}
-                        height={9}
-                        className='inline-block h-[9px] w-auto'
-                    />
+                <a href='https://www.themoviedb.org' target='_blank' rel='noreferrer' className='inline-block rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-accent/40'>
+                    <img src='/tmdb.svg' alt='TMDB' width={69} height={9} className='inline-block h-[9px] w-auto' />
                 </a>
                 .
             </p>
@@ -143,11 +120,7 @@ function WatchlistShellComponent(): JSX.Element {
             <main className='flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center'>
                 <p className='text-[17px] font-semibold'>{t('watchlist.loadFailed')}</p>
                 <p className='text-[15px] text-ink-secondary'>{error}</p>
-                <button
-                    type='button'
-                    onClick={() => void store.refresh()}
-                    className='mt-2 rounded-full bg-accent px-5 py-2 text-[15px] font-semibold text-white'
-                >
+                <button type='button' onClick={() => void store.refresh()} className='mt-2 rounded-full bg-accent px-5 py-2 text-[15px] font-semibold text-white'>
                     {t('watchlist.tryAgain')}
                 </button>
             </main>
@@ -156,11 +129,7 @@ function WatchlistShellComponent(): JSX.Element {
 
     return (
         <WatchlistSheetProvider>
-            <FrameComponent
-                app={watchlist}
-                tabs={TABS}
-                action={<AddButtonComponent />}
-            >
+            <FrameComponent app={watchlist} tabs={TABS} action={<AddButtonComponent />}>
                 <Routes>
                     <Route index element={<WatchlistQueueComponent />} />
                     <Route path='watched' element={<WatchlistWatchedComponent />} />

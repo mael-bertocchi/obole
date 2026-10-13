@@ -41,12 +41,7 @@ interface LauncherTileComponentProps {
  */
 function LauncherTileComponent(props: LauncherTileComponentProps): JSX.Element {
     return (
-        <Link
-            to={props.to}
-            onClick={props.onPick}
-            aria-current={props.isCurrent ? 'page' : undefined}
-            className='group flex flex-col items-center gap-2 rounded-2xl px-1 py-3 text-center outline-none transition hover:bg-fill-strong/60 focus-visible:ring-2 focus-visible:ring-accent/40'
-        >
+        <Link to={props.to} onClick={props.onPick} aria-current={props.isCurrent ? 'page' : undefined} className='group flex flex-col items-center gap-2 rounded-2xl px-1 py-3 text-center outline-none transition hover:bg-fill-strong/60 focus-visible:ring-2 focus-visible:ring-accent/40'>
             <span className='transition group-hover:scale-105 group-active:scale-95'>{props.icon}</span>
             <span className={`text-[13px] font-medium leading-tight ${props.isCurrent ? 'text-accent' : 'text-ink'}`}>{props.name}</span>
         </Link>
@@ -72,37 +67,14 @@ function LauncherComponent(props: LauncherComponentProps): JSX.Element {
     }, [props.isOpen]);
 
     return (
-        <div
-            id={props.id}
-            inert={!props.isOpen}
-            className={`fixed inset-0 z-20 overflow-y-auto bg-canvas pt-[calc(3.5rem+env(safe-area-inset-top))] duration-300 ease-out motion-reduce:transition-none ${props.isOpen ? 'visible opacity-100 transition-opacity' : 'invisible opacity-0 transition-[opacity,visibility]'}`}
-        >
-            <div
-                className={`mx-auto max-w-5xl px-5 pb-16 pt-8 transition-transform duration-300 ease-out motion-reduce:transition-none sm:px-8 sm:pt-10 ${props.isOpen ? 'scale-100' : 'scale-[0.98]'}`}
-            >
+        <div id={props.id} inert={!props.isOpen} className={`fixed inset-0 z-20 overflow-y-auto bg-canvas pt-[calc(3.5rem+env(safe-area-inset-top))] duration-300 ease-out motion-reduce:transition-none ${props.isOpen ? 'visible opacity-100 transition-opacity' : 'invisible opacity-0 transition-[opacity,visibility]'}`}>
+            <div className={`mx-auto max-w-5xl px-5 pb-16 pt-8 transition-transform duration-300 ease-out motion-reduce:transition-none sm:px-8 sm:pt-10 ${props.isOpen ? 'scale-100' : 'scale-[0.98]'}`}>
                 <p className='eyebrow'>{t('frame.launcherEyebrow')}</p>
                 <h1 className='mt-1 text-[34px] font-semibold leading-tight tracking-tight'>{t('frame.apps')}</h1>
-                <nav
-                    ref={grid}
-                    aria-label={t('frame.apps')}
-                    className='mt-8 grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-4 md:grid-cols-6'
-                >
-                    <LauncherTileComponent
-                        to='/'
-                        name={t('frame.home')}
-                        icon={<LogoComponent size={ICON_SIZE} />}
-                        isCurrent={pathname === '/'}
-                        onPick={props.onClose}
-                    />
+                <nav ref={grid} aria-label={t('frame.apps')} className='mt-8 grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-4 md:grid-cols-6'>
+                    <LauncherTileComponent to='/' name={t('frame.home')} icon={<LogoComponent size={ICON_SIZE} />} isCurrent={pathname === '/'} onPick={props.onClose} />
                     {APPS.map((app) => (
-                        <LauncherTileComponent
-                            key={app.id}
-                            to={appPath(app)}
-                            name={t(app.name)}
-                            icon={<AppIconComponent app={app} size={ICON_SIZE} />}
-                            isCurrent={pathname === appPath(app) || pathname.startsWith(`${appPath(app)}/`)}
-                            onPick={props.onClose}
-                        />
+                        <LauncherTileComponent key={app.id} to={appPath(app)} name={t(app.name)} icon={<AppIconComponent app={app} size={ICON_SIZE} />} isCurrent={pathname === appPath(app) || pathname.startsWith(`${appPath(app)}/`)} onPick={props.onClose} />
                     ))}
                 </nav>
             </div>

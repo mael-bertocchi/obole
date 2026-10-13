@@ -50,11 +50,7 @@ function ToggleRowComponent(props: ToggleRowComponentProps): JSX.Element {
                 <span className='block text-[15px]'>{props.title}</span>
                 <span className='block text-[12px] text-ink-secondary'>{props.hint}</span>
             </span>
-            <SwitchComponent
-                checked={props.checked}
-                onChange={props.onChange}
-                label={props.title}
-            />
+            <SwitchComponent checked={props.checked} onChange={props.onChange} label={props.title} />
         </div>
     );
 }
@@ -215,22 +211,8 @@ function OperationFormComponent(props: OperationFormComponentProps): JSX.Element
             <div className='flex flex-col items-center pb-2 pt-1'>
                 <label htmlFor='amount' className='eyebrow'>{t('operation.amount')}</label>
                 <div className='mt-2 flex items-center gap-2'>
-                    <input
-                        id='amount'
-                        inputMode='decimal'
-                        autoComplete='off'
-                        placeholder={groupAmountInput('0.00')}
-                        value={amountText}
-                        onChange={(event) => setAmountText(groupAmountInput(sanitizeAmountInput(event.target.value)))}
-                        style={{ width: `${Math.max(4, amountText.length) * 0.6 + 0.3}em` }}
-                        className='bg-transparent text-right text-[46px] font-semibold tracking-tight tabular-nums outline-none placeholder:text-ink-quaternary'
-                    />
-                    <select
-                        aria-label={t('operation.currency')}
-                        value={currencyCode}
-                        onChange={(event) => setCurrencyCode(event.target.value)}
-                        className='h-9 cursor-pointer rounded-xl bg-fill px-2.5 text-[15px] font-semibold outline-none transition hover:bg-fill-strong focus:ring-2 focus:ring-accent/40'
-                    >
+                    <input id='amount' inputMode='decimal' autoComplete='off' placeholder={groupAmountInput('0.00')} value={amountText} onChange={(event) => setAmountText(groupAmountInput(sanitizeAmountInput(event.target.value)))} style={{ width: `${Math.max(4, amountText.length) * 0.6 + 0.3}em` }} className='bg-transparent text-right text-[46px] font-semibold tracking-tight tabular-nums outline-none placeholder:text-ink-quaternary' />
+                    <select aria-label={t('operation.currency')} value={currencyCode} onChange={(event) => setCurrencyCode(event.target.value)} className='h-9 cursor-pointer rounded-xl bg-fill px-2.5 text-[15px] font-semibold outline-none transition hover:bg-fill-strong focus:ring-2 focus:ring-accent/40'>
                         {CURRENCIES.map((currency) => (
                             <option key={currency.code} value={currency.code}>{currency.code}</option>
                         ))}
@@ -243,9 +225,7 @@ function OperationFormComponent(props: OperationFormComponentProps): JSX.Element
                                 {euroPrecise(amount * appliedRate)}
                             </p>
                         )}
-                        <p
-                            className={`text-[12px] ${appliedRate === null ? 'text-warning-text' : 'text-ink-tertiary'}`}
-                        >
+                        <p className={`text-[12px] ${appliedRate === null ? 'text-warning-text' : 'text-ink-tertiary'}`}>
                             {rateLine}
                         </p>
                     </div>
@@ -259,21 +239,11 @@ function OperationFormComponent(props: OperationFormComponentProps): JSX.Element
                         const isSelected = category.id === categoryId;
 
                         return (
-                            <button
-                                key={category.id}
-                                type='button'
-                                aria-pressed={isSelected}
-                                onClick={() => setCategoryId(category.id)}
-                                className='group flex flex-col items-center gap-1.5 rounded-2xl py-1 focus-visible:outline-none'
-                            >
-                                <span
-                                    className={`rounded-[16px] p-[3px] ring-2 transition ${isSelected ? 'ring-accent' : 'ring-transparent group-hover:ring-fill-strong group-focus-visible:ring-accent/50'}`}
-                                >
+                            <button key={category.id} type='button' aria-pressed={isSelected} onClick={() => setCategoryId(category.id)} className='group flex flex-col items-center gap-1.5 rounded-2xl py-1 focus-visible:outline-none'>
+                                <span className={`rounded-[16px] p-[3px] ring-2 transition ${isSelected ? 'ring-accent' : 'ring-transparent group-hover:ring-fill-strong group-focus-visible:ring-accent/50'}`}>
                                     <CategoryIconComponent category={category} size={44} />
                                 </span>
-                                <span
-                                    className={`w-full truncate text-center text-[12px] transition ${isSelected ? 'font-semibold text-accent' : 'font-medium text-ink-secondary'}`}
-                                >
+                                <span className={`w-full truncate text-center text-[12px] transition ${isSelected ? 'font-semibold text-accent' : 'font-medium text-ink-secondary'}`}>
                                     {categoryName(category)}
                                 </span>
                             </button>
@@ -283,94 +253,35 @@ function OperationFormComponent(props: OperationFormComponentProps): JSX.Element
             </div>
 
             <FieldComponent label={t('operation.name')} htmlFor='name'>
-                <input
-                    id='name'
-                    className='field'
-                    value={name}
-                    maxLength={Limits.name}
-                    onChange={(event) => setName(event.target.value)}
-                    placeholder={t('operation.namePlaceholder')}
-                    autoComplete='off'
-                />
+                <input id='name' className='field' value={name} maxLength={Limits.name} onChange={(event) => setName(event.target.value)} placeholder={t('operation.namePlaceholder')} autoComplete='off' />
             </FieldComponent>
 
             <FieldComponent label={t('operation.description')} htmlFor='description'>
-                <textarea
-                    id='description'
-                    className='field min-h-[76px] resize-none py-2.5 leading-snug'
-                    value={description}
-                    maxLength={Limits.description}
-                    onChange={(event) => setDescription(event.target.value)}
-                    placeholder={t('operation.descriptionPlaceholder')}
-                    rows={2}
-                />
+                <textarea id='description' className='field min-h-[76px] resize-none py-2.5 leading-snug' value={description} maxLength={Limits.description} onChange={(event) => setDescription(event.target.value)} placeholder={t('operation.descriptionPlaceholder')} rows={2} />
             </FieldComponent>
 
-            <FieldComponent
-                label={t('operation.date')}
-                htmlFor='date'
-                aside={fieldDate(date, now)}
-            >
+            <FieldComponent label={t('operation.date')} htmlFor='date' aside={fieldDate(date, now)}>
                 <div className='flex gap-2'>
-                    <input
-                        id='date'
-                        type='date'
-                        className='field min-w-0 flex-1'
-                        value={day}
-                        max={dayKey(now)}
-                        onChange={(event) => pickDay(event.target.value)}
-                    />
-                    <input
-                        type='time'
-                        aria-label={t('operation.time')}
-                        className='field w-28 shrink-0'
-                        value={timeKey(date)}
-                        onChange={(event) => pickTime(event.target.value)}
-                    />
+                    <input id='date' type='date' className='field min-w-0 flex-1' value={day} max={dayKey(now)} onChange={(event) => pickDay(event.target.value)} />
+                    <input type='time' aria-label={t('operation.time')} className='field w-28 shrink-0' value={timeKey(date)} onChange={(event) => pickTime(event.target.value)} />
                 </div>
             </FieldComponent>
 
-            <ToggleRowComponent
-                icon={Globe}
-                title={t('operation.online')}
-                hint={t('operation.onlineHint')}
-                checked={isOnline}
-                onChange={setIsOnline}
-            />
+            <ToggleRowComponent icon={Globe} title={t('operation.online')} hint={t('operation.onlineHint')} checked={isOnline} onChange={setIsOnline} />
 
             {!isOnline && (
                 <FieldComponent label={t('operation.location')} htmlFor='location'>
                     <div className='relative'>
-                        <MapPin
-                            size={16}
-                            className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-accent'
-                        />
-                        <input
-                            id='location'
-                            className='field pl-9'
-                            value={location}
-                            maxLength={Limits.location}
-                            onChange={(event) => setLocation(event.target.value)}
-                            placeholder={t('operation.locationPlaceholder')}
-                        />
+                        <MapPin size={16} className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-accent' />
+                        <input id='location' className='field pl-9' value={location} maxLength={Limits.location} onChange={(event) => setLocation(event.target.value)} placeholder={t('operation.locationPlaceholder')} />
                     </div>
                 </FieldComponent>
             )}
 
-            <ToggleRowComponent
-                icon={Repeat}
-                title={t('operation.recurring')}
-                hint={t('operation.recurringHint')}
-                checked={isRecurring}
-                onChange={setIsRecurring}
-            />
+            <ToggleRowComponent icon={Repeat} title={t('operation.recurring')} hint={t('operation.recurringHint')} checked={isRecurring} onChange={setIsRecurring} />
 
             {existing !== null && (
-                <button
-                    type='button'
-                    onClick={props.onDelete}
-                    className='w-full py-2 text-[15px] font-medium text-negative-text transition hover:opacity-70'
-                >
+                <button type='button' onClick={props.onDelete} className='w-full py-2 text-[15px] font-medium text-negative-text transition hover:opacity-70'>
                     {t('operation.delete')}
                 </button>
             )}
@@ -424,12 +335,7 @@ function BudgetOperationComponent(props: BudgetOperationComponentProps): JSX.Ele
                 onClose={props.onClose}
                 isFull
                 footer={isMissing ? undefined : (
-                    <button
-                        type='submit'
-                        form={FORM_ID}
-                        disabled={!canSave}
-                        className='button-primary'
-                    >
+                    <button type='submit' form={FORM_ID} disabled={!canSave} className='button-primary'>
                         {route?.kind === 'edit' ? t('operation.saveChanges') : t('operation.save')}
                     </button>
                 )}
@@ -437,23 +343,10 @@ function BudgetOperationComponent(props: BudgetOperationComponentProps): JSX.Ele
                 {isMissing
                     ? <p className='py-10 text-center text-[15px] text-ink-secondary'>{t('operation.missing')}</p>
                     : (
-                        <OperationFormComponent
-                            key={route?.kind === 'edit' ? route.id : 'new'}
-                            existing={existing}
-                            onDone={props.onClose}
-                            onDelete={() => setIsConfirmingDelete(true)}
-                            onValidityChange={setCanSave}
-                        />
+                        <OperationFormComponent key={route?.kind === 'edit' ? route.id : 'new'} existing={existing} onDone={props.onClose} onDelete={() => setIsConfirmingDelete(true)} onValidityChange={setCanSave} />
                     )}
             </SheetComponent>
-            <AlertComponent
-                open={isConfirmingDelete}
-                title={t('operation.confirmDelete')}
-                message={t('common.irreversible')}
-                action={t('operation.deleteAction')}
-                onConfirm={confirmDelete}
-                onCancel={() => setIsConfirmingDelete(false)}
-            />
+            <AlertComponent open={isConfirmingDelete} title={t('operation.confirmDelete')} message={t('common.irreversible')} action={t('operation.deleteAction')} onConfirm={confirmDelete} onCancel={() => setIsConfirmingDelete(false)} />
         </>
     );
 }

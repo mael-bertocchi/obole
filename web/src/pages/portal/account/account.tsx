@@ -60,21 +60,13 @@ function PasskeyRowComponent(props: PasskeyRowComponentProps): JSX.Element {
 
     return (
         <ListRowComponent
-            icon={
-                <IconTileComponent
-                    icon={KeyRound}
-                    color={ACCENT}
-                    size={30}
-                />
-            }
+            icon={<IconTileComponent icon={KeyRound} color={ACCENT} size={30} />}
             title={
                 <span className='block'>
                     <span className='flex items-center gap-2'>
                         {name}
                         {props.passkey.backedUp && (
-                            <span
-                                className='rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent'
-                            >
+                            <span className='rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent'>
                                 {t('account.synced')}
                             </span>
                         )}
@@ -86,12 +78,7 @@ function PasskeyRowComponent(props: PasskeyRowComponentProps): JSX.Element {
             }
         >
             {props.canRemove && (
-                <button
-                    type='button'
-                    onClick={props.onRemove}
-                    aria-label={t('account.removePasskey', { name })}
-                    className='flex h-8 w-8 items-center justify-center rounded-full text-ink-tertiary transition hover:bg-negative-soft hover:text-negative-text'
-                >
+                <button type='button' onClick={props.onRemove} aria-label={t('account.removePasskey', { name })} className='flex h-8 w-8 items-center justify-center rounded-full text-ink-tertiary transition hover:bg-negative-soft hover:text-negative-text'>
                     <Trash2 size={17} />
                 </button>
             )}
@@ -177,41 +164,16 @@ function AccountPage(): JSX.Element {
                         <div className='flex min-h-[52px] items-center justify-center'><SpinnerComponent /></div>
                     ) : (
                         passkeys.map((passkey) => (
-                            <PasskeyRowComponent
-                                key={passkey.id}
-                                passkey={passkey}
-                                canRemove={passkeys.length > 1}
-                                onRemove={() => setRemoving(passkey)}
-                            />
+                            <PasskeyRowComponent key={passkey.id} passkey={passkey} canRemove={passkeys.length > 1} onRemove={() => setRemoving(passkey)} />
                         ))
                     )}
-                    <ListRowComponent
-                        icon={
-                            <IconTileComponent
-                                icon={Plus}
-                                color={ACCENT}
-                                size={30}
-                            />
-                        }
-                        title={<span className='text-accent'>{t('account.addPasskey')}</span>}
-                        onClick={() => void add()}
-                        disabled={isAdding}
-                    >
+                    <ListRowComponent icon={<IconTileComponent icon={Plus} color={ACCENT} size={30} />} title={<span className='text-accent'>{t('account.addPasskey')}</span>} onClick={() => void add()} disabled={isAdding}>
                         {isAdding && <SpinnerComponent size={18} />}
                     </ListRowComponent>
                 </ListGroupComponent>
 
                 <ListGroupComponent title={t('account.general')}>
-                    <ListRowComponent
-                        icon={
-                            <IconTileComponent
-                                icon={Languages}
-                                color={ACCENT}
-                                size={30}
-                            />
-                        }
-                        title={<label htmlFor='language'>{t('account.language')}</label>}
-                    >
+                    <ListRowComponent icon={<IconTileComponent icon={Languages} color={ACCENT} size={30} />} title={<label htmlFor='language'>{t('account.language')}</label>}>
                         <select
                             id='language'
                             value={language}
@@ -229,11 +191,7 @@ function AccountPage(): JSX.Element {
                         >
                             <option value='automatic'>{t('account.automatic')}</option>
                             {LANGUAGES.map((option) => (
-                                <option
-                                    key={option.code}
-                                    value={option.code}
-                                    lang={option.code}
-                                >
+                                <option key={option.code} value={option.code} lang={option.code}>
                                     {option.name}
                                 </option>
                             ))}
@@ -242,18 +200,7 @@ function AccountPage(): JSX.Element {
                 </ListGroupComponent>
 
                 <ListGroupComponent title={t('account.session')}>
-                    <ListRowComponent
-                        icon={
-                            <IconTileComponent
-                                icon={LogOut}
-                                color={NEGATIVE}
-                                size={30}
-                            />
-                        }
-                        title={t('account.signOut')}
-                        destructive
-                        onClick={() => setIsConfirmingSignOut(true)}
-                    />
+                    <ListRowComponent icon={<IconTileComponent icon={LogOut} color={NEGATIVE} size={30} />} title={t('account.signOut')} destructive onClick={() => setIsConfirmingSignOut(true)} />
                 </ListGroupComponent>
 
                 <p className='mt-10 text-center text-[12px] text-ink-quaternary'>Obole Web {__APP_VERSION__}</p>

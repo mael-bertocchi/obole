@@ -55,11 +55,7 @@ interface CategoryIconComponentProps {
  */
 function CategoryIconComponent(props: CategoryIconComponentProps): JSX.Element {
     return (
-        <IconTileComponent
-            icon={SYMBOL_ICONS[props.category.symbol] ?? Tag}
-            color={hexColor(props.category.colorHex)}
-            size={props.size}
-        />
+        <IconTileComponent icon={SYMBOL_ICONS[props.category.symbol] ?? Tag} color={hexColor(props.category.colorHex)} size={props.size} />
     );
 }
 

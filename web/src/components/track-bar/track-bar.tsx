@@ -18,10 +18,7 @@ interface TrackBarComponentProps {
 function TrackBarComponent(props: TrackBarComponentProps): JSX.Element {
     return (
         <div className='h-1.5 w-full overflow-hidden rounded-full bg-fill-strong'>
-            <div
-                className='h-full rounded-full'
-                style={{ width: `${Math.min(1, Math.max(0, props.progress)) * 100}%`, backgroundColor: props.color, transition: 'width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)' }}
-            />
+            <div className='h-full rounded-full' style={{ width: `${Math.min(1, Math.max(0, props.progress)) * 100}%`, backgroundColor: props.color, transition: 'width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)' }} />
         </div>
     );
 }

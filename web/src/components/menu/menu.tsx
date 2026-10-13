@@ -63,22 +63,11 @@ function MenuComponent(props: MenuComponentProps): JSX.Element {
 
     return (
         <div ref={root} className='relative'>
-            <button
-                ref={button}
-                type='button'
-                aria-label={props.label}
-                aria-expanded={isOpen}
-                aria-haspopup='menu'
-                onClick={() => setIsOpen(!isOpen)}
-                className={props.triggerClassName}
-            >
+            <button ref={button} type='button' aria-label={props.label} aria-expanded={isOpen} aria-haspopup='menu' onClick={() => setIsOpen(!isOpen)} className={props.triggerClassName}>
                 {props.trigger}
             </button>
             {isOpen && (
-                <div
-                    role='menu'
-                    className={`absolute right-0 top-full z-40 mt-2 origin-top-right animate-rise overflow-hidden rounded-[20px] bg-white/95 p-2 shadow-sheet ring-1 ring-hairline backdrop-blur-xl ${panelClassName}`}
-                >
+                <div role='menu' className={`absolute right-0 top-full z-40 mt-2 origin-top-right animate-rise overflow-hidden rounded-[20px] bg-white/95 p-2 shadow-sheet ring-1 ring-hairline backdrop-blur-xl ${panelClassName}`}>
                     {props.children(() => setIsOpen(false))}
                 </div>
             )}

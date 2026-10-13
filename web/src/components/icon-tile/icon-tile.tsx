@@ -22,11 +22,7 @@ function IconTileComponent(props: IconTileComponentProps): JSX.Element {
     const size = props.size ?? 36;
 
     return (
-        <span
-            className='inline-flex shrink-0 items-center justify-center text-white'
-            style={{ width: size, height: size, borderRadius: size * 0.28, backgroundColor: props.color }}
-            aria-hidden='true'
-        >
+        <span className='inline-flex shrink-0 items-center justify-center text-white' style={{ width: size, height: size, borderRadius: size * 0.28, backgroundColor: props.color }} aria-hidden='true'>
             <Icon size={size * 0.52} strokeWidth={2.1} />
         </span>
     );

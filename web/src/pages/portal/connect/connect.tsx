@@ -96,12 +96,7 @@ function ConnectPage(): JSX.Element {
                 {isComplete && !isDone && (
                     <>
                         <p className='mt-3 text-[15px] text-ink-secondary'>{t('connect.prompt')}</p>
-                        <button
-                            type='button'
-                            className='button-primary mt-8'
-                            disabled={isWorking}
-                            onClick={() => void connect()}
-                        >
+                        <button type='button' className='button-primary mt-8' disabled={isWorking} onClick={() => void connect()}>
                             <KeyRound size={19} strokeWidth={2.3} />
                             {t('connect.action')}
                         </button>

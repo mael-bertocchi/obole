@@ -51,18 +51,10 @@ function AlertComponent(props: AlertComponentProps): JSX.Element {
                 {props.message !== undefined && <p className='mt-1 text-[13px] text-ink-secondary'>{props.message}</p>}
             </div>
             <div className='grid grid-cols-2 border-t border-hairline'>
-                <button
-                    type='button'
-                    onClick={props.onCancel}
-                    className='h-11 text-[17px] text-accent transition hover:bg-fill'
-                >
+                <button type='button' onClick={props.onCancel} className='h-11 text-[17px] text-accent transition hover:bg-fill'>
                     {t('common.cancel')}
                 </button>
-                <button
-                    type='button'
-                    onClick={props.onConfirm}
-                    className='h-11 border-l border-hairline text-[17px] font-semibold text-negative-text transition hover:bg-fill'
-                >
+                <button type='button' onClick={props.onConfirm} className='h-11 border-l border-hairline text-[17px] font-semibold text-negative-text transition hover:bg-fill'>
                     {props.action}
                 </button>
             </div>

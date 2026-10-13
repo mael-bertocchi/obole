@@ -40,48 +40,17 @@ function LogoComponent(props: LogoComponentProps): JSX.Element {
     const gradient = useId();
 
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox='0 0 64 64'
-            aria-hidden='true'
-            className='shrink-0'
-        >
+        <svg width={size} height={size} viewBox='0 0 64 64' aria-hidden='true' className='shrink-0'>
             <defs>
-                <linearGradient
-                    id={gradient}
-                    x1='0'
-                    y1='0'
-                    x2='1'
-                    y2='1'
-                >
+                <linearGradient id={gradient} x1='0' y1='0' x2='1' y2='1'>
                     <stop offset='0' stopColor='#8B74E8' />
                     <stop offset='1' stopColor='#5B45B8' />
                 </linearGradient>
             </defs>
-            <rect
-                width='64'
-                height='64'
-                rx='15'
-                fill={`url(#${gradient})`}
-            />
-            <circle
-                cx='22.5'
-                cy='22.5'
-                r='7'
-                fill='#fff'
-            />
+            <rect width='64' height='64' rx='15' fill={`url(#${gradient})`} />
+            <circle cx='22.5' cy='22.5' r='7' fill='#fff' />
             {TILES.map((tile) => (
-                <rect
-                    key={`${tile.x}-${tile.y}`}
-                    x={tile.x}
-                    y={tile.y}
-                    width='14'
-                    height='14'
-                    rx='4'
-                    fill='#fff'
-                    fillOpacity='0.72'
-                />
+                <rect key={`${tile.x}-${tile.y}`} x={tile.x} y={tile.y} width='14' height='14' rx='4' fill='#fff' fillOpacity='0.72' />
             ))}
         </svg>
     );

@@ -73,28 +73,16 @@ function OperationRowComponent(props: OperationRowComponentProps): JSX.Element {
     const hasDescription = (props.operation.description ?? '') !== '';
 
     return (
-        <button
-            type='button'
-            onClick={props.onOpen}
-            className='flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition hover:bg-fill/60 sm:px-5'
-        >
+        <button type='button' onClick={props.onOpen} className='flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition hover:bg-fill/60 sm:px-5'>
             <CategoryIconComponent category={category} size={40} />
             <span className='min-w-0 flex-1'>
                 <span className='flex items-center gap-1.5'>
                     <span className='truncate text-[15px] font-medium'>{props.operation.name}</span>
                     {props.operation.isRecurring && (
-                        <Repeat
-                            size={13}
-                            className='shrink-0 text-ink-quaternary'
-                            aria-label={t('history.recurring')}
-                        />
+                        <Repeat size={13} className='shrink-0 text-ink-quaternary' aria-label={t('history.recurring')} />
                     )}
                     {hasDescription && (
-                        <AlignLeft
-                            size={13}
-                            className='shrink-0 text-ink-quaternary'
-                            aria-label={t('history.hasNote')}
-                        />
+                        <AlignLeft size={13} className='shrink-0 text-ink-quaternary' aria-label={t('history.hasNote')} />
                     )}
                 </span>
                 <span className='mt-0.5 flex items-center gap-2 text-[13px] text-ink-secondary'>
@@ -181,23 +169,10 @@ function BudgetHistoryComponent(): JSX.Element {
             <p className='eyebrow'>{t('history.eyebrow')}</p>
             <h1 className='mt-1 text-[34px] font-semibold leading-tight tracking-tight'>{t('history.title')}</h1>
 
-            <SearchFieldComponent
-                value={query}
-                onChange={(next) => update({ q: next })}
-                placeholder={t('history.search')}
-                clearLabel={t('history.clearSearch')}
-                className='mt-6'
-            />
+            <SearchFieldComponent value={query} onChange={(next) => update({ q: next })} placeholder={t('history.search')} clearLabel={t('history.clearSearch')} className='mt-6' />
 
-            <div
-                className='no-scrollbar -mx-5 -mb-2 mt-2 flex gap-2 overflow-x-auto px-5 py-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0'
-            >
-                <button
-                    type='button'
-                    aria-haspopup='dialog'
-                    onClick={() => setIsPickingDates(true)}
-                    className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[14px] font-medium transition ${range !== null ? 'bg-ink text-white' : 'bg-white text-ink shadow-control hover:bg-fill'}`}
-                >
+            <div className='no-scrollbar -mx-5 -mb-2 mt-2 flex gap-2 overflow-x-auto px-5 py-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0'>
+                <button type='button' aria-haspopup='dialog' onClick={() => setIsPickingDates(true)} className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[14px] font-medium transition ${range !== null ? 'bg-ink text-white' : 'bg-white text-ink shadow-control hover:bg-fill'}`}>
                     <CalendarDays size={15} />
                     {range === null ? t('history.date') : rangeTitle(range)}
                 </button>
@@ -206,12 +181,7 @@ function BudgetHistoryComponent(): JSX.Element {
                     const isActive = chip.id === categoryId;
 
                     return (
-                        <button
-                            key={chip.id ?? 'all'}
-                            type='button'
-                            onClick={() => update({ category: isActive ? null : chip.id })}
-                            className={`h-8 shrink-0 rounded-full px-3.5 text-[14px] font-medium transition ${isActive ? 'bg-ink text-white' : 'bg-white text-ink shadow-control hover:bg-fill'}`}
-                        >
+                        <button key={chip.id ?? 'all'} type='button' onClick={() => update({ category: isActive ? null : chip.id })} className={`h-8 shrink-0 rounded-full px-3.5 text-[14px] font-medium transition ${isActive ? 'bg-ink text-white' : 'bg-white text-ink shadow-control hover:bg-fill'}`}>
                             {chip.name}
                         </button>
                     );
@@ -240,25 +210,14 @@ function BudgetHistoryComponent(): JSX.Element {
                         </div>
                         <div className='card divide-y divide-hairline overflow-hidden'>
                             {group.operations.map((operation) => (
-                                <OperationRowComponent
-                                    key={operation.id}
-                                    document={document}
-                                    operation={operation}
-                                    onOpen={() => openEdit(operation.id)}
-                                />
+                                <OperationRowComponent key={operation.id} document={document} operation={operation} onOpen={() => openEdit(operation.id)} />
                             ))}
                         </div>
                     </section>
                 ))}
             </div>
 
-            <BudgetDatesComponent
-                open={isPickingDates}
-                range={range}
-                onApply={filterDates}
-                onClear={() => filterDates(null)}
-                onClose={() => setIsPickingDates(false)}
-            />
+            <BudgetDatesComponent open={isPickingDates} range={range} onApply={filterDates} onClear={() => filterDates(null)} onClose={() => setIsPickingDates(false)} />
         </div>
     );
 }

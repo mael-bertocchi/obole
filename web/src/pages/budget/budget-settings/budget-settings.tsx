@@ -61,29 +61,10 @@ function BudgetSettingsComponent(): JSX.Element {
             <h1 className='mb-8 mt-1 text-[34px] font-semibold leading-tight tracking-tight'>{t('settings.title')}</h1>
 
             <ListGroupComponent title={t('settings.budget')}>
-                <ListRowComponent
-                    icon={
-                        <IconTileComponent
-                            icon={RefreshCw}
-                            color={ACCENT}
-                            size={30}
-                        />
-                    }
-                    title={t('settings.sync')}
-                >
+                <ListRowComponent icon={<IconTileComponent icon={RefreshCw} color={ACCENT} size={30} />} title={t('settings.sync')}>
                     <SyncBadgeComponent status={status} />
                 </ListRowComponent>
-                <ListRowComponent
-                    icon={
-                        <IconTileComponent
-                            icon={Target}
-                            color={ACCENT}
-                            size={30}
-                        />
-                    }
-                    title={t('settings.budgetAndLimits')}
-                    onClick={() => setShowLimits(true)}
-                >
+                <ListRowComponent icon={<IconTileComponent icon={Target} color={ACCENT} size={30} />} title={t('settings.budgetAndLimits')} onClick={() => setShowLimits(true)}>
                     <span className='text-[15px] text-ink-secondary tabular-nums'>
                         {euro(document.budget.monthlyLimit)}
                     </span>
@@ -92,16 +73,7 @@ function BudgetSettingsComponent(): JSX.Element {
             </ListGroupComponent>
 
             <ListGroupComponent title={t('settings.entry')}>
-                <ListRowComponent
-                    icon={
-                        <IconTileComponent
-                            icon={Euro}
-                            color={ACCENT}
-                            size={30}
-                        />
-                    }
-                    title={<label htmlFor='default-currency'>{t('settings.defaultCurrency')}</label>}
-                >
+                <ListRowComponent icon={<IconTileComponent icon={Euro} color={ACCENT} size={30} />} title={<label htmlFor='default-currency'>{t('settings.defaultCurrency')}</label>}>
                     <select
                         id='default-currency'
                         value={currency}
@@ -118,10 +90,7 @@ function BudgetSettingsComponent(): JSX.Element {
                 </ListRowComponent>
             </ListGroupComponent>
 
-            <ListGroupComponent
-                title={t('settings.exchangeRates')}
-                note={t('settings.markup', { markup: percent(BANK_MARKUP) })}
-            >
+            <ListGroupComponent title={t('settings.exchangeRates')} note={t('settings.markup', { markup: percent(BANK_MARKUP) })}>
                 {CURRENCIES.filter((option) => option.code !== EURO.code).map((option) => {
                     const reference = latest?.rates[option.code];
 
@@ -144,53 +113,17 @@ function BudgetSettingsComponent(): JSX.Element {
             </ListGroupComponent>
 
             <ListGroupComponent title={t('settings.data')}>
-                <ListRowComponent
-                    icon={
-                        <IconTileComponent
-                            icon={List}
-                            color={ACCENT}
-                            size={30}
-                        />
-                    }
-                    title={t('settings.operations')}
-                >
+                <ListRowComponent icon={<IconTileComponent icon={List} color={ACCENT} size={30} />} title={t('settings.operations')}>
                     <span className='text-[15px] text-ink-secondary tabular-nums'>{document.operations.length}</span>
                 </ListRowComponent>
-                <ListRowComponent
-                    icon={
-                        <IconTileComponent
-                            icon={LayoutGrid}
-                            color={ACCENT}
-                            size={30}
-                        />
-                    }
-                    title={t('settings.categories')}
-                >
+                <ListRowComponent icon={<IconTileComponent icon={LayoutGrid} color={ACCENT} size={30} />} title={t('settings.categories')}>
                     <span className='text-[15px] text-ink-secondary tabular-nums'>{document.categories.length}</span>
                 </ListRowComponent>
-                <ListRowComponent
-                    icon={
-                        <IconTileComponent
-                            icon={Trash2}
-                            color={NEGATIVE}
-                            size={30}
-                        />
-                    }
-                    title={t('settings.reset')}
-                    destructive
-                    onClick={() => setIsConfirmingReset(true)}
-                />
+                <ListRowComponent icon={<IconTileComponent icon={Trash2} color={NEGATIVE} size={30} />} title={t('settings.reset')} destructive onClick={() => setIsConfirmingReset(true)} />
             </ListGroupComponent>
 
             <BudgetLimitsComponent open={showLimits} onClose={() => setShowLimits(false)} />
-            <AlertComponent
-                open={isConfirmingReset}
-                title={t('settings.confirmReset')}
-                message={t('settings.resetMessage')}
-                action={t('settings.resetAction')}
-                onConfirm={reset}
-                onCancel={() => setIsConfirmingReset(false)}
-            />
+            <AlertComponent open={isConfirmingReset} title={t('settings.confirmReset')} message={t('settings.resetMessage')} action={t('settings.resetAction')} onConfirm={reset} onCancel={() => setIsConfirmingReset(false)} />
         </div>
     );
 }

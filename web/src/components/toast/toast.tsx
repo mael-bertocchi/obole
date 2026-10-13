@@ -18,14 +18,9 @@ interface ToastComponentProps {
  */
 function ToastComponent(props: ToastComponentProps): JSX.Element {
     return (
-        <div
-            aria-live='polite'
-            className='pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-5 sm:bottom-8'
-        >
+        <div aria-live='polite' className='pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-5 sm:bottom-8'>
             {props.message !== null && (
-                <p
-                    className='animate-rise rounded-full bg-ink/90 px-5 py-3 text-[14px] font-medium text-white shadow-sheet backdrop-blur-xl'
-                >
+                <p className='animate-rise rounded-full bg-ink/90 px-5 py-3 text-[14px] font-medium text-white shadow-sheet backdrop-blur-xl'>
                     {props.message}
                 </p>
             )}

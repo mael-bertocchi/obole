@@ -39,10 +39,7 @@ function NewOperationButtonComponent(): JSX.Element {
     const { openNew }: BudgetEditorContextProps = useBudgetEditorContext();
 
     return (
-        <FrameActionComponent
-            label={t('navigation.newOperation')}
-            onClick={openNew}
-        />
+        <FrameActionComponent label={t('navigation.newOperation')} onClick={openNew} />
     );
 }
 
@@ -82,11 +79,7 @@ function BudgetShellComponent(): JSX.Element {
             <main className='flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center'>
                 <p className='text-[17px] font-semibold'>{t('layout.loadFailed')}</p>
                 <p className='text-[15px] text-ink-secondary'>{error}</p>
-                <button
-                    type='button'
-                    onClick={() => void services.store.refresh()}
-                    className='mt-2 rounded-full bg-accent px-5 py-2 text-[15px] font-semibold text-white'
-                >
+                <button type='button' onClick={() => void services.store.refresh()} className='mt-2 rounded-full bg-accent px-5 py-2 text-[15px] font-semibold text-white'>
                     {t('layout.tryAgain')}
                 </button>
             </main>
@@ -95,11 +88,7 @@ function BudgetShellComponent(): JSX.Element {
 
     return (
         <BudgetEditorProvider>
-            <FrameComponent
-                app={budget}
-                tabs={TABS}
-                action={<NewOperationButtonComponent />}
-            >
+            <FrameComponent app={budget} tabs={TABS} action={<NewOperationButtonComponent />}>
                 <Routes>
                     <Route index element={<BudgetOverviewComponent />} />
                     <Route path='history' element={<BudgetHistoryComponent />} />

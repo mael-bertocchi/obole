@@ -58,20 +58,13 @@ function SheetComponent(props: SheetComponentProps): JSX.Element {
                 <>
                     <header className='flex items-center justify-between px-6 pb-2 pt-5'>
                         <h2 className='text-[20px] font-semibold tracking-tight'>{props.title}</h2>
-                        <button
-                            type='button'
-                            onClick={props.onClose}
-                            aria-label={t('common.close')}
-                            className='flex h-8 w-8 items-center justify-center rounded-full bg-fill text-ink-secondary transition hover:bg-fill-strong'
-                        >
+                        <button type='button' onClick={props.onClose} aria-label={t('common.close')} className='flex h-8 w-8 items-center justify-center rounded-full bg-fill text-ink-secondary transition hover:bg-fill-strong'>
                             <X size={17} strokeWidth={2.4} />
                         </button>
                     </header>
                     <div className='flex-1 overflow-y-auto px-6 pb-6 pt-2'>{props.children}</div>
                     {props.footer !== undefined && (
-                        <footer
-                            className='border-t border-hairline px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4'
-                        >
+                        <footer className='border-t border-hairline px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4'>
                             {props.footer}
                         </footer>
                     )}

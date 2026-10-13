@@ -65,10 +65,7 @@ function BudgetGlanceComponent(): JSX.Element {
                 {hasOperations ? t('budget.of', { amount: euro(figures.limit) }) : t('budget.noOperations')}
             </p>
             <div className='mt-3'>
-                <TrackBarComponent
-                    progress={hasOperations ? figures.progress : 0}
-                    color={isOverBudget ? NEGATIVE : ACCENT}
-                />
+                <TrackBarComponent progress={hasOperations ? figures.progress : 0} color={isOverBudget ? NEGATIVE : ACCENT} />
             </div>
             <dl className='mt-3 flex gap-6 text-[13px]'>
                 <div>

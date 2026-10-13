@@ -47,11 +47,7 @@ function AccountMenuComponent(): JSX.Element {
 
     return (
         <>
-            <MenuComponent
-                label={t('frame.account')}
-                trigger={initial}
-                triggerClassName='flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-[#A1A1A8] to-[#7C7C84] text-[15px] font-semibold text-white shadow-control transition hover:brightness-105'
-            >
+            <MenuComponent label={t('frame.account')} trigger={initial} triggerClassName='flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-[#A1A1A8] to-[#7C7C84] text-[15px] font-semibold text-white shadow-control transition hover:brightness-105'>
                 {(close) => (
                     <>
                         {account !== null && (
@@ -61,12 +57,7 @@ function AccountMenuComponent(): JSX.Element {
                             </div>
                         )}
                         <div className='pt-1.5'>
-                            <Link
-                                to='/account'
-                                onClick={close}
-                                className={item}
-                                role='menuitem'
-                            >
+                            <Link to='/account' onClick={close} className={item} role='menuitem'>
                                 <Settings size={18} className='text-ink-secondary' />
                                 {t('frame.accountSettings')}
                             </Link>
@@ -175,14 +166,9 @@ function FrameComponent(props: FrameComponentProps): JSX.Element {
 
     return (
         <>
-            <header
-                className={`sticky top-0 z-30 border-b bg-canvas/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150 transition-colors duration-200 ${isScrolled ? 'border-hairline' : 'border-transparent'}`}
-            >
+            <header className={`sticky top-0 z-30 border-b bg-canvas/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150 transition-colors duration-200 ${isScrolled ? 'border-hairline' : 'border-transparent'}`}>
                 <div className='mx-auto grid h-14 max-w-5xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-5 sm:px-8'>
-                    <Link
-                        to={props.app === undefined ? '/' : appPath(props.app)}
-                        className='flex items-center gap-2.5 justify-self-start rounded-lg'
-                    >
+                    <Link to={props.app === undefined ? '/' : appPath(props.app)} className='flex items-center gap-2.5 justify-self-start rounded-lg'>
                         {props.app === undefined ? (
                             <LogoComponent size={28} />
                         ) : <AppIconComponent app={props.app} size={28} />}
@@ -192,18 +178,9 @@ function FrameComponent(props: FrameComponentProps): JSX.Element {
                     </Link>
 
                     {tabs.length > 0 && (
-                        <nav
-                            inert={isLaunching}
-                            className={`hidden rounded-full bg-fill-strong/80 p-1 sm:flex ${pageClassName}`}
-                            aria-label={t('frame.sections')}
-                        >
+                        <nav inert={isLaunching} className={`hidden rounded-full bg-fill-strong/80 p-1 sm:flex ${pageClassName}`} aria-label={t('frame.sections')}>
                             {tabs.map(({ to, label, end }) => (
-                                <NavLink
-                                    key={to}
-                                    to={to}
-                                    end={end}
-                                    className={({ isActive }) => `rounded-full px-4 py-1.5 text-[14px] font-medium transition ${isActive ? 'bg-white text-ink shadow-control' : 'text-ink-secondary hover:text-ink'}`}
-                                >
+                                <NavLink key={to} to={to} end={end} className={({ isActive }) => `rounded-full px-4 py-1.5 text-[14px] font-medium transition ${isActive ? 'bg-white text-ink shadow-control' : 'text-ink-secondary hover:text-ink'}`}>
                                     {t(label)}
                                 </NavLink>
                             ))}
@@ -216,15 +193,7 @@ function FrameComponent(props: FrameComponentProps): JSX.Element {
                                 {props.action}
                             </div>
                         )}
-                        <button
-                            ref={launcherButton}
-                            type='button'
-                            aria-label={t('frame.apps')}
-                            aria-expanded={isLaunching}
-                            aria-controls={LAUNCHER_ID}
-                            onClick={() => setIsLaunching(!isLaunching)}
-                            className='flex h-9 w-9 items-center justify-center rounded-full text-ink-secondary transition hover:bg-fill-strong/70 hover:text-ink aria-expanded:bg-fill-strong/70 aria-expanded:text-ink'
-                        >
+                        <button ref={launcherButton} type='button' aria-label={t('frame.apps')} aria-expanded={isLaunching} aria-controls={LAUNCHER_ID} onClick={() => setIsLaunching(!isLaunching)} className='flex h-9 w-9 items-center justify-center rounded-full text-ink-secondary transition hover:bg-fill-strong/70 hover:text-ink aria-expanded:bg-fill-strong/70 aria-expanded:text-ink'>
                             <Grip size={18} strokeWidth={2.2} />
                         </button>
                         <AccountMenuComponent />
@@ -232,38 +201,21 @@ function FrameComponent(props: FrameComponentProps): JSX.Element {
                 </div>
             </header>
 
-            <main
-                inert={isLaunching}
-                className={`mx-auto max-w-5xl px-5 pt-8 sm:px-8 sm:pb-16 sm:pt-10 ${tabs.length > 0 ? 'pb-28' : 'pb-12'} ${pageClassName}`}
-            >
+            <main inert={isLaunching} className={`mx-auto max-w-5xl px-5 pt-8 sm:px-8 sm:pb-16 sm:pt-10 ${tabs.length > 0 ? 'pb-28' : 'pb-12'} ${pageClassName}`}>
                 {props.children}
             </main>
 
             {tabs.length > 0 && (
-                <nav
-                    inert={isLaunching}
-                    className={`fixed inset-x-0 bottom-0 z-30 grid border-t border-hairline bg-canvas/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 sm:hidden ${pageClassName}`}
-                    style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
-                    aria-label={t('frame.sections')}
-                >
+                <nav inert={isLaunching} className={`fixed inset-x-0 bottom-0 z-30 grid border-t border-hairline bg-canvas/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 sm:hidden ${pageClassName}`} style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }} aria-label={t('frame.sections')}>
                     {tabs.map(({ to, label, icon: Icon, end }) => (
-                        <NavLink
-                            key={to}
-                            to={to}
-                            end={end}
-                            className={({ isActive }) => `flex flex-col items-center gap-0.5 pb-1.5 pt-2 text-[11px] font-medium ${isActive ? 'text-accent' : 'text-ink-tertiary'}`}
-                        >
+                        <NavLink key={to} to={to} end={end} className={({ isActive }) => `flex flex-col items-center gap-0.5 pb-1.5 pt-2 text-[11px] font-medium ${isActive ? 'text-accent' : 'text-ink-tertiary'}`}>
                             <Icon size={23} strokeWidth={2} />
                             {t(label)}
                         </NavLink>
                     ))}
                 </nav>
             )}
-            <LauncherComponent
-                id={LAUNCHER_ID}
-                isOpen={isLaunching}
-                onClose={() => setIsLaunching(false)}
-            />
+            <LauncherComponent id={LAUNCHER_ID} isOpen={isLaunching} onClose={() => setIsLaunching(false)} />
         </>
     );
 }

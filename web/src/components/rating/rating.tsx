@@ -58,27 +58,11 @@ function RatingComponent(props: RatingComponentProps): JSX.Element {
         const lit = Math.min(2, Math.max(0, value - index * 2));
 
         return (
-            <span
-                key={index}
-                className='relative inline-block shrink-0'
-                style={{ width: size, height: size }}
-            >
-                <Star
-                    size={size}
-                    strokeWidth={1.8}
-                    className='text-ink-quaternary'
-                />
+            <span key={index} className='relative inline-block shrink-0' style={{ width: size, height: size }}>
+                <Star size={size} strokeWidth={1.8} className='text-ink-quaternary' />
                 {lit > 0 && (
-                    <span
-                        className='absolute inset-y-0 left-0 overflow-hidden'
-                        style={{ width: lit === 2 ? size : size / 2 }}
-                    >
-                        <Star
-                            size={size}
-                            strokeWidth={1.8}
-                            fill={GOLD}
-                            color={GOLD}
-                        />
+                    <span className='absolute inset-y-0 left-0 overflow-hidden' style={{ width: lit === 2 ? size : size / 2 }}>
+                        <Star size={size} strokeWidth={1.8} fill={GOLD} color={GOLD} />
                     </span>
                 )}
             </span>
@@ -87,11 +71,7 @@ function RatingComponent(props: RatingComponentProps): JSX.Element {
 
     if (onChange === undefined) {
         return (
-            <span
-                className='inline-flex items-center gap-0.5'
-                role='img'
-                aria-label={props.label}
-            >
+            <span className='inline-flex items-center gap-0.5' role='img' aria-label={props.label}>
                 {stars}
             </span>
         );
@@ -124,18 +104,7 @@ function RatingComponent(props: RatingComponentProps): JSX.Element {
     };
 
     return (
-        <div
-            role='slider'
-            tabIndex={0}
-            aria-label={props.label}
-            aria-valuemin={1}
-            aria-valuemax={HALVES}
-            aria-valuenow={props.value ?? undefined}
-            aria-valuetext={props.value === null ? undefined : `${props.value / 2} / ${STARS}`}
-            onClick={pick}
-            onKeyDown={step}
-            className='inline-flex cursor-pointer items-center gap-1 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-accent/40'
-        >
+        <div role='slider' tabIndex={0} aria-label={props.label} aria-valuemin={1} aria-valuemax={HALVES} aria-valuenow={props.value ?? undefined} aria-valuetext={props.value === null ? undefined : `${props.value / 2} / ${STARS}`} onClick={pick} onKeyDown={step} className='inline-flex cursor-pointer items-center gap-1 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-accent/40'>
             {stars}
         </div>
     );

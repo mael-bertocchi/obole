@@ -59,21 +59,14 @@ function AppTileComponent(props: AppTileComponentProps): JSX.Element {
     const Widget = props.Widget;
 
     return (
-        <Link
-            to={appPath(props.app)}
-            aria-label={t('home.open', { app: t(props.app.name) })}
-            className='card group block p-5 transition hover:-translate-y-0.5 hover:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_14px_36px_rgb(0_0_0/0.08)] sm:p-6'
-        >
+        <Link to={appPath(props.app)} aria-label={t('home.open', { app: t(props.app.name) })} className='card group block p-5 transition hover:-translate-y-0.5 hover:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_14px_36px_rgb(0_0_0/0.08)] sm:p-6'>
             <div className='flex items-center gap-3.5'>
                 <AppIconComponent app={props.app} size={46} />
                 <div className='min-w-0 flex-1'>
                     <p className='text-[17px] font-semibold tracking-tight'>{t(props.app.name)}</p>
                     <p className='text-[13px] text-ink-secondary'>{t(props.app.summary)}</p>
                 </div>
-                <ChevronRight
-                    size={18}
-                    className='text-ink-quaternary transition group-hover:translate-x-0.5 group-hover:text-ink-tertiary'
-                />
+                <ChevronRight size={18} className='text-ink-quaternary transition group-hover:translate-x-0.5 group-hover:text-ink-tertiary' />
             </div>
             {Widget !== undefined && (
                 <div className='mt-5 border-t border-hairline pt-4'>
@@ -104,11 +97,7 @@ function HomePage(): JSX.Element {
 
                 <div className='mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3'>
                     {TILES.map(({ app, Widget }) => (
-                        <AppTileComponent
-                            key={app.id}
-                            app={app}
-                            Widget={Widget}
-                        />
+                        <AppTileComponent key={app.id} app={app} Widget={Widget} />
                     ))}
                 </div>
             </div>
