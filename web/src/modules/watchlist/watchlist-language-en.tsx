@@ -1,0 +1,103 @@
+/**
+ * @constant watchlistEn
+ * @description Every sentence the watchlist shows, in English. The keys are what the rest of the code asks for; `{name}`
+ * marks a value filled in when the sentence is used.
+ */
+export const watchlistEn = {
+    'watchlist.appName': 'Watchlist',
+    'watchlist.appSummary': 'Films and series to watch, rated once seen',
+
+    'watchlist.eyebrow': 'Watchlist',
+    'watchlist.toWatch': 'To watch',
+    'watchlist.watched': 'Watched',
+    'watchlist.toWatchTitle': 'To watch',
+    'watchlist.watchedTitle': 'Watched',
+    'watchlist.add': 'Add',
+    'watchlist.addFirst': 'Find a film or a series',
+    'watchlist.loadFailed': "Your watchlist couldn't be loaded",
+    'watchlist.tryAgain': 'Try again',
+
+    'watchlist.countOne': '1 title',
+    'watchlist.countMany': '{count} titles',
+    'watchlist.watchedOne': '1 title watched',
+    'watchlist.watchedMany': '{count} titles watched',
+    'watchlist.shelving': 'Shelve by',
+    'watchlist.byGenre': 'Genre',
+    'watchlist.bySaga': 'Saga',
+    'watchlist.byRecent': 'Latest',
+    'watchlist.kind': 'Kind',
+    'watchlist.all': 'All',
+    'watchlist.movies': 'Films',
+    'watchlist.seriesPlural': 'Series',
+    'watchlist.noGenre': 'Other genres',
+    'watchlist.noSaga': 'No saga',
+    'watchlist.emptyQueue': 'Nothing to watch yet.',
+    'watchlist.noneOfKind': 'Nothing of this kind to watch.',
+    'watchlist.order': 'Order',
+    'watchlist.latestWatched': 'Latest',
+    'watchlist.bestRated': 'Best rated',
+    'watchlist.noneWatched': "You haven't marked anything as watched yet.",
+    'watchlist.watchedOn': 'Watched {date}',
+    'watchlist.lastWatched': 'Last watched: {title}',
+    'watchlist.nothingWatched': 'Nothing watched yet',
+
+    'watchlist.movie': 'Film',
+    'watchlist.series': 'Series',
+    'watchlist.minutes': '{minutes} min',
+    'watchlist.hours': '{hours}h {minutes}m',
+    'watchlist.oneSeason': '1 season',
+    'watchlist.seasons': '{count} seasons',
+    'watchlist.stars': '{stars} out of 5 stars',
+    'watchlist.notRated': 'Not rated',
+    'watchlist.unreleased': 'Not released yet',
+
+    'watchlist.searchTitle': 'Search',
+    'watchlist.searchPlaceholder': 'Films and series',
+    'watchlist.searchPrompt': 'Search for a film or a series by its title.',
+    'watchlist.clearSearch': 'Clear search',
+    'watchlist.noResults': 'No films or series found.',
+    'watchlist.backToResults': 'Results',
+    'watchlist.addTitle': 'Add {title}',
+    'watchlist.onList': 'On your list',
+    'watchlist.seen': 'Watched',
+
+    'watchlist.addToWatch': 'Add to the list',
+    'watchlist.alreadySeen': 'Already seen',
+    'watchlist.markWatched': 'Mark as watched',
+    'watchlist.editReview': 'Edit review',
+    'watchlist.watchAgain': 'Watch again',
+    'watchlist.remove': 'Remove',
+    'watchlist.confirmRemove': 'Remove from your watchlist?',
+    'watchlist.removeMessage': 'Your rating and comment will be deleted too.',
+    'watchlist.added': '{title} is on your list.',
+    'watchlist.removed': '{title} is off your list.',
+    'watchlist.backOnList': '{title} is back on your list.',
+    'watchlist.alreadyAdded': 'This title is already on your watchlist.',
+    'watchlist.yourRating': 'Your rating',
+    'watchlist.clearRating': 'Clear',
+    'watchlist.comment': 'Comment',
+    'watchlist.commentPlaceholder': 'What did you think?',
+    'watchlist.watchedDay': 'Watched on',
+    'watchlist.save': 'Save',
+
+    'watchlist.whereToWatch': 'Where to watch',
+    'watchlist.subscription': 'Subscription',
+    'watchlist.free': 'Free',
+    'watchlist.rent': 'Rent',
+    'watchlist.buy': 'Buy',
+    'watchlist.notAvailable': 'Not available in France right now.',
+    'watchlist.offersSource': 'Offers in France by JustWatch.',
+    'watchlist.allOffers': 'All offers',
+    'watchlist.saga': 'Saga',
+    'watchlist.thisFilm': 'This film',
+
+    'watchlist.creditsSource': 'Film and series data and images come from',
+    'watchlist.creditsNotice': 'This product uses the TMDB API but is not endorsed or certified by TMDB.'
+};
+
+/**
+ * @type WatchlistMessages
+ * @description Every sentence of the watchlist in one language. Typing a translation with it makes a forgotten sentence a
+ * build error.
+ */
+export type WatchlistMessages = Record<keyof typeof watchlistEn, string>;

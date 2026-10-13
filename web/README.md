@@ -1,11 +1,11 @@
 # 🖥️ Obole • Web
 
-**Obole, the portal**: a personal space in the browser, light, calm and Apple-like. Open it, sign in with your passkey, and every app is there; for now, the budget, the same as on the iOS app.
+**Obole, the portal**: a personal space in the browser, light, calm and Apple-like. Open it, sign in with your passkey, and every app is there: the budget, the same as on the iOS app, and the watchlist.
 
 ## The portal
 
 - **Passkey only** • one button, Face ID or Touch ID, and the passkey stays in your password manager. No password, no code. While the server has an enrollment token set, the sign-in page also offers to create the first passkey with it.
-- **Home** • a greeting, today's date, and a tile for each app with a glance at it (what is left to spend this month, for the budget).
+- **Home** • a greeting, today's date, and a tile for each app with a glance at it (what is left to spend this month, for the budget; how many titles are left to watch, for the watchlist).
 - **App switcher and account menu** • in the bar, on every page: jump home or to another app, open the account settings, sign out.
 - **Account** • the passkeys that open the portal (add one, remove one, but never the last), the language every app speaks, signing out.
 - **Connect** • `/connect` is the page the iOS app opens in a browser sheet to sign in with the passkey; it hands the app a one-time code, never a session.
@@ -19,6 +19,14 @@
 - **Settings** • sync state, budget and limits, default currency, exchange rates, operation and category counts, reset.
 - **English & French** • the page follows the browser's language, or the one picked in the account settings, and switches on the spot. Amounts and dates are written as in the app: `€1,234.50` in English, `1 234,50 €` in French.
 - **Works on a phone too** • the tabs move to a bottom tab bar and sheets rise from the bottom edge.
+
+## The watchlist
+
+- **To watch** • films and series shelved by genre (their main one), by saga (each saga's films in the order they came out, whatever the order they were added in) or the latest added first, and filtered by films or series. The shelving lives in the address.
+- **Add** • the catalog is searched as you type; add a title in a tap, or open it first.
+- **A title** • poster, year, length or seasons, genres, summary, where to watch it in France (subscription, free, rent, buy) and, for a film, its saga with what is watched and what is left.
+- **Watched** • mark a title watched on a day, with a rating in half stars and a comment, or rate one you have already seen in one go; list them the latest watched first or the best rated first. A title can go back to the list, or off it.
+- **Credits** • data and images come from TMDB and offers from JustWatch, credited as they ask.
 
 ## Stack
 
@@ -39,16 +47,18 @@ src/
 ├─ main.tsx       The router and the providers
 ├─ models.tsx     Maybe, Perhaps
 ├─ components/    One folder per component: the frame (bar, app switcher, account menu), sheet, alert, list group and
-│                 row, icons, ring, track bar, toast…
+│                 row, icons, ring, track bar, poster, rating, toast…
 ├─ modules/       One folder per domain, split into -models, -service, -context, -hooks and -provider files:
 │  ├─ apps/          The apps the portal hosts (manifest type, registry)
 │  ├─ identity/      The session, passkeys, the server's identity routes
 │  ├─ language/      English and French, the picker's state
 │  ├─ toast/         Short messages at the bottom of the page
-│  └─ budget/        The budget app: manifest, service, store, rates, math, formatting, sentences…
+│  ├─ budget/        The budget app: manifest, service, store, rates, math, formatting, sentences…
+│  └─ watchlist/     The watchlist app: manifest, service, store, shelves, formatting, sentences…
 ├─ pages/         One folder per page area, each page or section in its own folder:
 │  ├─ portal/        Home, account, login, connect
-│  └─ budget/        The budget's root page, its tabs (overview, history, settings), sheets and home tile
+│  ├─ budget/        The budget's root page, its tabs (overview, history, settings), sheets and home tile
+│  └─ watchlist/     The watchlist's root page, its tabs (to watch, watched), search and title sheets and home tile
 ├─ styles/        Tailwind entry
 ├─ types/         Vite's environment types
 └─ utils/         Requests (with the session's renewal), tokens, small tools
