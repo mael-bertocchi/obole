@@ -90,7 +90,8 @@ function WatchlistSheetComponent(): JSX.Element {
 
 /**
  * @function WatchlistCreditsComponent
- * @description Where the films and series come from, as the catalog asks to be credited
+ * @description Where the films and series come from, as the catalog asks to be credited: its own logo, as TMDB supplies
+ * it, at the height of the text so it stays quieter than the portal's, and its notice
  *
  * @returns {JSX.Element} The credits
  */
@@ -103,9 +104,15 @@ function WatchlistCreditsComponent(): JSX.Element {
                     href='https://www.themoviedb.org'
                     target='_blank'
                     rel='noreferrer'
-                    className='font-medium text-ink-tertiary underline-offset-2 hover:underline'
+                    className='inline-block rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-accent/40'
                 >
-                    TMDB
+                    <img
+                        src='/tmdb.svg'
+                        alt='TMDB'
+                        width={69}
+                        height={9}
+                        className='inline-block h-[9px] w-auto'
+                    />
                 </a>
                 .
             </p>
