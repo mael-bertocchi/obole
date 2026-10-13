@@ -32,6 +32,7 @@ export const portalEn = {
 
     'frame.sections': 'Sections',
     'frame.home': 'Home',
+    'frame.launcherEyebrow': 'Obole',
     'frame.apps': 'Apps',
     'frame.account': 'Account',
     'frame.accountSettings': 'Account settings',

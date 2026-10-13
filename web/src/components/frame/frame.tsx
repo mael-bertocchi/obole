@@ -1,16 +1,17 @@
 import AlertComponent from 'components/alert/alert';
 import AppIconComponent from 'components/app-icon/app-icon';
+import LauncherComponent from 'components/launcher/launcher';
 import LogoComponent from 'components/logo/logo';
 import MenuComponent from 'components/menu/menu';
 import { Grip, LogOut, Settings, type LucideIcon } from 'lucide-react';
 import type { PortalApp } from 'modules/apps/apps-models';
-import { APPS, appPath } from 'modules/apps/apps-registry';
+import { appPath } from 'modules/apps/apps-registry';
 import { useIdentityContext } from 'modules/identity/identity-hooks';
 import type { IdentityContextProps } from 'modules/identity/identity-models';
 import type { MessageKey } from 'modules/language/language-en';
 import { t } from 'modules/language/language-service';
-import { useEffect, useState, type JSX, type ReactNode } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { useEffect, useRef, useState, type JSX, type ReactNode } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 
 /**
  * @interface FrameTab
@@ -32,49 +33,6 @@ interface FrameComponentProps {
     tabs?: readonly FrameTab[]; /*!< The app's tabs */
     action?: ReactNode; /*!< The app's main action, beside the menus */
     children: ReactNode; /*!< The page */
-}
-
-/**
- * @function LauncherMenuComponent
- * @description The app switcher: the home page and every app, as a grid of icons.
- */
-function LauncherMenuComponent(): JSX.Element {
-    const tile = 'flex flex-col items-center gap-1.5 rounded-2xl px-1 py-3 text-[12px] font-medium text-ink transition hover:bg-fill';
-
-    return (
-        <MenuComponent
-            label={t('frame.apps')}
-            trigger={<Grip size={18} strokeWidth={2.2} />}
-            triggerClassName='flex h-9 w-9 items-center justify-center rounded-full text-ink-secondary transition hover:bg-fill-strong/70 hover:text-ink aria-expanded:bg-fill-strong/70 aria-expanded:text-ink'
-            panelClassName='w-72'
-        >
-            {(close) => (
-                <nav className='grid grid-cols-3 gap-1' aria-label={t('frame.apps')}>
-                    <Link
-                        to='/'
-                        onClick={close}
-                        className={tile}
-                        role='menuitem'
-                    >
-                        <LogoComponent size={44} />
-                        {t('frame.home')}
-                    </Link>
-                    {APPS.map((app) => (
-                        <Link
-                            key={app.id}
-                            to={appPath(app)}
-                            onClick={close}
-                            className={tile}
-                            role='menuitem'
-                        >
-                            <AppIconComponent app={app} size={44} />
-                            {t(app.name)}
-                        </Link>
-                    ))}
-                </nav>
-            )}
-        </MenuComponent>
-    );
 }
 
 /**
@@ -144,11 +102,18 @@ function AccountMenuComponent(): JSX.Element {
 }
 
 /**
+ * @constant LAUNCHER_ID
+ * @description The launcher's identifier, which its button names
+ */
+const LAUNCHER_ID = 'portal-launcher';
+
+/**
  * @function FrameComponent
  * @description The portal's frame around every page: a bar the colour of the page with the app's name on the left, its
  * tabs as a segmented control in the middle, and its action, the app switcher and the account menu on the right. It only
  * draws its bottom rule once the page scrolls under it, like an iOS navigation bar. On a phone the tabs move to a tab bar
- * along the bottom edge.
+ * along the bottom edge. The app switcher's button fades the page out and the launcher in, in its place, with the tabs
+ * and the action, which belong to the page; Escape, the button again, or picking a destination brings the page back.
  *
  * @param {FrameComponentProps} props The properties of the component
  */
@@ -156,6 +121,44 @@ function FrameComponent(props: FrameComponentProps): JSX.Element {
     const tabs = props.tabs ?? [];
 
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isLaunching, setIsLaunching] = useState(false);
+    const launcherButton = useRef<HTMLButtonElement>(null);
+    const { pathname } = useLocation();
+    const [launchedFrom, setLaunchedFrom] = useState(pathname);
+
+    if (launchedFrom !== pathname) {
+        setLaunchedFrom(pathname);
+        setIsLaunching(false);
+    }
+
+    useEffect(() => {
+        if (!isLaunching) {
+            return;
+        }
+
+        /**
+         * @function closeOnEscape
+         * @description Brings the page back on Escape and gives the focus back to the launcher's button
+         */
+        const closeOnEscape = (event: KeyboardEvent): void => {
+            if (event.key === 'Escape') {
+                setIsLaunching(false);
+                launcherButton.current?.focus();
+            }
+        };
+
+        const overflow = document.documentElement.style.overflow;
+
+        document.documentElement.style.overflow = 'hidden';
+        window.addEventListener('keydown', closeOnEscape);
+
+        return () => {
+            document.documentElement.style.overflow = overflow;
+            window.removeEventListener('keydown', closeOnEscape);
+        };
+    }, [isLaunching]);
+
+    const pageClassName = `transition-opacity duration-300 ease-out motion-reduce:transition-none ${isLaunching ? 'pointer-events-none opacity-0' : 'opacity-100'}`;
 
     useEffect(() => {
         /**
@@ -190,7 +193,8 @@ function FrameComponent(props: FrameComponentProps): JSX.Element {
 
                     {tabs.length > 0 && (
                         <nav
-                            className='hidden rounded-full bg-fill-strong/80 p-1 sm:flex'
+                            inert={isLaunching}
+                            className={`hidden rounded-full bg-fill-strong/80 p-1 sm:flex ${pageClassName}`}
                             aria-label={t('frame.sections')}
                         >
                             {tabs.map(({ to, label, end }) => (
@@ -207,22 +211,38 @@ function FrameComponent(props: FrameComponentProps): JSX.Element {
                     )}
 
                     <div className='col-start-3 flex items-center gap-1.5 justify-self-end sm:gap-2'>
-                        {props.action}
-                        <LauncherMenuComponent />
+                        {props.action !== undefined && (
+                            <div inert={isLaunching} className={pageClassName}>
+                                {props.action}
+                            </div>
+                        )}
+                        <button
+                            ref={launcherButton}
+                            type='button'
+                            aria-label={t('frame.apps')}
+                            aria-expanded={isLaunching}
+                            aria-controls={LAUNCHER_ID}
+                            onClick={() => setIsLaunching(!isLaunching)}
+                            className='flex h-9 w-9 items-center justify-center rounded-full text-ink-secondary transition hover:bg-fill-strong/70 hover:text-ink aria-expanded:bg-fill-strong/70 aria-expanded:text-ink'
+                        >
+                            <Grip size={18} strokeWidth={2.2} />
+                        </button>
                         <AccountMenuComponent />
                     </div>
                 </div>
             </header>
 
             <main
-                className={`mx-auto max-w-5xl px-5 pt-8 sm:px-8 sm:pb-16 sm:pt-10 ${tabs.length > 0 ? 'pb-28' : 'pb-12'}`}
+                inert={isLaunching}
+                className={`mx-auto max-w-5xl px-5 pt-8 sm:px-8 sm:pb-16 sm:pt-10 ${tabs.length > 0 ? 'pb-28' : 'pb-12'} ${pageClassName}`}
             >
                 {props.children}
             </main>
 
             {tabs.length > 0 && (
                 <nav
-                    className='fixed inset-x-0 bottom-0 z-30 grid border-t border-hairline bg-canvas/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 sm:hidden'
+                    inert={isLaunching}
+                    className={`fixed inset-x-0 bottom-0 z-30 grid border-t border-hairline bg-canvas/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 sm:hidden ${pageClassName}`}
                     style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
                     aria-label={t('frame.sections')}
                 >
@@ -239,6 +259,11 @@ function FrameComponent(props: FrameComponentProps): JSX.Element {
                     ))}
                 </nav>
             )}
+            <LauncherComponent
+                id={LAUNCHER_ID}
+                isOpen={isLaunching}
+                onClose={() => setIsLaunching(false)}
+            />
         </>
     );
 }

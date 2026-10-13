@@ -33,6 +33,7 @@ const portalFr: PortalMessages = {
 
     'frame.sections': 'Sections',
     'frame.home': 'Accueil',
+    'frame.launcherEyebrow': 'Obole',
     'frame.apps': 'Applications',
     'frame.account': 'Compte',
     'frame.accountSettings': 'Réglages du compte',
