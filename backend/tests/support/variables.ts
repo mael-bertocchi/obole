@@ -20,6 +20,8 @@ export function testVariables(overrides: Partial<Variables> = {}): Variables {
         JWT_SECRET: 'a-test-secret-that-is-at-least-thirty-two-characters',
         JWT_ACCESS_EXPIRY: '15m',
         JWT_REFRESH_EXPIRY: '30d',
+        WATCHLIST_TMDB_TOKEN: 'a-test-tmdb-token',
+        WATCHLIST_TMDB_URL: 'https://tmdb.example.fr/3',
         ...overrides
     };
 }

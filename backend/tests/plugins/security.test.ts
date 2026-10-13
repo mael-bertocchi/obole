@@ -51,6 +51,7 @@ describe('CORS', () => {
         expect(response.statusCode).toBe(204);
         expect(response.headers['access-control-allow-origin']).toBe(WEB);
         expect(response.headers['access-control-allow-methods']).toContain('PUT');
+        expect(response.headers['access-control-allow-methods']).toContain('PATCH');
         expect(response.headers['access-control-allow-headers']).toContain('Authorization');
     });
 

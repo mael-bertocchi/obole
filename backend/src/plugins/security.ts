@@ -38,7 +38,7 @@ export default fp(async function (fastify: FastifyInstance): Promise<void> {
     if (origins.length > 0) {
         await fastify.register(fastifyCors, {
             origin: origins,
-            methods: ['GET', 'POST', 'PUT', 'DELETE'],
+            methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
             allowedHeaders: ['Authorization', 'Content-Type'],
             maxAge: PREFLIGHT_CACHE
         });

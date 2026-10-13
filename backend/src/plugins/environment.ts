@@ -18,7 +18,9 @@ export const variables = Type.Object({
     CORS_ORIGIN: Type.String({ default: '' }),
     JWT_SECRET: Type.String({ minLength: 32 }),
     JWT_ACCESS_EXPIRY: Type.String({ minLength: 1 }),
-    JWT_REFRESH_EXPIRY: Type.String({ minLength: 1 })
+    JWT_REFRESH_EXPIRY: Type.String({ minLength: 1 }),
+    WATCHLIST_TMDB_TOKEN: Type.String({ default: '' }),
+    WATCHLIST_TMDB_URL: Type.String({ pattern: '^https?://[^ ]+[^/]$', default: 'https://api.themoviedb.org/3' })
 });
 
 /**

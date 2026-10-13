@@ -7,6 +7,8 @@ import ratesRoutes from 'src/modules/budget/rates/rates-routes';
 import stateRoutes from 'src/modules/budget/state/state-routes';
 import healthRoutes from 'src/modules/health/health-routes';
 import identityRoutes from 'src/modules/identity/identity-routes';
+import catalogRoutes from 'src/modules/watchlist/catalog/catalog-routes';
+import entriesRoutes from 'src/modules/watchlist/entries/entries-routes';
 import databasePlugin from 'src/plugins/database';
 import environmentPlugin from 'src/plugins/environment';
 import identityPlugin from 'src/plugins/identity';
@@ -115,6 +117,8 @@ async function startServer(): Promise<void> {
     await fastify.register(identityRoutes, { prefix: '/v1/identity' });
     await fastify.register(ratesRoutes, { prefix: '/v1/budget/rates' });
     await fastify.register(stateRoutes, { prefix: '/v1/budget/state' });
+    await fastify.register(catalogRoutes, { prefix: '/v1/watchlist/catalog' });
+    await fastify.register(entriesRoutes, { prefix: '/v1/watchlist/entries' });
 
     fastify.setNotFoundHandler(handleNotFound);
 

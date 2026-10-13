@@ -1,0 +1,125 @@
+import type { RequestGenericInterface } from 'fastify';
+import { MediaTypeSchema } from 'src/modules/watchlist/catalog/catalog-models';
+import { z } from 'zod';
+
+/**
+ * @constant RATING_MAX
+ * @description The best rating, in half stars: five stars.
+ */
+export const RATING_MAX = 10;
+
+/**
+ * @constant COMMENT_MAX
+ * @description How long a comment may be, in characters.
+ */
+export const COMMENT_MAX = 2000;
+
+/**
+ * @constant LocalizedTextSchema
+ * @description Zod schema for a text the catalog writes in each of the portal's languages, such as a title.
+ */
+export const LocalizedTextSchema = z.object({
+    en: z.string(),
+    fr: z.string()
+});
+
+/**
+ * @constant EntrySchema
+ * @description Zod schema for a title on the watchlist: to watch while `watchedAt` is null, watched after, with a rating
+ * in half stars (1 to 10) and a comment. Its title and its saga's name are kept in both of the portal's languages.
+ */
+export const EntrySchema = z.object({
+    id: z.string(),
+    tmdbId: z.number().int(),
+    mediaType: MediaTypeSchema,
+    title: LocalizedTextSchema,
+    originalTitle: z.string(),
+    releaseDate: z.string().nullable(),
+    posterPath: z.string().nullable(),
+    genreIds: z.array(z.number().int()),
+    collectionId: z.number().int().nullable(),
+    collectionName: LocalizedTextSchema.nullable(),
+    runtime: z.number().int().nullable(),
+    seasons: z.number().int().nullable(),
+    addedAt: z.date(),
+    watchedAt: z.date().nullable(),
+    rating: z.number().int().nullable(),
+    comment: z.string().nullable()
+});
+
+/**
+ * @constant EntryCreateSchema
+ * @description Zod schema for adding a title. The server reads what it is from the catalog itself.
+ */
+export const EntryCreateSchema = z.object({
+    mediaType: MediaTypeSchema,
+    tmdbId: z.number().int().positive()
+});
+
+/**
+ * @constant EntryUpdateSchema
+ * @description Zod schema for changing a title: marking it watched (or not), rating it, commenting on it. A field left
+ * out stays as it is; an empty comment is no comment.
+ */
+export const EntryUpdateSchema = z.object({
+    watchedAt: z.coerce.date().nullable().optional(),
+    rating: z.number().int().min(1).max(RATING_MAX).nullable().optional(),
+    comment: z.string().trim().max(COMMENT_MAX).nullable().optional().transform((value) => (value === '' ? null : value))
+});
+
+/**
+ * @constant EntryParamsSchema
+ * @description Zod schema for the title a change is about.
+ */
+export const EntryParamsSchema = z.object({
+    entryId: z.uuid()
+});
+
+/**
+ * @interface EntryCreateRequest
+ * @description Fastify request generic for adding a title.
+ *
+ * @extends RequestGenericInterface
+ */
+export interface EntryCreateRequest extends RequestGenericInterface {
+    Body: z.infer<typeof EntryCreateSchema>; /*!< The title to add */
+}
+
+/**
+ * @interface EntryUpdateRequest
+ * @description Fastify request generic for changing a title.
+ *
+ * @extends RequestGenericInterface
+ */
+export interface EntryUpdateRequest extends RequestGenericInterface {
+    Params: z.infer<typeof EntryParamsSchema>; /*!< The title */
+    Body: z.infer<typeof EntryUpdateSchema>; /*!< What changes */
+}
+
+/**
+ * @interface EntryDeleteRequest
+ * @description Fastify request generic for taking a title off the watchlist.
+ *
+ * @extends RequestGenericInterface
+ */
+export interface EntryDeleteRequest extends RequestGenericInterface {
+    Params: z.infer<typeof EntryParamsSchema>; /*!< The title */
+}
+
+/**
+ * @type Entry
+ * @description A title on the watchlist.
+ */
+export type Entry = z.infer<typeof EntrySchema>;
+
+/**
+ * @type EntryCreate
+ * @description What adding a title says.
+ */
+export type EntryCreate = z.infer<typeof EntryCreateSchema>;
+
+/**
+ * @type EntryUpdate
+ * @description What changing a title says.
+ */
+export type EntryUpdate = z.infer<typeof EntryUpdateSchema>;

@@ -93,3 +93,36 @@ model BudgetExchangeRateSnapshot {
 
   @@map("budget_exchange_rate_snapshots")
 }
+
+enum WatchlistMediaType {
+  movie
+  tv
+
+  @@map("watchlist_media_type")
+}
+
+model WatchlistEntry {
+  id               String             @id @default(uuid())
+  tmdbId           Int                @map("tmdb_id")
+  mediaType        WatchlistMediaType @map("media_type")
+  titleEn          String             @map("title_en")
+  titleFr          String             @map("title_fr")
+  originalTitle    String             @map("original_title")
+  releaseDate      String?            @map("release_date")
+  posterPath       String?            @map("poster_path")
+  genreIds         Int[]              @default([]) @map("genre_ids")
+  collectionId     Int?               @map("collection_id")
+  collectionNameEn String?            @map("collection_name_en")
+  collectionNameFr String?            @map("collection_name_fr")
+  runtime          Int?
+  seasons          Int?
+  addedAt          DateTime           @default(now()) @map("added_at")
+  watchedAt        DateTime?          @map("watched_at")
+  rating           Int?
+  comment          String?
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  @@unique([mediaType, tmdbId])
+  @@index([watchedAt])
+  @@map("watchlist_entries")
+}

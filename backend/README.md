@@ -1,17 +1,18 @@
 # ⚙️ Obole • Backend
 
-The **Fastify + TypeScript** server behind the Obole portal: it opens the single account with a passkey and keeps the data of every app (the budget, for now), backed by PostgreSQL.
+The **Fastify + TypeScript** server behind the Obole portal: it opens the single account with a passkey and keeps the data of every app (the budget and the watchlist), backed by PostgreSQL.
 
 ## Features
 
 - **REST API** • versioned under `/v1`, split into focused modules: the portal's own (identity, health) and one folder per app under `modules/<app>/`, served under `/v1/<app>`. In the database too, every model and table starts with its app (`BudgetOperation` in `budget_operations`; `Identity…` for the portal's own), so apps never fight over a name.
 - **Passkey-only identity** • the single account opens with a passkey (WebAuthn), nothing else: no password, no code, no user table, no registration. The first passkey is created with an enrollment token you set only for that; the iOS app signs in through the portal with a one-time code bound to a PKCE challenge. JWT access + refresh sessions.
 - **Document sync** • clients pull and replace the whole budget document (`GET`/`PUT /v1/budget/state`), stored relationally and written in one transaction. Each write bumps a revision, and a write made from an older revision is refused, so the app and the web interface never erase each other's changes.
+- **Watchlist** • films and series to watch, then watched with a rating in half stars and a comment (`/v1/watchlist/entries`). What a title is comes from TMDB, which the server asks itself so its token never leaves it (`/v1/watchlist/catalog`): search, details with where to watch it in France (JustWatch data), sagas and genres, kept in memory for a while. A title and its saga's name are stored in English and in French, so the list reads right in either language.
 - **Hardened** • Helmet, CORS open to the portal's origin only, rate limiting, Zod request validation, and a non-root Docker image.
 
 ## Stack
 
-Node 24 · Fastify 5 · TypeScript · Prisma 7 · PostgreSQL · Zod · SimpleWebAuthn
+Node 24 · Fastify 5 · TypeScript · Prisma 7 · PostgreSQL · Zod · SimpleWebAuthn · TMDB
 
 ## API
 
@@ -35,9 +36,17 @@ Node 24 · Fastify 5 · TypeScript · Prisma 7 · PostgreSQL · Zod · SimpleWeb
 | `PUT /v1/budget/state` | access | Replace the whole budget document; `409` if the `revision` it names is out of date |
 | `GET /v1/budget/rates` | access | The latest euro reference rates |
 | `GET /v1/budget/rates/:date` | access | The reference rates of one past day |
+| `GET /v1/watchlist/entries` | access | Every title on the watchlist |
+| `POST /v1/watchlist/entries` | access | Add a `{ mediaType, tmdbId }`, described by the catalog; `409` if it is already there |
+| `PATCH /v1/watchlist/entries/:id` | access | Mark it watched (`watchedAt`), rate it (`rating`, 1 to 10 half stars), comment on it; marking it unwatched forgets both |
+| `DELETE /v1/watchlist/entries/:id` | access | Take a title off the watchlist |
+| `GET /v1/watchlist/catalog/search?query=` | access | Find films and series in the catalog |
+| `GET /v1/watchlist/catalog/titles/:mediaType/:tmdbId` | access | A title's details, and where to watch it in France |
+| `GET /v1/watchlist/catalog/collections/:id` | access | A saga's films, in the order they came out |
+| `GET /v1/watchlist/catalog/genres` | access | Every genre of films and series |
 | `GET /v1/health` | public | Liveness and database connectivity |
 
-Every response is wrapped in `{ "data": … }`; errors are `{ "message": …, "data": … }`.
+Every response is wrapped in `{ "data": … }`; errors are `{ "message": …, "data": … }`. The catalog routes write in `?language=en` or `fr` (French by default).
 
 ## Getting Started
 
@@ -55,7 +64,7 @@ npm install
 cp .env.example .env
 ```
 
-Fill in `DATABASE_URL`, set the portal's origin in `IDENTITY_ORIGIN` (passkeys are bound to its host name) and your name in `IDENTITY_OWNER_NAME`, set a long random `JWT_SECRET` (≥ 32 chars), and list the portal's origin in `CORS_ORIGIN` too (comma-separated if there are several; leave it empty to allow no browser origin at all, since the iOS app doesn't need it). To create your first passkey, also set `IDENTITY_ENROLLMENT_TOKEN` (see below). Locally, the portal runs at `http://localhost:5173`, which passkeys accept as a secure origin.
+Fill in `DATABASE_URL`, set the portal's origin in `IDENTITY_ORIGIN` (passkeys are bound to its host name) and your name in `IDENTITY_OWNER_NAME`, set a long random `JWT_SECRET` (≥ 32 chars), and list the portal's origin in `CORS_ORIGIN` too (comma-separated if there are several; leave it empty to allow no browser origin at all, since the iOS app doesn't need it). To create your first passkey, also set `IDENTITY_ENROLLMENT_TOKEN`, and for the watchlist's catalog, `WATCHLIST_TMDB_TOKEN` (both below). Locally, the portal runs at `http://localhost:5173`, which passkeys accept as a secure origin.
 
 3. Apply the database migrations
 
@@ -93,6 +102,16 @@ While it is set, the portal's sign-in page offers **Set up a passkey**: paste th
 **The iOS app** can't use the portal's passkeys directly (that takes the Associated Domains capability, out of reach of a free developer team), so it signs in through the portal: it opens `/connect` in a browser sheet with a PKCE challenge, the page signs in with the passkey and gets a one-time code bound to that challenge (`POST /v1/identity/connect`), and the app trades it with its verifier (`POST /v1/identity/connect/token`). A code lives two minutes, works once, and is useless without the verifier.
 
 The last passkey can't be removed, so the account can't be locked by mistake.
+
+## Watchlist catalog
+
+The watchlist reads films and series from [TMDB](https://www.themoviedb.org), free for a personal, non-commercial project. Create an account there, ask for an API key in its settings (*API*), and copy the **API Read Access Token** (the long one) into:
+
+```bash
+WATCHLIST_TMDB_TOKEN="eyJ…"
+```
+
+Without it, the watchlist still lists its titles, but searching and opening one answer `503`. Where to watch a title comes from JustWatch through TMDB, for France only. As both ask, the portal credits TMDB at the bottom of the watchlist and JustWatch under the offers.
 
 ## Scripts
 
