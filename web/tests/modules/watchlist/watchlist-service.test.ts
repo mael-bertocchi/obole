@@ -22,14 +22,14 @@ describe('watchlistService', () => {
         expect(calls[3]?.[1].body).toBe(JSON.stringify({ mediaType: 'movie', tmdbId: 120 }));
     });
 
-    it('names what to fix when the catalog has no token, or a refused one', async () => {
+    it('says when the catalog has no token, or a refused one', async () => {
         vi.mocked(fetchWithAuthentication).mockRejectedValueOnce(new RequestError(503, 'The server is unavailable right now.', 'catalog-not-configured'));
 
-        await expect(watchlistService.searchTitles('Dune')).rejects.toMatchObject({ status: 503, message: "The catalog isn't set up on the server: WATCHLIST_TMDB_TOKEN is missing." });
+        await expect(watchlistService.searchTitles('Dune')).rejects.toMatchObject({ status: 503, message: "The catalog isn't set up on the server: The TMDB token is missing." });
 
         vi.mocked(fetchWithAuthentication).mockRejectedValueOnce(new RequestError(503, 'The server is unavailable right now.', 'catalog-refused'));
 
-        await expect(watchlistService.getTitle({ mediaType: 'movie', tmdbId: 438631 })).rejects.toMatchObject({ message: expect.stringContaining('TMDB refuses the server') });
+        await expect(watchlistService.getTitle({ mediaType: 'movie', tmdbId: 438631 })).rejects.toMatchObject({ message: "TMDB refuses the server's token." });
     });
 
     it('leaves any other failure as it is', async () => {
