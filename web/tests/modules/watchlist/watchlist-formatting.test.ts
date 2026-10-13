@@ -1,5 +1,5 @@
 import { chooseLanguage } from 'modules/language/language-service';
-import { imageUrl, ratingText, releaseYear, runtimeText, titleFacts } from 'modules/watchlist/watchlist-formatting';
+import { imageUrl, ratingText, releaseYear, runtimeText, titleFacts, titlesText, watchedText } from 'modules/watchlist/watchlist-formatting';
 import { describe, expect, it } from 'vitest';
 
 describe('watchlist formatting', () => {
@@ -24,6 +24,14 @@ describe('watchlist formatting', () => {
         expect(titleFacts({ releaseDate: '2001-12-18', mediaType: 'movie', runtime: 179 })).toBe('2001 • Film • 2h 59m');
         expect(titleFacts({ releaseDate: '2011-04-17', mediaType: 'tv', seasons: 8 })).toBe('2011 • Series • 8 seasons');
         expect(titleFacts({ releaseDate: null, mediaType: 'tv', seasons: 1 })).toBe('Series • 1 season');
+    });
+
+    it('counts titles with each language’s singular, which takes 0 in French', () => {
+        expect([0, 1, 2].map(titlesText)).toEqual(['0 titles', '1 title', '2 titles']);
+        expect(watchedText(1)).toBe('1 title watched');
+        chooseLanguage('fr');
+        expect([0, 1, 2].map(titlesText)).toEqual(['0 titre', '1 titre', '2 titres']);
+        expect([0, 3].map(watchedText)).toEqual(['0 titre vu', '3 titres vus']);
     });
 
     it('writes a rating in stars, with the page’s decimal separator', () => {

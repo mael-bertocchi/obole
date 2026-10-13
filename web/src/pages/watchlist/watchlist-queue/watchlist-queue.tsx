@@ -3,7 +3,7 @@ import SearchFieldComponent from 'components/search-field/search-field';
 import { Plus } from 'lucide-react';
 import type { MessageKey } from 'modules/language/language-en';
 import { t } from 'modules/language/language-service';
-import { localized, releaseYear } from 'modules/watchlist/watchlist-formatting';
+import { localized, releaseYear, titlesText } from 'modules/watchlist/watchlist-formatting';
 import { useWatchlist, useWatchlistSheetContext } from 'modules/watchlist/watchlist-hooks';
 import type { Entry, WatchlistSheetContextProps } from 'modules/watchlist/watchlist-models';
 import type { KindFilter, ShelfOrder } from 'modules/watchlist/watchlist-shelves';
@@ -120,7 +120,7 @@ function WatchlistQueueComponent(): JSX.Element {
             <p className='eyebrow'>{t('watchlist.eyebrow')}</p>
             <h1 className='mt-1 text-[34px] font-semibold leading-tight tracking-tight'>{t('watchlist.toWatchTitle')}</h1>
             <p className='mt-1 text-[15px] text-ink-secondary'>
-                {total === 1 ? t('watchlist.countOne') : t('watchlist.countMany', { count: total })}
+                {titlesText(total)}
             </p>
 
             <SearchFieldComponent

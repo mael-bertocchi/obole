@@ -4,7 +4,7 @@ import RatingComponent from 'components/rating/rating';
 import SearchFieldComponent from 'components/search-field/search-field';
 import type { MessageKey } from 'modules/language/language-en';
 import { t } from 'modules/language/language-service';
-import { dayText, localized, ratingText, releaseYear } from 'modules/watchlist/watchlist-formatting';
+import { dayText, localized, ratingText, releaseYear, watchedText } from 'modules/watchlist/watchlist-formatting';
 import { useWatchlist, useWatchlistSheetContext } from 'modules/watchlist/watchlist-hooks';
 import type { Entry, WatchlistSheetContextProps } from 'modules/watchlist/watchlist-models';
 import type { WatchedOrder } from 'modules/watchlist/watchlist-shelves';
@@ -113,7 +113,7 @@ function WatchlistWatchedComponent(): JSX.Element {
             <p className='eyebrow'>{t('watchlist.eyebrow')}</p>
             <h1 className='mt-1 text-[34px] font-semibold leading-tight tracking-tight'>{t('watchlist.watchedTitle')}</h1>
             <p className='mt-1 text-[15px] text-ink-secondary'>
-                {watched.length === 1 ? t('watchlist.watchedOne') : t('watchlist.watchedMany', { count: watched.length })}
+                {watchedText(watched.length)}
             </p>
 
             <SearchFieldComponent

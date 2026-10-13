@@ -75,6 +75,39 @@ export function runtimeText(minutes: number): string {
 }
 
 /**
+ * @function isSingular
+ * @description Whether a count takes the singular in the page's language: 1 in English, 0 and 1 in French
+ *
+ * @param {number} count The count
+ * @returns {boolean} Whether it takes the singular
+ */
+function isSingular(count: number): boolean {
+    return new Intl.PluralRules(currentLanguage()).select(count) === 'one';
+}
+
+/**
+ * @function titlesText
+ * @description How many titles there are to watch
+ *
+ * @param {number} count The number of titles
+ * @returns {string} The number of titles, written out
+ */
+export function titlesText(count: number): string {
+    return isSingular(count) ? t('watchlist.countOne', { count }) : t('watchlist.countMany', { count });
+}
+
+/**
+ * @function watchedText
+ * @description How many titles were watched
+ *
+ * @param {number} count The number of titles
+ * @returns {string} The number of titles, written out
+ */
+export function watchedText(count: number): string {
+    return isSingular(count) ? t('watchlist.watchedOne', { count }) : t('watchlist.watchedMany', { count });
+}
+
+/**
  * @function seasonsText
  * @description How many seasons a series has
  *
@@ -82,7 +115,7 @@ export function runtimeText(minutes: number): string {
  * @returns {string} The number of seasons, written out
  */
 export function seasonsText(seasons: number): string {
-    return seasons === 1 ? t('watchlist.oneSeason') : t('watchlist.seasons', { count: seasons });
+    return isSingular(seasons) ? t('watchlist.oneSeason', { count: seasons }) : t('watchlist.seasons', { count: seasons });
 }
 
 /**
