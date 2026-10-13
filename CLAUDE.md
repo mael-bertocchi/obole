@@ -86,7 +86,7 @@ When pending changes are ready, use the following workflow:
    - Use an optional scope in parentheses.
    - Keep the message to exactly one line.
    - Do not add a body, co-author trailer, or tool-attribution trailer.
-4. Push the commit.
+4. Do not push. Push only when the user explicitly asks for it in the current conversation; otherwise, once committed, stop and ask.
 
 ### Version bumps
 
