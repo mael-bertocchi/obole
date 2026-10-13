@@ -14,7 +14,7 @@ import type { BudgetEditorRoute, Operation } from 'modules/budget/budget-models'
 import { amountInputOf, deleteOperation, groupAmountInput, Limits, parseAmountInput, sanitizeAmountInput, toOperation, upsertOperation } from 'modules/budget/budget-operations';
 import { defaultCurrency, rememberCurrency } from 'modules/budget/budget-preferences';
 import { t } from 'modules/language/language-service';
-import { useEffect, useState, type JSX, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type JSX, type ReactNode } from 'react';
 
 /**
  * @constant FORM_ID
@@ -199,15 +199,17 @@ function OperationFormComponent(props: OperationFormComponentProps): JSX.Element
         rateLine = t('operation.rate', { rate: rate(appliedRate) });
     }
 
+    /**
+     * @function submit
+     * @description Saves the operation instead of sending the form
+     */
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+        save();
+    };
+
     return (
-        <form
-            id={FORM_ID}
-            onSubmit={(event) => {
-                event.preventDefault();
-                save();
-            }}
-            className='space-y-5'
-        >
+        <form id={FORM_ID} onSubmit={submit} className='space-y-5'>
             <div className='flex flex-col items-center pb-2 pt-1'>
                 <label htmlFor='amount' className='eyebrow'>{t('operation.amount')}</label>
                 <div className='mt-2 flex items-center gap-2'>
@@ -327,19 +329,19 @@ function BudgetOperationComponent(props: BudgetOperationComponentProps): JSX.Ele
         props.onClose();
     };
 
+    /**
+     * @constant footer
+     * @description The button saving the operation, pinned under the form, unless the operation is gone
+     */
+    const footer = isMissing ? undefined : (
+        <button type='submit' form={FORM_ID} disabled={!canSave} className='button-primary'>
+            {route?.kind === 'edit' ? t('operation.saveChanges') : t('operation.save')}
+        </button>
+    );
+
     return (
         <>
-            <SheetComponent
-                open={route !== null}
-                title={route?.kind === 'edit' ? t('operation.edit') : t('operation.new')}
-                onClose={props.onClose}
-                isFull
-                footer={isMissing ? undefined : (
-                    <button type='submit' form={FORM_ID} disabled={!canSave} className='button-primary'>
-                        {route?.kind === 'edit' ? t('operation.saveChanges') : t('operation.save')}
-                    </button>
-                )}
-            >
+            <SheetComponent open={route !== null} title={route?.kind === 'edit' ? t('operation.edit') : t('operation.new')} onClose={props.onClose} isFull footer={footer}>
                 {isMissing
                     ? <p className='py-10 text-center text-[15px] text-ink-secondary'>{t('operation.missing')}</p>
                     : (

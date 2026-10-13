@@ -45,6 +45,26 @@ function AccountMenuComponent(): JSX.Element {
     const initial = account?.name.trim().charAt(0).toLocaleUpperCase() ?? '';
     const item = 'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] transition hover:bg-fill';
 
+    /**
+     * @function askToSignOut
+     * @description Closes the menu and asks whether to sign out
+     *
+     * @param {() => void} closeMenu Closes the menu
+     */
+    const askToSignOut = (closeMenu: () => void): void => {
+        closeMenu();
+        setIsConfirming(true);
+    };
+
+    /**
+     * @function confirmSignOut
+     * @description Signs out, once confirmed
+     */
+    const confirmSignOut = (): void => {
+        setIsConfirming(false);
+        void signOut();
+    };
+
     return (
         <>
             <MenuComponent label={t('frame.account')} trigger={initial} triggerClassName='flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-[#A1A1A8] to-[#7C7C84] text-[15px] font-semibold text-white shadow-control transition hover:brightness-105'>
@@ -61,15 +81,7 @@ function AccountMenuComponent(): JSX.Element {
                                 <Settings size={18} className='text-ink-secondary' />
                                 {t('frame.accountSettings')}
                             </Link>
-                            <button
-                                type='button'
-                                role='menuitem'
-                                onClick={() => {
-                                    close();
-                                    setIsConfirming(true);
-                                }}
-                                className={`${item} text-negative-text`}
-                            >
+                            <button type='button' role='menuitem' onClick={() => askToSignOut(close)} className={`${item} text-negative-text`}>
                                 <LogOut size={18} />
                                 {t('frame.signOut')}
                             </button>
@@ -77,17 +89,7 @@ function AccountMenuComponent(): JSX.Element {
                     </>
                 )}
             </MenuComponent>
-            <AlertComponent
-                open={isConfirming}
-                title={t('account.confirmSignOut')}
-                message={t('account.signOutMessage')}
-                action={t('account.signOut')}
-                onConfirm={() => {
-                    setIsConfirming(false);
-                    void signOut();
-                }}
-                onCancel={() => setIsConfirming(false)}
-            />
+            <AlertComponent open={isConfirming} title={t('account.confirmSignOut')} message={t('account.signOutMessage')} action={t('account.signOut')} onConfirm={confirmSignOut} onCancel={() => setIsConfirming(false)} />
         </>
     );
 }

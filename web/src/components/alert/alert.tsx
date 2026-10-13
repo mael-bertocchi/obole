@@ -1,5 +1,5 @@
 import { t } from 'modules/language/language-service';
-import { useEffect, useRef, type JSX } from 'react';
+import { useEffect, useRef, type JSX, type SyntheticEvent } from 'react';
 
 /**
  * @interface AlertComponentProps
@@ -37,15 +37,17 @@ function AlertComponent(props: AlertComponentProps): JSX.Element {
         }
     }, [props.open]);
 
+    /**
+     * @function cancel
+     * @description Answers Escape like the cancel button, rather than letting the browser close the alert on its own
+     */
+    const cancel = (event: SyntheticEvent<HTMLDialogElement>): void => {
+        event.preventDefault();
+        props.onCancel();
+    };
+
     return (
-        <dialog
-            ref={dialog}
-            className='alert'
-            onCancel={(event) => {
-                event.preventDefault();
-                props.onCancel();
-            }}
-        >
+        <dialog ref={dialog} className='alert' onCancel={cancel}>
             <div className='px-5 pb-4 pt-5 text-center'>
                 <h3 className='text-[17px] font-semibold'>{props.title}</h3>
                 {props.message !== undefined && <p className='mt-1 text-[13px] text-ink-secondary'>{props.message}</p>}

@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import { t } from 'modules/language/language-service';
-import { useEffect, useRef, type JSX, type ReactNode } from 'react';
+import { useEffect, useRef, type JSX, type MouseEvent, type ReactNode, type SyntheticEvent } from 'react';
 
 /**
  * @interface SheetComponentProps
@@ -39,21 +39,27 @@ function SheetComponent(props: SheetComponentProps): JSX.Element {
         }
     }, [props.open]);
 
+    /**
+     * @function cancel
+     * @description Answers Escape like the close button, rather than letting the browser close the sheet on its own
+     */
+    const cancel = (event: SyntheticEvent<HTMLDialogElement>): void => {
+        event.preventDefault();
+        props.onClose();
+    };
+
+    /**
+     * @function closeBeside
+     * @description Closes the sheet on a click beside it, on the dimmed page
+     */
+    const closeBeside = (event: MouseEvent<HTMLDialogElement>): void => {
+        if (event.target === dialog.current) {
+            props.onClose();
+        }
+    };
+
     return (
-        <dialog
-            ref={dialog}
-            className={props.isFull === true ? 'sheet sheet-full' : 'sheet'}
-            aria-label={props.title}
-            onCancel={(event) => {
-                event.preventDefault();
-                props.onClose();
-            }}
-            onClick={(event) => {
-                if (event.target === dialog.current) {
-                    props.onClose();
-                }
-            }}
-        >
+        <dialog ref={dialog} className={props.isFull === true ? 'sheet sheet-full' : 'sheet'} aria-label={props.title} onCancel={cancel} onClick={closeBeside}>
             {props.open && (
                 <>
                     <header className='flex items-center justify-between px-6 pb-2 pt-5'>

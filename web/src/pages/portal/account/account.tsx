@@ -14,7 +14,7 @@ import identityService from 'modules/identity/identity-service';
 import { chooseLanguage, currentLanguage, isLanguageChoice, LANGUAGES, languageChoice, t } from 'modules/language/language-service';
 import { useToastContext } from 'modules/toast/toast-hooks';
 import type { ToastContextProps } from 'modules/toast/toast-models';
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useState, type ChangeEvent, type JSX } from 'react';
 import { messageOf } from 'utils/tools';
 
 /**
@@ -58,25 +58,28 @@ function PasskeyRowComponent(props: PasskeyRowComponentProps): JSX.Element {
     const name = passkeyName(props.passkey);
     const used = props.passkey.lastUsedAt === null ? t('account.neverUsed') : t('account.lastUsed', { date: day(props.passkey.lastUsedAt) });
 
+    /**
+     * @constant title
+     * @description The passkey's name, whether it is synced, and when it was created and last used
+     */
+    const title = (
+        <span className='block'>
+            <span className='flex items-center gap-2'>
+                {name}
+                {props.passkey.backedUp && (
+                    <span className='rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent'>
+                        {t('account.synced')}
+                    </span>
+                )}
+            </span>
+            <span className='block text-[13px] text-ink-secondary'>
+                {t('account.created', { date: day(props.passkey.createdAt) })} • {used}
+            </span>
+        </span>
+    );
+
     return (
-        <ListRowComponent
-            icon={<IconTileComponent icon={KeyRound} color={ACCENT} size={30} />}
-            title={
-                <span className='block'>
-                    <span className='flex items-center gap-2'>
-                        {name}
-                        {props.passkey.backedUp && (
-                            <span className='rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent'>
-                                {t('account.synced')}
-                            </span>
-                        )}
-                    </span>
-                    <span className='block text-[13px] text-ink-secondary'>
-                        {t('account.created', { date: day(props.passkey.createdAt) })} • {used}
-                    </span>
-                </span>
-            }
-        >
+        <ListRowComponent icon={<IconTileComponent icon={KeyRound} color={ACCENT} size={30} />} title={title}>
             {props.canRemove && (
                 <button type='button' onClick={props.onRemove} aria-label={t('account.removePasskey', { name })} className='flex h-8 w-8 items-center justify-center rounded-full text-ink-tertiary transition hover:bg-negative-soft hover:text-negative-text'>
                     <Trash2 size={17} />
@@ -151,6 +154,40 @@ function AccountPage(): JSX.Element {
         }
     };
 
+    /**
+     * @function pickLanguage
+     * @description Switches every app to the language picked
+     */
+    const pickLanguage = (event: ChangeEvent<HTMLSelectElement>): void => {
+        const next = event.target.value;
+
+        if (!isLanguageChoice(next)) {
+            return;
+        }
+
+        setLanguage(next);
+        chooseLanguage(next);
+    };
+
+    /**
+     * @function confirmRemove
+     * @description Removes the passkey asked about, once confirmed
+     */
+    const confirmRemove = (): void => {
+        if (removing !== null) {
+            void remove(removing);
+        }
+    };
+
+    /**
+     * @function confirmSignOut
+     * @description Signs out, once confirmed
+     */
+    const confirmSignOut = (): void => {
+        setIsConfirmingSignOut(false);
+        void signOut();
+    };
+
     return (
         <FrameComponent>
             <div className='animate-rise'>
@@ -174,21 +211,7 @@ function AccountPage(): JSX.Element {
 
                 <ListGroupComponent title={t('account.general')}>
                     <ListRowComponent icon={<IconTileComponent icon={Languages} color={ACCENT} size={30} />} title={<label htmlFor='language'>{t('account.language')}</label>}>
-                        <select
-                            id='language'
-                            value={language}
-                            onChange={(event) => {
-                                const next = event.target.value;
-
-                                if (!isLanguageChoice(next)) {
-                                    return;
-                                }
-
-                                setLanguage(next);
-                                chooseLanguage(next);
-                            }}
-                            className='cursor-pointer rounded-lg bg-transparent py-1 text-right text-[15px] text-ink-secondary outline-none focus:ring-2 focus:ring-accent/40'
-                        >
+                        <select id='language' value={language} onChange={pickLanguage} className='cursor-pointer rounded-lg bg-transparent py-1 text-right text-[15px] text-ink-secondary outline-none focus:ring-2 focus:ring-accent/40'>
                             <option value='automatic'>{t('account.automatic')}</option>
                             {LANGUAGES.map((option) => (
                                 <option key={option.code} value={option.code} lang={option.code}>
@@ -205,29 +228,8 @@ function AccountPage(): JSX.Element {
 
                 <p className='mt-10 text-center text-[12px] text-ink-quaternary'>Obole Web {__APP_VERSION__}</p>
 
-                <AlertComponent
-                    open={removing !== null}
-                    title={t('account.confirmRemove')}
-                    message={t('account.removeMessage')}
-                    action={t('account.removeAction')}
-                    onConfirm={() => {
-                        if (removing !== null) {
-                            void remove(removing);
-                        }
-                    }}
-                    onCancel={() => setRemoving(null)}
-                />
-                <AlertComponent
-                    open={isConfirmingSignOut}
-                    title={t('account.confirmSignOut')}
-                    message={t('account.signOutMessage')}
-                    action={t('account.signOut')}
-                    onConfirm={() => {
-                        setIsConfirmingSignOut(false);
-                        void signOut();
-                    }}
-                    onCancel={() => setIsConfirmingSignOut(false)}
-                />
+                <AlertComponent open={removing !== null} title={t('account.confirmRemove')} message={t('account.removeMessage')} action={t('account.removeAction')} onConfirm={confirmRemove} onCancel={() => setRemoving(null)} />
+                <AlertComponent open={isConfirmingSignOut} title={t('account.confirmSignOut')} message={t('account.signOutMessage')} action={t('account.signOut')} onConfirm={confirmSignOut} onCancel={() => setIsConfirmingSignOut(false)} />
             </div>
         </FrameComponent>
     );

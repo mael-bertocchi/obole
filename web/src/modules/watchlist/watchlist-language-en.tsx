@@ -95,8 +95,7 @@ export const watchlistEn = {
     'watchlist.saga': 'Saga',
     'watchlist.thisFilm': 'This film',
 
-    'watchlist.creditsSource': 'Film and series data and images come from',
-    'watchlist.creditsNotice': 'This product uses the TMDB API but is not endorsed or certified by TMDB.'
+    'watchlist.creditsSource': 'Film and series data and images come from'
 };
 
 /**

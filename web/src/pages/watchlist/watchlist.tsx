@@ -56,16 +56,17 @@ function WatchlistSheetComponent(): JSX.Element {
         title = route.title.mediaType === 'movie' ? t('watchlist.movie') : t('watchlist.series');
     }
 
+    /**
+     * @function closeSheet
+     * @description Closes the sheet and forgets the search, so the next one starts empty
+     */
+    const closeSheet = (): void => {
+        close();
+        setQuery('');
+    };
+
     return (
-        <SheetComponent
-            open={route.kind !== 'closed'}
-            title={title}
-            isFull
-            onClose={() => {
-                close();
-                setQuery('');
-            }}
-        >
+        <SheetComponent open={route.kind !== 'closed'} title={title} isFull onClose={closeSheet}>
             {route.kind === 'search' && (
                 <WatchlistSearchComponent query={query} onQueryChange={setQuery} onOpen={(found) => openTitle(found, true)} />
             )}
@@ -93,7 +94,6 @@ function WatchlistCreditsComponent(): JSX.Element {
                 </a>
                 .
             </p>
-            <p>{t('watchlist.creditsNotice')}</p>
         </footer>
     );
 }

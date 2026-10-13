@@ -97,6 +97,5 @@ export const watchlistFr: WatchlistMessages = {
     'watchlist.saga': 'Saga',
     'watchlist.thisFilm': 'Ce film',
 
-    'watchlist.creditsSource': 'Les données et images des films et séries viennent de',
-    'watchlist.creditsNotice': 'Ce produit utilise l’API TMDB mais n’est ni approuvé ni certifié par TMDB.'
+    'watchlist.creditsSource': 'Les données et images des films et séries viennent de'
 };

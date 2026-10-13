@@ -7,7 +7,7 @@ import { useDocument } from 'modules/budget/budget-hooks';
 import { useBudgetContext } from 'modules/budget/budget-hooks';
 import { amountInputOf, groupAmountInput, sanitizeAmountInput } from 'modules/budget/budget-operations';
 import { t } from 'modules/language/language-service';
-import { useState, type JSX } from 'react';
+import { useState, type FormEvent, type JSX } from 'react';
 
 /**
  * @function parseLimit
@@ -67,14 +67,17 @@ function LimitsFormComponent(props: LimitsFormComponentProps): JSX.Element {
         props.onDone();
     };
 
+    /**
+     * @function submit
+     * @description Saves the limits instead of sending the form
+     */
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+        save();
+    };
+
     return (
-        <form
-            id='limits-form'
-            onSubmit={(event) => {
-                event.preventDefault();
-                save();
-            }}
-        >
+        <form id='limits-form' onSubmit={submit}>
             <label className='field-label' htmlFor='monthly-limit'>{t('limits.monthly')}</label>
             <div className='relative'>
                 <span className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[15px] text-ink-tertiary'>
@@ -117,17 +120,18 @@ interface BudgetLimitsComponentProps {
  * @param {BudgetLimitsComponentProps} props The properties of the component
  */
 function BudgetLimitsComponent(props: BudgetLimitsComponentProps): JSX.Element {
+    /**
+     * @constant footer
+     * @description The button saving the limits, pinned under them
+     */
+    const footer = (
+        <button type='submit' form='limits-form' className='button-primary'>
+            {t('limits.save')}
+        </button>
+    );
+
     return (
-        <SheetComponent
-            open={props.open}
-            title={t('limits.title')}
-            onClose={props.onClose}
-            footer={
-                <button type='submit' form='limits-form' className='button-primary'>
-                    {t('limits.save')}
-                </button>
-            }
-        >
+        <SheetComponent open={props.open} title={t('limits.title')} onClose={props.onClose} footer={footer}>
             <LimitsFormComponent onDone={props.onClose} />
         </SheetComponent>
     );

@@ -12,7 +12,7 @@ import { useBudgetContext } from 'modules/budget/budget-hooks';
 import { defaultCurrency, rememberCurrency } from 'modules/budget/budget-preferences';
 import { t } from 'modules/language/language-service';
 import BudgetLimitsComponent from 'pages/budget/budget-limits/budget-limits';
-import { useState, type JSX } from 'react';
+import { useState, type ChangeEvent, type JSX } from 'react';
 
 /**
  * @constant ACCENT
@@ -55,6 +55,15 @@ function BudgetSettingsComponent(): JSX.Element {
         setIsConfirmingReset(false);
     };
 
+    /**
+     * @function pickCurrency
+     * @description Remembers the currency new operations start in
+     */
+    const pickCurrency = (event: ChangeEvent<HTMLSelectElement>): void => {
+        setCurrency(event.target.value);
+        rememberCurrency(event.target.value);
+    };
+
     return (
         <div className='animate-rise'>
             <p className='eyebrow'>{t('settings.eyebrow')}</p>
@@ -74,15 +83,7 @@ function BudgetSettingsComponent(): JSX.Element {
 
             <ListGroupComponent title={t('settings.entry')}>
                 <ListRowComponent icon={<IconTileComponent icon={Euro} color={ACCENT} size={30} />} title={<label htmlFor='default-currency'>{t('settings.defaultCurrency')}</label>}>
-                    <select
-                        id='default-currency'
-                        value={currency}
-                        onChange={(event) => {
-                            setCurrency(event.target.value);
-                            rememberCurrency(event.target.value);
-                        }}
-                        className='cursor-pointer rounded-lg bg-transparent py-1 text-right text-[15px] text-ink-secondary outline-none focus:ring-2 focus:ring-accent/40'
-                    >
+                    <select id='default-currency' value={currency} onChange={pickCurrency} className='cursor-pointer rounded-lg bg-transparent py-1 text-right text-[15px] text-ink-secondary outline-none focus:ring-2 focus:ring-accent/40'>
                         {CURRENCIES.map((option) => (
                             <option key={option.code} value={option.code}>{option.code}</option>
                         ))}
@@ -94,16 +95,19 @@ function BudgetSettingsComponent(): JSX.Element {
                 {CURRENCIES.filter((option) => option.code !== EURO.code).map((option) => {
                     const reference = latest?.rates[option.code];
 
+                    /**
+                     * @constant title
+                     * @description The currency's code and name
+                     */
+                    const title = (
+                        <span>
+                            <span className='font-mono text-[14px] font-medium'>{option.code}</span>{' '}
+                            <span className='ml-1.5 text-ink-secondary'>{currencyName(option)}</span>
+                        </span>
+                    );
+
                     return (
-                        <ListRowComponent
-                            key={option.code}
-                            title={
-                                <span>
-                                    <span className='font-mono text-[14px] font-medium'>{option.code}</span>{' '}
-                                    <span className='ml-1.5 text-ink-secondary'>{currencyName(option)}</span>
-                                </span>
-                            }
-                        >
+                        <ListRowComponent key={option.code} title={title}>
                             <span className='text-[14px] text-ink-secondary tabular-nums'>
                                 {reference === undefined ? '•' : `1 ${option.code} = ${rate(bankRate(reference, option.code))} €`}
                             </span>

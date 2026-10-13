@@ -4,7 +4,7 @@ import type { DayRange } from 'modules/budget/budget-dates';
 import { dayKey, dayRange, isSameDay, monthStart, parseDayKey, startOfDay } from 'modules/budget/budget-dates';
 import type { MessageKey } from 'modules/language/language-en';
 import { t } from 'modules/language/language-service';
-import { useState, type JSX } from 'react';
+import { useState, type ChangeEvent, type FormEvent, type JSX } from 'react';
 
 /**
  * @constant FORM_ID
@@ -94,15 +94,29 @@ function DateFormComponent(props: DateFormComponentProps): JSX.Element {
         }
     };
 
+    /**
+     * @function pickDay
+     * @description Moves the one day shown
+     */
+    const pickDay = (event: ChangeEvent<HTMLInputElement>): void => {
+        const picked = parseDayKey(event.target.value);
+
+        if (picked !== null) {
+            setDay(picked);
+        }
+    };
+
+    /**
+     * @function submit
+     * @description Applies the day or the period instead of sending the form
+     */
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+        props.onApply(mode === 'day' ? { start: day, end: day } : dayRange(start, end));
+    };
+
     return (
-        <form
-            id={FORM_ID}
-            onSubmit={(event) => {
-                event.preventDefault();
-                props.onApply(mode === 'day' ? { start: day, end: day } : dayRange(start, end));
-            }}
-            className='space-y-5'
-        >
+        <form id={FORM_ID} onSubmit={submit} className='space-y-5'>
             <div role='radiogroup' aria-label={t('history.dateFilter')} className='grid grid-cols-2 rounded-full bg-fill-strong/80 p-1'>
                 {MODES.map(({ id, label }) => (
                     <button key={id} type='button' role='radio' aria-checked={mode === id} onClick={() => setMode(id)} className={`rounded-full py-1.5 text-[14px] font-medium transition ${mode === id ? 'bg-white text-ink shadow-control' : 'text-ink-secondary hover:text-ink'}`}>
@@ -114,20 +128,7 @@ function DateFormComponent(props: DateFormComponentProps): JSX.Element {
             {mode === 'day' && (
                 <div>
                     <label className='field-label' htmlFor='filter-day'>{t('history.date')}</label>
-                    <input
-                        id='filter-day'
-                        type='date'
-                        className='field'
-                        value={dayKey(day)}
-                        max={max}
-                        onChange={(event) => {
-                            const picked = parseDayKey(event.target.value);
-
-                            if (picked !== null) {
-                                setDay(picked);
-                            }
-                        }}
-                    />
+                    <input id='filter-day' type='date' className='field' value={dayKey(day)} max={max} onChange={pickDay} />
                 </div>
             )}
 
@@ -160,17 +161,18 @@ function DateFormComponent(props: DateFormComponentProps): JSX.Element {
  * @param {BudgetDatesComponentProps} props The properties of the component
  */
 function BudgetDatesComponent(props: BudgetDatesComponentProps): JSX.Element {
+    /**
+     * @constant footer
+     * @description The button applying the dates, pinned under them
+     */
+    const footer = (
+        <button type='submit' form={FORM_ID} className='button-primary'>
+            {t('history.apply')}
+        </button>
+    );
+
     return (
-        <SheetComponent
-            open={props.open}
-            title={t('history.dateFilter')}
-            onClose={props.onClose}
-            footer={
-                <button type='submit' form={FORM_ID} className='button-primary'>
-                    {t('history.apply')}
-                </button>
-            }
-        >
+        <SheetComponent open={props.open} title={t('history.dateFilter')} onClose={props.onClose} footer={footer}>
             <DateFormComponent range={props.range} onApply={props.onApply} onClear={props.onClear} />
         </SheetComponent>
     );

@@ -76,6 +76,17 @@ function LoginPage(): JSX.Element {
         }
     };
 
+    /**
+     * @function switchTo
+     * @description Switches between signing in and creating the first passkey, forgetting the last error
+     *
+     * @param {SignInMode} next What the page does next
+     */
+    const switchTo = (next: SignInMode): void => {
+        setError(null);
+        setMode(next);
+    };
+
     if (status === 'signedIn') {
         const from: unknown = location.state !== null && typeof location.state === 'object' && 'from' in location.state ? location.state.from : null;
 
@@ -99,14 +110,7 @@ function LoginPage(): JSX.Element {
                             {t('signIn.action')}
                         </button>
                         {isEnrollmentOpen && (
-                            <button
-                                type='button'
-                                className='mt-5 text-[15px] font-medium text-accent hover:text-accent-strong'
-                                onClick={() => {
-                                    setError(null);
-                                    setMode('enroll');
-                                }}
-                            >
+                            <button type='button' className='mt-5 text-[15px] font-medium text-accent hover:text-accent-strong' onClick={() => switchTo('enroll')}>
                                 {t('signIn.setUp')}
                             </button>
                         )}
@@ -121,14 +125,7 @@ function LoginPage(): JSX.Element {
                             {t('signIn.create')}
                         </button>
                         <div className='text-center'>
-                            <button
-                                type='button'
-                                className='mt-5 text-[15px] font-medium text-accent hover:text-accent-strong'
-                                onClick={() => {
-                                    setError(null);
-                                    setMode('signIn');
-                                }}
-                            >
+                            <button type='button' className='mt-5 text-[15px] font-medium text-accent hover:text-accent-strong' onClick={() => switchTo('signIn')}>
                                 {t('signIn.back')}
                             </button>
                         </div>

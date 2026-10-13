@@ -10,9 +10,9 @@ import { useToastContext } from 'modules/toast/toast-hooks';
 import type { ToastContextProps } from 'modules/toast/toast-models';
 import { dayText, imageUrl, ratingText, releaseYear, titleFacts } from 'modules/watchlist/watchlist-formatting';
 import { useWatchlist, useWatchlistContext } from 'modules/watchlist/watchlist-hooks';
-import type { Collection, Entry, Offers, Provider, TitleDetails, TitleReference } from 'modules/watchlist/watchlist-models';
+import type { CatalogTitle, Collection, Entry, Offers, Provider, TitleDetails, TitleReference } from 'modules/watchlist/watchlist-models';
 import watchlistService from 'modules/watchlist/watchlist-service';
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useState, type FormEvent, type JSX } from 'react';
 import { messageOf } from 'utils/tools';
 
 /**
@@ -131,14 +131,17 @@ function ReviewFormComponent(props: ReviewFormComponentProps): JSX.Element {
         }
     };
 
+    /**
+     * @function submit
+     * @description Saves the review instead of sending the form
+     */
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+        void save();
+    };
+
     return (
-        <form
-            className='mt-5 rounded-2xl bg-fill p-4'
-            onSubmit={(event) => {
-                event.preventDefault();
-                void save();
-            }}
-        >
+        <form className='mt-5 rounded-2xl bg-fill p-4' onSubmit={submit}>
             <p className='field-label'>{t('watchlist.yourRating')}</p>
             <div className='flex items-center gap-3'>
                 <RatingComponent value={rating} label={t('watchlist.yourRating')} onChange={setRating} size={30} />
@@ -254,6 +257,18 @@ function SagaComponent(props: SagaComponentProps): JSX.Element {
         };
     }, [props.collectionId]);
 
+    /**
+     * @function addPart
+     * @description Puts one of the saga's films on the watchlist, to watch
+     *
+     * @param {CatalogTitle} part The film
+     */
+    const addPart = (part: CatalogTitle): void => {
+        store.add({ mediaType: part.mediaType, tmdbId: part.tmdbId })
+            .then(() => showToast(t('watchlist.added', { title: part.title })))
+            .catch((failure: unknown) => showToast(messageOf(failure)));
+    };
+
     if (saga === null) {
         return (
             <section className='mt-7'>
@@ -281,16 +296,7 @@ function SagaComponent(props: SagaComponentProps): JSX.Element {
                         mark = <Bookmark size={18} className='text-accent' aria-label={t('watchlist.onList')} />;
                     } else {
                         mark = (
-                            <button
-                                type='button'
-                                aria-label={t('watchlist.addTitle', { title: part.title })}
-                                onClick={() => {
-                                    store.add({ mediaType: part.mediaType, tmdbId: part.tmdbId })
-                                        .then(() => showToast(t('watchlist.added', { title: part.title })))
-                                        .catch((failure: unknown) => showToast(messageOf(failure)));
-                                }}
-                                className='flex h-7 w-7 items-center justify-center rounded-full bg-white text-accent shadow-control transition hover:bg-accent hover:text-white'
-                            >
+                            <button type='button' aria-label={t('watchlist.addTitle', { title: part.title })} onClick={() => addPart(part)} className='flex h-7 w-7 items-center justify-center rounded-full bg-white text-accent shadow-control transition hover:bg-accent hover:text-white'>
                                 <Plus size={16} strokeWidth={2.6} />
                             </button>
                         );
@@ -401,6 +407,18 @@ function WatchlistTitleComponent(props: WatchlistTitleComponentProps): JSX.Eleme
         );
     }
 
+    /**
+     * @function confirmRemoval
+     * @description Takes the title off the watchlist, once confirmed
+     */
+    const confirmRemoval = (): void => {
+        setIsConfirmingRemoval(false);
+
+        if (entry !== null) {
+            void run(() => store.remove(entry.id), t('watchlist.removed', { title: details.title }));
+        }
+    };
+
     const secondary = 'inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-fill px-4 text-[15px] font-semibold text-ink transition hover:bg-fill-strong disabled:opacity-60';
     const primary = 'inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-accent px-4 text-[15px] font-semibold text-white transition hover:bg-accent-strong disabled:opacity-60';
     let actions: JSX.Element;
@@ -492,20 +510,7 @@ function WatchlistTitleComponent(props: WatchlistTitleComponentProps): JSX.Eleme
                 <SagaComponent collectionId={details.collection.id} current={props.title} onOpen={props.onOpen} />
             )}
 
-            <AlertComponent
-                open={isConfirmingRemoval}
-                title={t('watchlist.confirmRemove')}
-                message={entry?.watchedAt === null ? undefined : t('watchlist.removeMessage')}
-                action={t('watchlist.remove')}
-                onConfirm={() => {
-                    setIsConfirmingRemoval(false);
-
-                    if (entry !== null) {
-                        void run(() => store.remove(entry.id), t('watchlist.removed', { title: details.title }));
-                    }
-                }}
-                onCancel={() => setIsConfirmingRemoval(false)}
-            />
+            <AlertComponent open={isConfirmingRemoval} title={t('watchlist.confirmRemove')} message={entry?.watchedAt === null ? undefined : t('watchlist.removeMessage')} action={t('watchlist.remove')} onConfirm={confirmRemoval} onCancel={() => setIsConfirmingRemoval(false)} />
         </div>
     );
 }
