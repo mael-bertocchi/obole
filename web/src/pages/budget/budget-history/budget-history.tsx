@@ -176,7 +176,7 @@ function BudgetHistoryComponent(): JSX.Element {
     const chips = [{ id: null, name: t('history.all') }, ...categoriesOf(document.categories).map((category) => ({ id: category.id, name: categoryName(category) }))];
 
     return (
-        <div className='mx-auto max-w-3xl animate-rise'>
+        <div className='animate-rise'>
             <p className='eyebrow'>{t('history.eyebrow')}</p>
             <h1 className='mt-1 text-[34px] font-semibold leading-tight tracking-tight'>{t('history.title')}</h1>
 

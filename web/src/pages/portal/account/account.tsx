@@ -166,7 +166,7 @@ function AccountPage(): JSX.Element {
 
     return (
         <FrameComponent>
-            <div className='mx-auto max-w-2xl animate-rise'>
+            <div className='animate-rise'>
                 <p className='eyebrow'>{t('account.eyebrow')}</p>
                 <h1 className='mb-8 mt-1 text-[34px] font-semibold leading-tight tracking-tight'>
                     {t('account.title')}

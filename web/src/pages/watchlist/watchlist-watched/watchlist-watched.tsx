@@ -90,7 +90,7 @@ function WatchlistWatchedComponent(): JSX.Element {
     const watched = useMemo(() => watchedEntries(entries ?? [], order), [entries, order]);
 
     return (
-        <div className='mx-auto max-w-3xl animate-rise'>
+        <div className='animate-rise'>
             <p className='eyebrow'>{t('watchlist.eyebrow')}</p>
             <h1 className='mt-1 text-[34px] font-semibold leading-tight tracking-tight'>{t('watchlist.watchedTitle')}</h1>
             <p className='mt-1 text-[15px] text-ink-secondary'>
