@@ -12,6 +12,7 @@ interface SheetComponentProps {
     onClose: () => void; /*!< Called when it is dismissed */
     children: ReactNode; /*!< Its content, only mounted while open so it starts fresh each time */
     footer?: ReactNode; /*!< What stays pinned under the scrolling content */
+    isFull?: boolean; /*!< Whether it keeps its full height whatever its content, so it never jumps as that changes */
 }
 
 /**
@@ -41,7 +42,7 @@ function SheetComponent(props: SheetComponentProps): JSX.Element {
     return (
         <dialog
             ref={dialog}
-            className='sheet'
+            className={props.isFull === true ? 'sheet sheet-full' : 'sheet'}
             aria-label={props.title}
             onCancel={(event) => {
                 event.preventDefault();

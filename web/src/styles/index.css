@@ -50,6 +50,14 @@
         @apply m-auto flex max-h-[min(88vh,880px)] w-[min(560px,calc(100vw-32px))] flex-col overflow-hidden rounded-sheet bg-white p-0 text-ink shadow-sheet;
     }
 
+    .sheet:not([open]) {
+        display: none;
+    }
+
+    .sheet-full {
+        height: min(88vh, 880px);
+    }
+
     .sheet[open] {
         animation: sheet-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
@@ -76,6 +84,10 @@
         .sheet {
             @apply mb-0 mt-auto w-full max-w-full rounded-b-none;
             max-height: 94dvh;
+        }
+
+        .sheet-full {
+            height: 94dvh;
         }
 
         .sheet[open] {

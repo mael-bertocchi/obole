@@ -67,6 +67,7 @@ function WatchlistSheetComponent(): JSX.Element {
         <SheetComponent
             open={route.kind !== 'closed'}
             title={title}
+            isFull
             onClose={() => {
                 close();
                 setQuery('');

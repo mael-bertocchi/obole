@@ -422,6 +422,7 @@ function BudgetOperationComponent(props: BudgetOperationComponentProps): JSX.Ele
                 open={route !== null}
                 title={route?.kind === 'edit' ? t('operation.edit') : t('operation.new')}
                 onClose={props.onClose}
+                isFull
                 footer={isMissing ? undefined : (
                     <button
                         type='submit'
