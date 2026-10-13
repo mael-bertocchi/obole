@@ -1,6 +1,7 @@
 import CategoryIconComponent from 'components/category-icon/category-icon';
 import EmptyStateComponent from 'components/empty-state/empty-state';
-import { AlignLeft, CalendarDays, Globe, MapPin, Repeat, Search, X } from 'lucide-react';
+import SearchFieldComponent from 'components/search-field/search-field';
+import { AlignLeft, CalendarDays, Globe, MapPin, Repeat } from 'lucide-react';
 import type { Maybe } from 'models';
 import { categoriesOf, categoryName, categoryOrFallback } from 'modules/budget/budget-categories';
 import { currencyNamed, EURO } from 'modules/budget/budget-currencies';
@@ -180,29 +181,13 @@ function BudgetHistoryComponent(): JSX.Element {
             <p className='eyebrow'>{t('history.eyebrow')}</p>
             <h1 className='mt-1 text-[34px] font-semibold leading-tight tracking-tight'>{t('history.title')}</h1>
 
-            <label className='relative mt-6 block'>
-                <Search
-                    size={17}
-                    className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-tertiary'
-                />
-                <input
-                    type='search'
-                    value={query}
-                    onChange={(event) => update({ q: event.target.value })}
-                    placeholder={t('history.search')}
-                    className='h-11 w-full rounded-xl bg-fill-strong/70 pl-10 pr-10 text-[16px] outline-none transition placeholder:text-ink-tertiary focus:bg-white focus:shadow-control focus:ring-2 focus:ring-accent/40 [&::-webkit-search-cancel-button]:hidden'
-                />
-                {query !== '' && (
-                    <button
-                        type='button'
-                        aria-label={t('history.clearSearch')}
-                        onClick={() => update({ q: null })}
-                        className='absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-ink-quaternary text-white'
-                    >
-                        <X size={12} strokeWidth={3} />
-                    </button>
-                )}
-            </label>
+            <SearchFieldComponent
+                value={query}
+                onChange={(next) => update({ q: next })}
+                placeholder={t('history.search')}
+                clearLabel={t('history.clearSearch')}
+                className='mt-6'
+            />
 
             <div
                 className='no-scrollbar -mx-5 -mb-2 mt-2 flex gap-2 overflow-x-auto px-5 py-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0'

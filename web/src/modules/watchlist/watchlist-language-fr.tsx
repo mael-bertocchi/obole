@@ -36,6 +36,8 @@ export const watchlistFr: WatchlistMessages = {
     'watchlist.emptyQueue': 'Rien à voir pour l’instant.',
     'watchlist.noneOfKind': 'Rien de ce type à voir.',
     'watchlist.order': 'Ordre',
+    'watchlist.filter': 'Rechercher un titre',
+    'watchlist.noMatch': 'Aucun titre ne correspond à cette recherche.',
     'watchlist.latestWatched': 'Récents',
     'watchlist.bestRated': 'Mieux notés',
     'watchlist.noneWatched': 'Vous n’avez encore rien marqué comme vu.',

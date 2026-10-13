@@ -1,13 +1,14 @@
 import EmptyStateComponent from 'components/empty-state/empty-state';
 import PosterComponent from 'components/poster/poster';
 import RatingComponent from 'components/rating/rating';
+import SearchFieldComponent from 'components/search-field/search-field';
 import type { MessageKey } from 'modules/language/language-en';
 import { t } from 'modules/language/language-service';
 import { dayText, localized, ratingText, releaseYear } from 'modules/watchlist/watchlist-formatting';
 import { useWatchlist, useWatchlistSheetContext } from 'modules/watchlist/watchlist-hooks';
 import type { Entry, WatchlistSheetContextProps } from 'modules/watchlist/watchlist-models';
 import type { WatchedOrder } from 'modules/watchlist/watchlist-shelves';
-import { isWatchedOrder, watchedEntries } from 'modules/watchlist/watchlist-shelves';
+import { isWatchedOrder, matches, watchedEntries } from 'modules/watchlist/watchlist-shelves';
 import { useMemo, type JSX } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -77,7 +78,7 @@ function WatchedRowComponent(props: WatchedRowComponentProps): JSX.Element {
 /**
  * @function WatchlistWatchedComponent
  * @description The "Watched" tab: every watched title with its rating and comment, the latest watched first or the
- * best rated first. The order lives in the address.
+ * best rated first, with a search through their titles and comments. The order and the search live in the address.
  *
  * @returns {JSX.Element} The watched titles
  */
@@ -87,7 +88,25 @@ function WatchlistWatchedComponent(): JSX.Element {
     const [params, setParams] = useSearchParams();
     const orderParam = params.get('by');
     const order: WatchedOrder = isWatchedOrder(orderParam) ? orderParam : 'recent';
+    const query = params.get('q') ?? '';
     const watched = useMemo(() => watchedEntries(entries ?? [], order), [entries, order]);
+    const shown = useMemo(() => watched.filter((entry) => matches(entry, query)), [watched, query]);
+
+    /**
+     * @function update
+     * @description Changes the order or the search in the address, dropping the defaults
+     */
+    const update = (key: 'by' | 'q', value: string, fallback: string): void => {
+        const next = new URLSearchParams(params);
+
+        if (value === fallback) {
+            next.delete(key);
+        } else {
+            next.set(key, value);
+        }
+
+        setParams(next, { replace: true });
+    };
 
     return (
         <div className='animate-rise'>
@@ -97,8 +116,16 @@ function WatchlistWatchedComponent(): JSX.Element {
                 {watched.length === 1 ? t('watchlist.watchedOne') : t('watchlist.watchedMany', { count: watched.length })}
             </p>
 
+            <SearchFieldComponent
+                value={query}
+                onChange={(next) => update('q', next, '')}
+                placeholder={t('watchlist.filter')}
+                clearLabel={t('watchlist.clearSearch')}
+                className='mt-6'
+            />
+
             <div
-                className='mt-6 inline-flex rounded-full bg-fill-strong/80 p-1'
+                className='mt-4 inline-flex rounded-full bg-fill-strong/80 p-1'
                 role='group'
                 aria-label={t('watchlist.order')}
             >
@@ -107,7 +134,7 @@ function WatchlistWatchedComponent(): JSX.Element {
                         key={option.order}
                         type='button'
                         aria-pressed={option.order === order}
-                        onClick={() => setParams(option.order === 'recent' ? {} : { by: option.order }, { replace: true })}
+                        onClick={() => update('by', option.order, 'recent')}
                         className={`rounded-full px-3.5 py-1.5 text-[14px] font-medium transition ${option.order === order ? 'bg-white text-ink shadow-control' : 'text-ink-secondary hover:text-ink'}`}
                     >
                         {t(option.name)}
@@ -116,11 +143,11 @@ function WatchlistWatchedComponent(): JSX.Element {
             </div>
 
             <div className='mt-6'>
-                {watched.length === 0 ? (
-                    <EmptyStateComponent message={t('watchlist.noneWatched')} />
+                {shown.length === 0 ? (
+                    <EmptyStateComponent message={watched.length === 0 ? t('watchlist.noneWatched') : t('watchlist.noMatch')} />
                 ) : (
                     <div className='card divide-y divide-hairline overflow-hidden'>
-                        {watched.map((entry) => (
+                        {shown.map((entry) => (
                             <WatchedRowComponent
                                 key={entry.id}
                                 entry={entry}

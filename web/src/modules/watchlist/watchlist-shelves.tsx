@@ -110,6 +110,39 @@ function byTitle(last: string): (first: Shelf, second: Shelf) => number {
 }
 
 /**
+ * @function folded
+ * @description A text as a search compares it: without accents or capitals
+ *
+ * @param {string} text The text
+ * @returns {string} The text, folded
+ */
+function folded(text: string): string {
+    return text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase();
+}
+
+/**
+ * @function matches
+ * @description Whether a title answers a search: its title in either language, its original title, its saga or what was
+ * said about it holds every word typed, accents and capitals aside. An empty search matches everything.
+ *
+ * @param {Entry} entry The title
+ * @param {string} query What was typed
+ * @returns {boolean} Whether it matches
+ */
+export function matches(entry: Entry, query: string): boolean {
+    const words = folded(query).split(/\s+/).filter((word) => word !== '');
+
+    if (words.length === 0) {
+        return true;
+    }
+
+    const texts = [entry.title.en, entry.title.fr, entry.originalTitle, entry.collectionName?.en, entry.collectionName?.fr, entry.comment];
+    const haystack = folded(texts.filter((text) => text !== undefined && text !== null).join(' '));
+
+    return words.every((word) => haystack.includes(word));
+}
+
+/**
  * @function toWatch
  * @description The titles still to watch.
  *

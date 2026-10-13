@@ -1,4 +1,5 @@
 import PosterComponent from 'components/poster/poster';
+import SearchFieldComponent from 'components/search-field/search-field';
 import { Plus } from 'lucide-react';
 import type { MessageKey } from 'modules/language/language-en';
 import { t } from 'modules/language/language-service';
@@ -6,7 +7,7 @@ import { localized, releaseYear } from 'modules/watchlist/watchlist-formatting';
 import { useWatchlist, useWatchlistSheetContext } from 'modules/watchlist/watchlist-hooks';
 import type { Entry, WatchlistSheetContextProps } from 'modules/watchlist/watchlist-models';
 import type { KindFilter, ShelfOrder } from 'modules/watchlist/watchlist-shelves';
-import { isKindFilter, isShelfOrder, KIND_FILTERS, ofKind, SHELF_ORDERS, shelves, toWatch } from 'modules/watchlist/watchlist-shelves';
+import { isKindFilter, isShelfOrder, KIND_FILTERS, matches, ofKind, SHELF_ORDERS, shelves, toWatch } from 'modules/watchlist/watchlist-shelves';
 import { useMemo, type JSX } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -71,7 +72,8 @@ function PosterCardComponent(props: PosterCardComponentProps): JSX.Element {
 /**
  * @function WatchlistQueueComponent
  * @description The "To watch" tab: the titles still to watch, shelved by genre, by saga (each saga's films in the order
- * they came out) or as one shelf, and filtered by kind. The shelving and the filter live in the address.
+ * they came out) or as one shelf, filtered by kind and by a search. The shelving, the filter and the search live in the
+ * address.
  *
  * @returns {JSX.Element} The titles to watch
  */
@@ -83,16 +85,17 @@ function WatchlistQueueComponent(): JSX.Element {
     const kindParam = params.get('kind');
     const order: ShelfOrder = isShelfOrder(orderParam) ? orderParam : 'genre';
     const kind: KindFilter = isKindFilter(kindParam) ? kindParam : 'all';
+    const query = params.get('q') ?? '';
 
-    const pending = useMemo(() => ofKind(toWatch(entries ?? []), kind), [entries, kind]);
+    const pending = useMemo(() => ofKind(toWatch(entries ?? []), kind).filter((entry) => matches(entry, query)), [entries, kind, query]);
     const groups = useMemo(() => shelves(pending, order, genres), [pending, order, genres]);
     const total = toWatch(entries ?? []).length;
 
     /**
      * @function update
-     * @description Changes the shelving or the filter in the address, dropping the defaults
+     * @description Changes the shelving, the filter or the search in the address, dropping the defaults
      */
-    const update = (key: 'by' | 'kind', value: string, fallback: string): void => {
+    const update = (key: 'by' | 'kind' | 'q', value: string, fallback: string): void => {
         const next = new URLSearchParams(params);
 
         if (value === fallback) {
@@ -104,6 +107,14 @@ function WatchlistQueueComponent(): JSX.Element {
         setParams(next, { replace: true });
     };
 
+    let emptyMessage = t('watchlist.noneOfKind');
+
+    if (total === 0) {
+        emptyMessage = t('watchlist.emptyQueue');
+    } else if (query.trim() !== '') {
+        emptyMessage = t('watchlist.noMatch');
+    }
+
     return (
         <div className='animate-rise'>
             <p className='eyebrow'>{t('watchlist.eyebrow')}</p>
@@ -112,7 +123,15 @@ function WatchlistQueueComponent(): JSX.Element {
                 {total === 1 ? t('watchlist.countOne') : t('watchlist.countMany', { count: total })}
             </p>
 
-            <div className='mt-6 flex flex-wrap items-center gap-3'>
+            <SearchFieldComponent
+                value={query}
+                onChange={(next) => update('q', next, '')}
+                placeholder={t('watchlist.filter')}
+                clearLabel={t('watchlist.clearSearch')}
+                className='mt-6'
+            />
+
+            <div className='mt-4 flex flex-wrap items-center gap-3'>
                 <div
                     className='flex rounded-full bg-fill-strong/80 p-1'
                     role='group'
@@ -152,7 +171,7 @@ function WatchlistQueueComponent(): JSX.Element {
             {groups.length === 0 ? (
                 <div className='mt-8 flex flex-col items-center rounded-2xl bg-fill px-6 py-10 text-center'>
                     <p className='text-[15px] text-ink-secondary'>
-                        {total === 0 ? t('watchlist.emptyQueue') : t('watchlist.noneOfKind')}
+                        {emptyMessage}
                     </p>
                     {total === 0 && (
                         <button

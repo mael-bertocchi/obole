@@ -1,6 +1,7 @@
 import PosterComponent from 'components/poster/poster';
+import SearchFieldComponent from 'components/search-field/search-field';
 import SpinnerComponent from 'components/spinner/spinner';
-import { Check, Plus, Search, X } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 import type { Maybe } from 'models';
 import { t } from 'modules/language/language-service';
 import { useToastContext } from 'modules/toast/toast-hooks';
@@ -9,7 +10,7 @@ import { titleFacts } from 'modules/watchlist/watchlist-formatting';
 import { useWatchlist, useWatchlistContext } from 'modules/watchlist/watchlist-hooks';
 import type { CatalogTitle, Entry, TitleReference } from 'modules/watchlist/watchlist-models';
 import watchlistService from 'modules/watchlist/watchlist-service';
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 import { messageOf } from 'utils/tools';
 
 /**
@@ -141,14 +142,9 @@ function ResultRowComponent(props: ResultRowComponentProps): JSX.Element {
 function WatchlistSearchComponent(props: WatchlistSearchComponentProps): JSX.Element {
     const { entries } = useWatchlist();
     const store = useWatchlistContext();
-    const input = useRef<HTMLInputElement>(null);
     const [search, setSearch] = useState<SearchState>({ query: '', results: null, error: null });
     const query = props.query.trim();
     const isSearching = query.length >= MIN_QUERY && search.query !== query;
-
-    useEffect(() => {
-        input.current?.focus();
-    }, []);
 
     useEffect(() => {
         if (query.length < MIN_QUERY) {
@@ -203,31 +199,14 @@ function WatchlistSearchComponent(props: WatchlistSearchComponentProps): JSX.Ele
 
     return (
         <div>
-            <label className='relative block'>
-                <Search
-                    size={17}
-                    className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-tertiary'
-                />
-                <input
-                    ref={input}
-                    type='search'
-                    value={props.query}
-                    onChange={(event) => props.onQueryChange(event.target.value)}
-                    placeholder={t('watchlist.searchPlaceholder')}
-                    aria-label={t('watchlist.searchTitle')}
-                    className='h-11 w-full rounded-xl bg-fill-strong/70 pl-10 pr-10 text-[16px] outline-none transition placeholder:text-ink-tertiary focus:bg-white focus:shadow-control focus:ring-2 focus:ring-accent/40 [&::-webkit-search-cancel-button]:hidden'
-                />
-                {props.query !== '' && (
-                    <button
-                        type='button'
-                        aria-label={t('watchlist.clearSearch')}
-                        onClick={() => props.onQueryChange('')}
-                        className='absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-ink-quaternary text-white'
-                    >
-                        <X size={12} strokeWidth={3} />
-                    </button>
-                )}
-            </label>
+            <SearchFieldComponent
+                value={props.query}
+                onChange={props.onQueryChange}
+                placeholder={t('watchlist.searchPlaceholder')}
+                label={t('watchlist.searchTitle')}
+                clearLabel={t('watchlist.clearSearch')}
+                hasFocus
+            />
             <div className='mt-2'>{body}</div>
         </div>
     );

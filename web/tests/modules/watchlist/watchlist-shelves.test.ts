@@ -1,6 +1,6 @@
 import { chooseLanguage } from 'modules/language/language-service';
 import type { Entry } from 'modules/watchlist/watchlist-models';
-import { isKindFilter, isShelfOrder, ofKind, shelves, toWatch, watchedEntries } from 'modules/watchlist/watchlist-shelves';
+import { isKindFilter, isShelfOrder, matches, ofKind, shelves, toWatch, watchedEntries } from 'modules/watchlist/watchlist-shelves';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -105,6 +105,20 @@ describe('watchedEntries', () => {
 
         expect(watchedEntries(watched, 'recent').map((found) => found.tmdbId)).toEqual([2, 3, 1]);
         expect(watchedEntries(watched, 'best').map((found) => found.tmdbId)).toEqual([1, 3, 2]);
+    });
+});
+
+describe('matches', () => {
+    it('finds a title by any of its names, its saga or its comment, accents, capitals and word order aside', () => {
+        const fellowship = entry({ title: { en: 'The Fellowship of the Ring', fr: 'La Communauté de l’anneau' }, originalTitle: 'The Lord of the Rings', collectionName: { en: 'The Lord of the Rings Collection', fr: 'Le Seigneur des anneaux - Saga' }, comment: 'Un monument.' });
+
+        expect(matches(fellowship, '')).toBe(true);
+        expect(matches(fellowship, '  communaute ')).toBe(true);
+        expect(matches(fellowship, 'RING fellowship')).toBe(true);
+        expect(matches(fellowship, 'seigneur saga')).toBe(true);
+        expect(matches(fellowship, 'monument')).toBe(true);
+        expect(matches(fellowship, 'matrix')).toBe(false);
+        expect(matches(fellowship, 'ring matrix')).toBe(false);
     });
 });
 

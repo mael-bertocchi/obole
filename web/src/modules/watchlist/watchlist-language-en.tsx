@@ -34,6 +34,8 @@ export const watchlistEn = {
     'watchlist.emptyQueue': 'Nothing to watch yet.',
     'watchlist.noneOfKind': 'Nothing of this kind to watch.',
     'watchlist.order': 'Order',
+    'watchlist.filter': 'Search titles',
+    'watchlist.noMatch': 'No titles match this search.',
     'watchlist.latestWatched': 'Latest',
     'watchlist.bestRated': 'Best rated',
     'watchlist.noneWatched': "You haven't marked anything as watched yet.",
