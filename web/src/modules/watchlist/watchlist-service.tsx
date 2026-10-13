@@ -1,8 +1,37 @@
+import type { Perhaps } from 'models';
+import type { MessageKey } from 'modules/language/language-en';
 import { currentLanguage, t } from 'modules/language/language-service';
 import type { CatalogTitle, Collection, Entry, EntryChanges, Genre, TitleDetails, TitleReference } from 'modules/watchlist/watchlist-models';
 import { CatalogTitleSchema, CollectionSchema, EntrySchema, GenreSchema, TitleDetailsSchema } from 'modules/watchlist/watchlist-models';
-import { fetchWithAuthentication, rewording } from 'utils/request';
+import { fetchWithAuthentication, RequestError, rewording } from 'utils/request';
 import { z } from 'zod';
+
+/**
+ * @constant CATALOG_REASONS
+ * @description What to say when the server tells why the catalog can't answer: only the owner can fix these, on the
+ * server, so the page names what to fix
+ */
+const CATALOG_REASONS: Partial<Record<string, MessageKey>> = {
+    'catalog-not-configured': 'watchlist.catalogNotConfigured',
+    'catalog-refused': 'watchlist.catalogRefused'
+};
+
+/**
+ * @function explainingCatalog
+ * @description Rewords a refusal whose reason is the catalog's set-up, leaving every other failure as it is
+ *
+ * @param {unknown} error The failure
+ * @returns {never} Rethrows it
+ */
+function explainingCatalog(error: unknown): never {
+    const key: Perhaps<MessageKey> = error instanceof RequestError && error.reason !== null ? CATALOG_REASONS[error.reason] : undefined;
+
+    if (error instanceof RequestError && key !== undefined) {
+        throw new RequestError(error.status, t(key), error.reason);
+    }
+
+    throw error;
+}
 
 /**
  * @function language
@@ -32,7 +61,7 @@ async function getEntries(): Promise<Entry[]> {
  * @returns {Promise<Entry>} The title, as stored
  */
 async function addEntry(title: TitleReference): Promise<Entry> {
-    return await fetchWithAuthentication('/v1/watchlist/entries', { method: 'POST', body: JSON.stringify({ mediaType: title.mediaType, tmdbId: title.tmdbId }) }, EntrySchema).catch(rewording(409, t('watchlist.alreadyAdded')));
+    return await fetchWithAuthentication('/v1/watchlist/entries', { method: 'POST', body: JSON.stringify({ mediaType: title.mediaType, tmdbId: title.tmdbId }) }, EntrySchema).catch(rewording(409, t('watchlist.alreadyAdded'))).catch(explainingCatalog);
 }
 
 /**
@@ -65,7 +94,7 @@ async function removeEntry(id: string): Promise<void> {
  * @returns {Promise<Genre[]>} The genres
  */
 async function getGenres(): Promise<Genre[]> {
-    return await fetchWithAuthentication(`/v1/watchlist/catalog/genres?${language()}`, { method: 'GET' }, z.array(GenreSchema));
+    return await fetchWithAuthentication(`/v1/watchlist/catalog/genres?${language()}`, { method: 'GET' }, z.array(GenreSchema)).catch(explainingCatalog);
 }
 
 /**
@@ -76,7 +105,7 @@ async function getGenres(): Promise<Genre[]> {
  * @returns {Promise<CatalogTitle[]>} The titles found, most relevant first
  */
 async function searchTitles(query: string): Promise<CatalogTitle[]> {
-    return await fetchWithAuthentication(`/v1/watchlist/catalog/search?query=${encodeURIComponent(query)}&${language()}`, { method: 'GET' }, z.array(CatalogTitleSchema));
+    return await fetchWithAuthentication(`/v1/watchlist/catalog/search?query=${encodeURIComponent(query)}&${language()}`, { method: 'GET' }, z.array(CatalogTitleSchema)).catch(explainingCatalog);
 }
 
 /**
@@ -87,7 +116,7 @@ async function searchTitles(query: string): Promise<CatalogTitle[]> {
  * @returns {Promise<TitleDetails>} Its details
  */
 async function getTitle(title: TitleReference): Promise<TitleDetails> {
-    return await fetchWithAuthentication(`/v1/watchlist/catalog/titles/${title.mediaType}/${title.tmdbId}?${language()}`, { method: 'GET' }, TitleDetailsSchema);
+    return await fetchWithAuthentication(`/v1/watchlist/catalog/titles/${title.mediaType}/${title.tmdbId}?${language()}`, { method: 'GET' }, TitleDetailsSchema).catch(explainingCatalog);
 }
 
 /**
@@ -98,7 +127,7 @@ async function getTitle(title: TitleReference): Promise<TitleDetails> {
  * @returns {Promise<Collection>} The saga
  */
 async function getCollection(id: number): Promise<Collection> {
-    return await fetchWithAuthentication(`/v1/watchlist/catalog/collections/${id}?${language()}`, { method: 'GET' }, CollectionSchema);
+    return await fetchWithAuthentication(`/v1/watchlist/catalog/collections/${id}?${language()}`, { method: 'GET' }, CollectionSchema).catch(explainingCatalog);
 }
 
 export default {

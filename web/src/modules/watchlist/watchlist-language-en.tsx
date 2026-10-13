@@ -56,6 +56,8 @@ export const watchlistEn = {
     'watchlist.searchPrompt': 'Search for a film or a series by its title.',
     'watchlist.clearSearch': 'Clear search',
     'watchlist.noResults': 'No films or series found.',
+    'watchlist.catalogNotConfigured': "The catalog isn't set up on the server: WATCHLIST_TMDB_TOKEN is missing.",
+    'watchlist.catalogRefused': "TMDB refuses the server's token: check WATCHLIST_TMDB_TOKEN, which takes the API Read Access Token.",
     'watchlist.backToResults': 'Results',
     'watchlist.addTitle': 'Add {title}',
     'watchlist.onList': 'On your list',

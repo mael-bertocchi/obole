@@ -51,6 +51,7 @@ let renewalInFlight: Maybe<Promise<boolean>> = null;
  */
 export class RequestError extends Error {
     public readonly status: number; /*!< The HTTP status, or 0 when the server could not be reached */
+    public readonly reason: Maybe<string>; /*!< Why, when the server says so in `data.reason`, for an app to word it */
 
     /**
      * @constructor
@@ -58,12 +59,14 @@ export class RequestError extends Error {
      *
      * @param {number} status The HTTP status, or 0 when the server could not be reached
      * @param {string} message The message to show
+     * @param {Maybe<string>} reason Why, when the server says so
      */
-    constructor(status: number, message: string) {
+    constructor(status: number, message: string, reason: Maybe<string> = null) {
         super(message);
 
         this.name = 'RequestError';
         this.status = status;
+        this.reason = reason;
     }
 
     /**
@@ -97,6 +100,23 @@ function refusal(status: number): string {
     }
 
     return status >= 500 ? t('error.unavailable') : t('error.refused');
+}
+
+/**
+ * @function reasonOf
+ * @description The reason an error answer gives in its `data.reason`, if any
+ *
+ * @param {unknown} payload The answer's body
+ * @returns {Maybe<string>} The reason, or null
+ */
+function reasonOf(payload: unknown): Maybe<string> {
+    if (typeof payload !== 'object' || payload === null || !('data' in payload)) {
+        return null;
+    }
+
+    const data: unknown = payload.data;
+
+    return typeof data === 'object' && data !== null && 'reason' in data && typeof data.reason === 'string' ? data.reason : null;
 }
 
 /**
@@ -159,7 +179,7 @@ async function unwrap<T extends z.ZodType>(response: Response, schema: T): Promi
             throw new RequestError(0, t('error.unreachable'));
         }
 
-        throw new RequestError(response.status, refusal(response.status));
+        throw new RequestError(response.status, refusal(response.status), reasonOf(payload));
     }
 
     const parsed = schema.safeParse(typeof payload === 'object' && payload !== null && 'data' in payload ? payload.data : undefined);

@@ -85,6 +85,16 @@ describe('fetchPublic', () => {
         await expect(fetchPublic('/v1/budget/rates', { method: 'GET' }, z.unknown())).rejects.toMatchObject({ status: 503, message: 'Le serveur est indisponible pour le moment.' });
     });
 
+    it('keeps the reason the server gives, for an app to word it', async () => {
+        answer(503, JSON.stringify({ message: 'The catalog is not configured', data: { reason: 'catalog-not-configured' } }));
+
+        await expect(fetchPublic('/v1/watchlist/catalog/genres', { method: 'GET' }, z.unknown())).rejects.toMatchObject({ status: 503, reason: 'catalog-not-configured', message: 'The server is unavailable right now.' });
+
+        answer(503, JSON.stringify({ message: 'Server Error', data: null }));
+
+        await expect(fetchPublic('/v1/budget/rates', { method: 'GET' }, z.unknown())).rejects.toMatchObject({ status: 503, reason: null });
+    });
+
     it('asks to wait a moment when rate-limited', async () => {
         answer(429, JSON.stringify({ message: 'Rate limit exceeded, retry in 1 minute', statusCode: 429 }));
 
