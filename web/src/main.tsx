@@ -18,7 +18,8 @@ import 'styles/index.css';
 /**
  * @constant APP_ROUTES
  * @description One route per app, under its own path. Each app's code is only loaded once it is opened, and the app
- * routes everything under its path itself.
+ * routes everything under its path itself. Each app has its own loading boundary: sharing one, going from an app to
+ * another would keep showing the first while the second loads, since the router navigates in a transition.
  */
 const APP_ROUTES: RouteObject[] = APPS.map((app) => {
     const App = lazy(app.load);
@@ -26,7 +27,7 @@ const APP_ROUTES: RouteObject[] = APPS.map((app) => {
     return {
         path: `${app.id}/*`,
         element: (
-            <Suspense fallback={<LoadingScreenComponent />}>
+            <Suspense key={app.id} fallback={<LoadingScreenComponent />}>
                 <App />
             </Suspense>
         )
