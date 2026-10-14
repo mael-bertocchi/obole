@@ -7,9 +7,9 @@ SCHEME="Obole"
 CONFIGURATION="${OBOLE_CONFIGURATION:-Release}"
 
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
-FRONTEND_DIR="$(dirname "$(dirname "$SCRIPT_PATH")")"
-PROJECT="$FRONTEND_DIR/Obole.xcodeproj"
-BUILD_DIR="$FRONTEND_DIR/build/device"
+IOS_DIR="$(dirname "$(dirname "$SCRIPT_PATH")")"
+PROJECT="$IOS_DIR/Obole.xcodeproj"
+BUILD_DIR="$IOS_DIR/build/device"
 PROFILE_DIR="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
 
 DEVICE="${OBOLE_DEVICE:-}"

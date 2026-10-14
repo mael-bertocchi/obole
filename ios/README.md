@@ -1,4 +1,4 @@
-# 🪙 Obole • Frontend
+# 🪙 Obole • iOS
 
 The native **iOS** app, built entirely in SwiftUI against the iOS 26 "Liquid Glass" design language: translucent, blurred materials floating over ambient colour glows on a pure-black base.
 

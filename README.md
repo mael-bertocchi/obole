@@ -30,13 +30,13 @@ A portal of your own: one site, one passkey, and the apps you use every day insi
 
 | Component | What it does |
 | --- | --- |
-| **[Frontend](frontend/README.md)** | The iOS application (SwiftUI): the budget on the iPhone. |
+| **[iOS](ios/README.md)** | The iOS application (SwiftUI): the budget on the iPhone. |
 | **[Web](web/README.md)** | The portal (React), light and Apple-like, with its apps: the budget and the watchlist. |
 | **[Backend](backend/README.md)** | A Fastify + PostgreSQL server: the passkey identity and the data of every app. |
 
 ## Under the hood
 
-**Application** • Swift · SwiftUI · Observation · iOS 26 Liquid Glass materials
+**iOS** • Swift · SwiftUI · Observation · iOS 26 Liquid Glass materials
 **Web** • React 19 · TypeScript · Vite · Tailwind CSS · SimpleWebAuthn · Caddy
 **Backend** • Node 24 · Fastify 5 · TypeScript · Prisma 7 · PostgreSQL · WebAuthn · JWT · TMDB
 
@@ -44,13 +44,13 @@ A portal of your own: one site, one passkey, and the apps you use every day insi
 
 ```
 obole/
-├─ frontend/   iOS application (SwiftUI)
+├─ ios/        iOS application (SwiftUI)
 ├─ web/        The portal and its apps (React)
 ├─ backend/    Fastify server (TypeScript)
 └─ .github/    The pipeline: checks, then deployment to Dokploy
 ```
 
-Pick a side: **[run the application](frontend/README.md)**, **[open the portal](web/README.md)** or **[spin up the server](backend/README.md)**.
+Pick a side: **[run the application](ios/README.md)**, **[open the portal](web/README.md)** or **[spin up the server](backend/README.md)**.
 
 ## Deployment
 

@@ -3,7 +3,7 @@
 These guidelines apply to the entire project.
 
 - The backend and web frontend use TypeScript.
-- The mobile frontend uses Swift.
+- The iOS app uses Swift.
 - Apply the same principles to all three codebases unless a language-specific convention requires otherwise.
 
 ## Documentation comments
