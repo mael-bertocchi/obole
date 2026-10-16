@@ -20,6 +20,79 @@ const DEFAULT_MONTHLY_LIMIT = 3000;
 const TRANSACTION_TIMEOUT = 30 * 1000;
 
 /**
+ * @constant RENAMED_CATEGORIES
+ * @description Category ids that shipped under another name, by their old id. An app build from before the rename
+ * still pushes the old id, so a push is brought up to date before it is stored.
+ */
+const RENAMED_CATEGORIES: ReadonlyMap<string, string> = new Map([['health', 'selfcare']]);
+
+/**
+ * @function renamedCategory
+ * @description The current id of a category.
+ *
+ * @param {string} id The id as pushed.
+ *
+ * @returns {string} The id it goes by now.
+ */
+function renamedCategory(id: string): string {
+    return RENAMED_CATEGORIES.get(id) ?? id;
+}
+
+/**
+ * @function renamedLimits
+ * @description A set of category limits with the renamed categories under their current id. A limit already stored
+ * under the current id wins over the one under the old id.
+ *
+ * @param {Record<string, number>} limits The limits, by category id as pushed.
+ *
+ * @returns {Record<string, number>} The limits, by current category id.
+ */
+function renamedLimits(limits: Record<string, number>): Record<string, number> {
+    const renamed: Record<string, number> = {};
+
+    for (const [id, limit] of Object.entries(limits)) {
+        const current = renamedCategory(id);
+
+        if (current !== id && current in limits) {
+            continue;
+        }
+
+        renamed[current] = limit;
+    }
+
+    return renamed;
+}
+
+/**
+ * @function withRenamedCategories
+ * @description Brings a pushed document up to date with the renamed categories: the categories, the operations filed
+ * under them and the limits frozen in the history move to the current id. A category pushed under both ids is kept once,
+ * as the one under the current id.
+ *
+ * @param {StatePushBody} body The pushed document.
+ *
+ * @returns {StatePushBody} The document with current category ids only.
+ */
+export function withRenamedCategories(body: StatePushBody): StatePushBody {
+    const pushedIds = new Set(body.categories.map((category) => category.id));
+
+    return {
+        ...body,
+        categories: body.categories.flatMap((category) => {
+            const current = renamedCategory(category.id);
+
+            if (current === category.id) {
+                return [category];
+            }
+
+            return pushedIds.has(current) ? [] : [{ ...category, id: current }];
+        }),
+        operations: body.operations.map((operation) => ({ ...operation, categoryId: renamedCategory(operation.categoryId) })),
+        budgetHistory: Object.fromEntries(Object.entries(body.budgetHistory).map(([month, snapshot]) => [month, { ...snapshot, categoryLimits: renamedLimits(snapshot.categoryLimits) }]))
+    };
+}
+
+/**
  * @function pullState
  * @description Reads the whole budget document back for the owner, in the order the client expects to render it.
  *
@@ -98,11 +171,13 @@ async function claimRevision(transaction: Prisma.TransactionClient, expected: Pe
  * A push naming a revision the server has moved past is rejected with a conflict and changes nothing.
  *
  * @param {PrismaClient} prisma The database client.
- * @param {StatePushBody} body The full budget document to store, and the revision it was edited from.
+ * @param {StatePushBody} pushed The full budget document to store, and the revision it was edited from.
  *
  * @returns {Promise<StoredStateBody>} The stored budget document and its new revision, read back after the write.
  */
-export async function pushState(prisma: PrismaClient, body: StatePushBody): Promise<StoredStateBody> {
+export async function pushState(prisma: PrismaClient, pushed: StatePushBody): Promise<StoredStateBody> {
+    const body = withRenamedCategories(pushed);
+
     await prisma.budgetState.upsert({
         where: { id: OWNER_ID },
         update: {},

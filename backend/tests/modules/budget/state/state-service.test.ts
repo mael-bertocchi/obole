@@ -1,5 +1,5 @@
 import type { PrismaClient } from 'prisma/generated/prisma/client';
-import { pushState } from 'src/modules/budget/state/state-service';
+import { pushState, withRenamedCategories } from 'src/modules/budget/state/state-service';
 import { RequestError } from 'src/shared/models';
 import type { Mock } from 'vitest';
 import { describe, expect, it, vi } from 'vitest';
@@ -91,5 +91,34 @@ describe('pushState', () => {
 
         expect(stored.revision).toBe(10);
         expect(updateMany.mock.calls[0]?.[0].where).toEqual({ id: 'owner' });
+    });
+});
+
+describe('withRenamedCategories', () => {
+    it('moves the health category, its operations and its frozen limits to selfcare', () => {
+        const pushed = {
+            categories: [{ id: 'health', name: 'Health', symbol: 'cross.case', colorHex: 0xff8a5c, monthlyLimit: 80 }],
+            operations: [{ id: 'gym', date: new Date('2026-10-01'), name: 'Gym', categoryId: 'health', amount: 30, currencyCode: 'EUR', rateToEuro: 1, isOnline: false, isRecurring: true }],
+            budget: { monthlyLimit: 3000 },
+            budgetHistory: { '2026-09': { monthlyLimit: 3000, categoryLimits: { health: 80, groceries: 400 } } }
+        };
+        const renamed = withRenamedCategories(pushed);
+
+        expect(renamed.categories.map((category) => category.id)).toEqual(['selfcare']);
+        expect(renamed.operations[0]?.categoryId).toBe('selfcare');
+        expect(renamed.budgetHistory['2026-09']?.categoryLimits).toEqual({ selfcare: 80, groceries: 400 });
+    });
+
+    it('keeps the selfcare category when both ids are pushed', () => {
+        const pushed = {
+            categories: [{ id: 'health', name: 'Health', symbol: 'cross.case', colorHex: 0xff8a5c, monthlyLimit: 80 }, { id: 'selfcare', name: 'Selfcare', symbol: 'cross.case', colorHex: 0xff8a5c, monthlyLimit: 90 }],
+            operations: [],
+            budget: { monthlyLimit: 3000 },
+            budgetHistory: { '2026-09': { monthlyLimit: 3000, categoryLimits: { health: 80, selfcare: 90 } } }
+        };
+        const renamed = withRenamedCategories(pushed);
+
+        expect(renamed.categories).toEqual([pushed.categories[1]]);
+        expect(renamed.budgetHistory['2026-09']?.categoryLimits).toEqual({ selfcare: 90 });
     });
 });
