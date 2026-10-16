@@ -21,8 +21,8 @@ describe('sentences', () => {
 
 describe('categories', () => {
     it('take their look from the catalogue and keep their stored limit', () => {
-        const stored = [{ id: 'health', name: 'Health', symbol: 'dumbbell', colorHex: 0x000000, monthlyLimit: 55 }, { id: 'pets', name: 'Pets', symbol: 'pawprint', colorHex: 0x123456, monthlyLimit: 20 }];
-        const shipped = DEFAULT_CATEGORIES.find((category) => category.id === 'health');
+        const stored = [{ id: 'selfcare', name: 'Selfcare', symbol: 'dumbbell', colorHex: 0x000000, monthlyLimit: 55 }, { id: 'pets', name: 'Pets', symbol: 'pawprint', colorHex: 0x123456, monthlyLimit: 20 }];
+        const shipped = DEFAULT_CATEGORIES.find((category) => category.id === 'selfcare');
 
         expect(categoriesOf(stored)).toEqual([{ ...shipped, monthlyLimit: 55 }, stored[1]]);
     });
@@ -30,7 +30,7 @@ describe('categories', () => {
     it('are named in the page language by id, and by their stored name otherwise', () => {
         chooseLanguage('fr');
 
-        expect(categoryName({ id: 'health', name: 'Health', symbol: 'cross.case', colorHex: 0, monthlyLimit: 0 })).toBe('Santé');
+        expect(categoryName({ id: 'selfcare', name: 'Selfcare', symbol: 'cross.case', colorHex: 0, monthlyLimit: 0 })).toBe('Bien-être');
         expect(categoryName({ id: 'pets', name: 'Pets', symbol: 'pawprint', colorHex: 0, monthlyLimit: 0 })).toBe('Pets');
         expect(currencyName(currencyNamed('USD'))).toBe('Dollar américain');
     });
