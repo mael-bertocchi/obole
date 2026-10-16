@@ -184,10 +184,10 @@ enum CategoryPalette {
      */
     static let fun: UInt32 = 0x38D6D6
     /**
-     * @constant health
-     * @description Health's coral
+     * @constant selfcare
+     * @description Selfcare's coral
      */
-    static let health: UInt32 = 0xFF8A5C
+    static let selfcare: UInt32 = 0xFF8A5C
     /**
      * @constant school
      * @description School's yellow
@@ -213,7 +213,7 @@ extension Category {
         Category(id: "transport", name: "Transport", symbol: "tram", colorHex: CategoryPalette.transport, monthlyLimit: 150),
         Category(id: "shopping", name: "Shopping", symbol: "bag", colorHex: CategoryPalette.shopping, monthlyLimit: 180),
         Category(id: "fun", name: "Fun", symbol: "film", colorHex: CategoryPalette.fun, monthlyLimit: 120),
-        Category(id: "health", name: "Health", symbol: "cross.case", colorHex: CategoryPalette.health, monthlyLimit: 80),
+        Category(id: "selfcare", name: "Selfcare", symbol: "cross.case", colorHex: CategoryPalette.selfcare, monthlyLimit: 80),
         Category(id: "school", name: "School", symbol: "graduationcap", colorHex: CategoryPalette.school, monthlyLimit: 120),
         Category(id: "miscellaneous", name: "Miscellaneous", symbol: "square.grid.2x2", colorHex: CategoryPalette.miscellaneous, monthlyLimit: 100)
     ]
@@ -224,7 +224,7 @@ extension Category {
      * still carries them, so the catalog merge needs to know they are gone on purpose; otherwise it keeps them for good
      * as unknown categories parked at the end of the list
      */
-    static let retired: Set<String> = ["rent"]
+    static let retired: Set<String> = ["rent", "health"]
 
     /**
      * @constant fallback
@@ -252,7 +252,7 @@ extension Category {
         case "transport": return String(appLocalized: "Transport")
         case "shopping": return String(appLocalized: "Shopping")
         case "fun": return String(appLocalized: "Fun")
-        case "health": return String(appLocalized: "Health")
+        case "selfcare": return String(appLocalized: "Selfcare")
         case "school": return String(appLocalized: "School")
         case "miscellaneous": return String(appLocalized: "Miscellaneous")
         case "rent": return String(appLocalized: "Rent")

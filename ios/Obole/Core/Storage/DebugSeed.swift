@@ -56,7 +56,7 @@ enum DebugSeed {
             Operation(date: day(1, hour: 21), name: "Trattoria Dinner", categoryId: "restaurant", location: "Kreuzberg", amount: 48),
             Operation(date: day(2, hour: 8), name: "Bonanza Coffee", categoryId: "coffee", location: "Prenzlauer Berg", amount: 4.50),
             Operation(date: day(2, hour: 22), name: "Klunkerkranich", categoryId: "bar", location: "Neukölln", amount: 18.50),
-            Operation(date: day(3, hour: 19), name: "FitX Gym", categoryId: "health", location: "Prenzlauer Berg", amount: 29.90, isRecurring: true),
+            Operation(date: day(3, hour: 19), name: "FitX Gym", categoryId: "selfcare", location: "Prenzlauer Berg", amount: 29.90, isRecurring: true),
             Operation(date: day(4, hour: 21), name: "Netflix", categoryId: "fun", amount: 12.99, isOnline: true, isRecurring: true),
             Operation(date: day(4, hour: 17), name: "REWE", categoryId: "groceries", location: "Prenzlauer Berg", amount: 31.40),
 

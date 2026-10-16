@@ -474,22 +474,22 @@
         }
       }
     },
+    "Selfcare" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bien-être"
+          }
+        }
+      }
+    },
     "has a note" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "avec une note"
-          }
-        }
-      }
-    },
-    "Health" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Santé"
           }
         }
       }
