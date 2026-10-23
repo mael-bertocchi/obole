@@ -203,11 +203,6 @@ enum CategoryPalette {
      * @description Telecom's indigo
      */
     static let telecom: UInt32 = 0x7B8CFF
-    /**
-     * @constant miscellaneous
-     * @description Miscellaneous' grey
-     */
-    static let miscellaneous: UInt32 = 0x9BA1B0
 }
 
 extension Category {
@@ -226,8 +221,7 @@ extension Category {
         Category(id: "selfcare", name: "Selfcare", symbol: "cross.case", colorHex: CategoryPalette.selfcare, monthlyLimit: 80),
         Category(id: "school", name: "School", symbol: "graduationcap", colorHex: CategoryPalette.school, monthlyLimit: 120),
         Category(id: "administrative", name: "Administrative", symbol: "doc.text", colorHex: CategoryPalette.administrative, monthlyLimit: 50),
-        Category(id: "telecom", name: "Telecom", symbol: "wifi", colorHex: CategoryPalette.telecom, monthlyLimit: 60),
-        Category(id: "miscellaneous", name: "Miscellaneous", symbol: "square.grid.2x2", colorHex: CategoryPalette.miscellaneous, monthlyLimit: 100)
+        Category(id: "telecom", name: "Telecom", symbol: "wifi", colorHex: CategoryPalette.telecom, monthlyLimit: 60)
     ]
 
     /**
@@ -237,6 +231,13 @@ extension Category {
      * as unknown categories parked at the end of the list
      */
     static let retired: Set<String> = ["rent", "health"]
+
+    /**
+     * @constant dropped
+     * @description Ids that shipped as categories once and are left out of a document for good, even while an
+     * operation still uses them: such an operation shows under the fallback instead
+     */
+    static let dropped: Set<String> = ["miscellaneous"]
 
     /**
      * @constant fallback
@@ -268,7 +269,6 @@ extension Category {
         case "school": return String(appLocalized: "School")
         case "administrative": return String(appLocalized: "Administrative")
         case "telecom": return String(appLocalized: "Telecom")
-        case "miscellaneous": return String(appLocalized: "Miscellaneous")
         case "rent": return String(appLocalized: "Rent")
         case Category.fallback.id: return String(appLocalized: "Uncategorized")
         default: return name

@@ -353,7 +353,7 @@ final class LocalStore {
      * @method mergeCatalog
      * @description Brings the categories in line with the shipped catalogue, keeping their stored limits and any
      * retired category an operation still uses. A category shipped after the budget was stored joins it with no limit,
-     * so it does not eat into the limits already dispatched
+     * so it does not eat into the limits already dispatched, and a dropped one is left out
      */
     private func mergeCatalog() {
         guard !categories.isEmpty else {
@@ -372,7 +372,7 @@ final class LocalStore {
         }
 
         categories = shipped + categories.filter { category in
-            guard !catalogIds.contains(category.id) else {
+            guard !catalogIds.contains(category.id), !Category.dropped.contains(category.id) else {
                 return false
             }
 

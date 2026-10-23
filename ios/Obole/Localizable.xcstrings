@@ -554,16 +554,6 @@
         }
       }
     },
-    "Miscellaneous" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Divers"
-          }
-        }
-      }
-    },
     "Monthly budget" : {
       "localizations" : {
         "fr" : {
