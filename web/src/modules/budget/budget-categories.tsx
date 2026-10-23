@@ -15,7 +15,7 @@ export const DEFAULT_CATEGORIES: readonly Category[] = [
     { id: 'shopping', name: 'Shopping', symbol: 'bag', colorHex: 0xff6ba8, monthlyLimit: 180 },
     { id: 'fun', name: 'Fun', symbol: 'film', colorHex: 0x38d6d6, monthlyLimit: 120 },
     { id: 'selfcare', name: 'Selfcare', symbol: 'cross.case', colorHex: 0xff8a5c, monthlyLimit: 80 },
-    { id: 'school', name: 'School', symbol: 'graduationcap', colorHex: 0xffd166, monthlyLimit: 120 },
+    { id: 'school', name: 'Study', symbol: 'graduationcap', colorHex: 0xffd166, monthlyLimit: 120 },
     { id: 'administrative', name: 'Administrative', symbol: 'doc.text', colorHex: 0xc9a27e, monthlyLimit: 50 },
     { id: 'telecom', name: 'Telecom', symbol: 'wifi', colorHex: 0x7b8cff, monthlyLimit: 60 }
 ];
