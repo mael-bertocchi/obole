@@ -3,6 +3,7 @@ import {
     BriefcaseMedical,
     CircleDashed,
     Coffee,
+    FileText,
     Film,
     GraduationCap,
     House,
@@ -12,6 +13,7 @@ import {
     Tag,
     TramFront,
     UtensilsCrossed,
+    Wifi,
     Wine,
     type LucideIcon
 } from 'lucide-react';
@@ -33,6 +35,8 @@ const SYMBOL_ICONS: Readonly<Record<string, LucideIcon>> = {
     'film': Film,
     'cross.case': BriefcaseMedical,
     'graduationcap': GraduationCap,
+    'doc.text': FileText,
+    'wifi': Wifi,
     'square.grid.2x2': LayoutGrid,
     'circle.dashed': CircleDashed,
     'house': House

@@ -31,6 +31,8 @@ describe('categories', () => {
         chooseLanguage('fr');
 
         expect(categoryName({ id: 'selfcare', name: 'Selfcare', symbol: 'cross.case', colorHex: 0, monthlyLimit: 0 })).toBe('Bien-être');
+        expect(categoryName({ id: 'administrative', name: 'Administrative', symbol: 'doc.text', colorHex: 0, monthlyLimit: 0 })).toBe('Administratif');
+        expect(categoryName({ id: 'telecom', name: 'Telecom', symbol: 'wifi', colorHex: 0, monthlyLimit: 0 })).toBe('Télécom');
         expect(categoryName({ id: 'pets', name: 'Pets', symbol: 'pawprint', colorHex: 0, monthlyLimit: 0 })).toBe('Pets');
         expect(currencyName(currencyNamed('USD'))).toBe('Dollar américain');
     });

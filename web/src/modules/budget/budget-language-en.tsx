@@ -124,6 +124,8 @@ export const budgetEn = {
     'category.fun': 'Fun',
     'category.selfcare': 'Selfcare',
     'category.school': 'School',
+    'category.administrative': 'Administrative',
+    'category.telecom': 'Telecom',
     'category.miscellaneous': 'Miscellaneous',
     'category.rent': 'Rent',
     'category.uncategorized': 'Uncategorized',
