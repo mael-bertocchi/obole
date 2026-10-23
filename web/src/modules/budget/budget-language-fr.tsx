@@ -117,7 +117,6 @@ export const budgetFr: BudgetMessages = {
     'dates.yesterdayOn': 'Hier, {day}',
     'dates.at': '{day} à {time}',
 
-    'category.housing': 'Logement',
     'category.groceries': 'Courses',
     'category.restaurant': 'Restaurant',
     'category.bar': 'Bar',
