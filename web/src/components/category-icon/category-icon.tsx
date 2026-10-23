@@ -7,7 +7,6 @@ import {
     Film,
     GraduationCap,
     House,
-    LayoutGrid,
     ShoppingBag,
     ShoppingCart,
     Tag,
@@ -37,7 +36,6 @@ const SYMBOL_ICONS: Readonly<Record<string, LucideIcon>> = {
     'graduationcap': GraduationCap,
     'doc.text': FileText,
     'wifi': Wifi,
-    'square.grid.2x2': LayoutGrid,
     'circle.dashed': CircleDashed,
     'house': House
 };

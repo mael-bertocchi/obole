@@ -126,7 +126,6 @@ export const budgetEn = {
     'category.school': 'School',
     'category.administrative': 'Administrative',
     'category.telecom': 'Telecom',
-    'category.miscellaneous': 'Miscellaneous',
     'category.rent': 'Rent',
     'category.uncategorized': 'Uncategorized',
 

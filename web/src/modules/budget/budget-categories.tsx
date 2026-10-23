@@ -16,9 +16,15 @@ export const DEFAULT_CATEGORIES: readonly Category[] = [
     { id: 'selfcare', name: 'Selfcare', symbol: 'cross.case', colorHex: 0xff8a5c, monthlyLimit: 80 },
     { id: 'school', name: 'School', symbol: 'graduationcap', colorHex: 0xffd166, monthlyLimit: 120 },
     { id: 'administrative', name: 'Administrative', symbol: 'doc.text', colorHex: 0xc9a27e, monthlyLimit: 50 },
-    { id: 'telecom', name: 'Telecom', symbol: 'wifi', colorHex: 0x7b8cff, monthlyLimit: 60 },
-    { id: 'miscellaneous', name: 'Miscellaneous', symbol: 'square.grid.2x2', colorHex: 0x9ba1b0, monthlyLimit: 100 }
+    { id: 'telecom', name: 'Telecom', symbol: 'wifi', colorHex: 0x7b8cff, monthlyLimit: 60 }
 ];
+
+/**
+ * @constant DROPPED_CATEGORIES
+ * @description Ids that shipped as categories once and are left out of a stored budget for good. An operation still
+ * filed under one shows under the uncategorized stand-in.
+ */
+const DROPPED_CATEGORIES: ReadonlySet<string> = new Set(['miscellaneous']);
 
 /**
  * @constant FALLBACK_CATEGORY
@@ -51,7 +57,8 @@ const CATALOGUE = new Map(DEFAULT_CATEGORIES.map((category) => [category.id, cat
  * @description The categories to offer: the stored ones, or the shipped catalogue when none were ever stored. As in the
  * app, the catalogue owns how a shipped category looks (its name, symbol and colour) and its order, and the stored copy
  * only its limit, so a new icon reaches a budget stored before it. A category shipped after the budget was stored joins
- * it with no limit, so it does not eat into limits already dispatched; the rest of the stored ones follow the catalogue.
+ * it with no limit, so it does not eat into limits already dispatched; a dropped one is left out, and the rest of the
+ * stored ones follow the catalogue.
  *
  * @param {readonly Category[]} categories The stored categories.
  *
@@ -65,7 +72,7 @@ export function categoriesOf(categories: readonly Category[]): readonly Category
     const stored = new Map(categories.map((category) => [category.id, category]));
     const shipped = DEFAULT_CATEGORIES.map((category) => ({ ...category, monthlyLimit: stored.get(category.id)?.monthlyLimit ?? 0 }));
 
-    return [...shipped, ...categories.filter((category) => !CATALOGUE.has(category.id))];
+    return [...shipped, ...categories.filter((category) => !CATALOGUE.has(category.id) && !DROPPED_CATEGORIES.has(category.id))];
 }
 
 /**
