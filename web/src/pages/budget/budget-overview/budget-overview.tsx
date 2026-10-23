@@ -122,7 +122,7 @@ function BudgetOverviewComponent(): JSX.Element {
                 </div>
             </div>
 
-            <div className='mt-6 grid gap-5 lg:grid-cols-5'>
+            <div className='mt-6 grid grid-cols-1 gap-5 lg:grid-cols-5'>
                 <section className='card flex flex-col items-center p-6 sm:p-8 lg:sticky lg:top-24 lg:col-span-2 lg:self-start'>
                     <RingComponent progress={hasOperations ? figures.progress : 0} color={isOverBudget ? NEGATIVE : ACCENT}>
                         <p className={`text-[14px] font-medium ${isOverBudget ? 'text-negative-text' : 'text-ink-secondary'}`}>

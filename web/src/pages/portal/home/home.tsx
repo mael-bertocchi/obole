@@ -95,7 +95,7 @@ function HomePage(): JSX.Element {
                     {account === null ? t('home.welcome') : t(greetingKey(now), { name: account.name })}
                 </h1>
 
-                <div className='mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3'>
+                <div className='mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3'>
                     {TILES.map(({ app, Widget }) => (
                         <AppTileComponent key={app.id} app={app} Widget={Widget} />
                     ))}
