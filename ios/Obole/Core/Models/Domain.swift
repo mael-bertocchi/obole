@@ -195,7 +195,7 @@ enum CategoryPalette {
     static let selfcare: UInt32 = 0xFF8A5C
     /**
      * @constant school
-     * @description School's yellow
+     * @description Study's yellow
      */
     static let school: UInt32 = 0xFFD166
     /**
@@ -225,7 +225,7 @@ extension Category {
         Category(id: "shopping", name: "Shopping", symbol: "bag", colorHex: CategoryPalette.shopping, monthlyLimit: 180),
         Category(id: "fun", name: "Fun", symbol: "film", colorHex: CategoryPalette.fun, monthlyLimit: 120),
         Category(id: "selfcare", name: "Selfcare", symbol: "cross.case", colorHex: CategoryPalette.selfcare, monthlyLimit: 80),
-        Category(id: "school", name: "School", symbol: "graduationcap", colorHex: CategoryPalette.school, monthlyLimit: 120),
+        Category(id: "school", name: "Study", symbol: "graduationcap", colorHex: CategoryPalette.school, monthlyLimit: 120),
         Category(id: "administrative", name: "Administrative", symbol: "doc.text", colorHex: CategoryPalette.administrative, monthlyLimit: 50),
         Category(id: "telecom", name: "Telecom", symbol: "wifi", colorHex: CategoryPalette.telecom, monthlyLimit: 60)
     ]
@@ -273,7 +273,7 @@ extension Category {
         case "shopping": return String(appLocalized: "Shopping")
         case "fun": return String(appLocalized: "Fun")
         case "selfcare": return String(appLocalized: "Selfcare")
-        case "school": return String(appLocalized: "School")
+        case "school": return String(appLocalized: "Study")
         case "administrative": return String(appLocalized: "Administrative")
         case "telecom": return String(appLocalized: "Telecom")
         case "rent": return String(appLocalized: "Rent")
