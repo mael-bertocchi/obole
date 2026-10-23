@@ -854,6 +854,26 @@
         }
       }
     },
+    "Administrative" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Administratif"
+          }
+        }
+      }
+    },
+    "Telecom" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Télécom"
+          }
+        }
+      }
+    },
     "School" : {
       "localizations" : {
         "fr" : {

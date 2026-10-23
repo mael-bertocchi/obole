@@ -194,6 +194,16 @@ enum CategoryPalette {
      */
     static let school: UInt32 = 0xFFD166
     /**
+     * @constant administrative
+     * @description Administrative's tan
+     */
+    static let administrative: UInt32 = 0xC9A27E
+    /**
+     * @constant telecom
+     * @description Telecom's indigo
+     */
+    static let telecom: UInt32 = 0x7B8CFF
+    /**
      * @constant miscellaneous
      * @description Miscellaneous' grey
      */
@@ -215,6 +225,8 @@ extension Category {
         Category(id: "fun", name: "Fun", symbol: "film", colorHex: CategoryPalette.fun, monthlyLimit: 120),
         Category(id: "selfcare", name: "Selfcare", symbol: "cross.case", colorHex: CategoryPalette.selfcare, monthlyLimit: 80),
         Category(id: "school", name: "School", symbol: "graduationcap", colorHex: CategoryPalette.school, monthlyLimit: 120),
+        Category(id: "administrative", name: "Administrative", symbol: "doc.text", colorHex: CategoryPalette.administrative, monthlyLimit: 50),
+        Category(id: "telecom", name: "Telecom", symbol: "wifi", colorHex: CategoryPalette.telecom, monthlyLimit: 60),
         Category(id: "miscellaneous", name: "Miscellaneous", symbol: "square.grid.2x2", colorHex: CategoryPalette.miscellaneous, monthlyLimit: 100)
     ]
 
@@ -254,6 +266,8 @@ extension Category {
         case "fun": return String(appLocalized: "Fun")
         case "selfcare": return String(appLocalized: "Selfcare")
         case "school": return String(appLocalized: "School")
+        case "administrative": return String(appLocalized: "Administrative")
+        case "telecom": return String(appLocalized: "Telecom")
         case "miscellaneous": return String(appLocalized: "Miscellaneous")
         case "rent": return String(appLocalized: "Rent")
         case Category.fallback.id: return String(appLocalized: "Uncategorized")
