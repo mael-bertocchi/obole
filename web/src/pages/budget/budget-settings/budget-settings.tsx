@@ -4,7 +4,7 @@ import ListGroupComponent from 'components/list-group/list-group';
 import ListRowComponent from 'components/list-row/list-row';
 import SyncBadgeComponent from 'components/sync-badge/sync-badge';
 import { ChevronRight, Euro, LayoutGrid, List, RefreshCw, Target, Trash2 } from 'lucide-react';
-import { DEFAULT_CATEGORIES } from 'modules/budget/budget-categories';
+import { categoriesOf, DEFAULT_CATEGORIES } from 'modules/budget/budget-categories';
 import { BANK_MARKUP, bankRate, CURRENCIES, currencyName, EURO } from 'modules/budget/budget-currencies';
 import { euro, percent, rate } from 'modules/budget/budget-formatting';
 import { useBudget, useDocument, useRates } from 'modules/budget/budget-hooks';
@@ -121,7 +121,7 @@ function BudgetSettingsComponent(): JSX.Element {
                     <span className='text-[15px] text-ink-secondary tabular-nums'>{document.operations.length}</span>
                 </ListRowComponent>
                 <ListRowComponent icon={<IconTileComponent icon={LayoutGrid} color={ACCENT} size={30} />} title={t('settings.categories')}>
-                    <span className='text-[15px] text-ink-secondary tabular-nums'>{document.categories.length}</span>
+                    <span className='text-[15px] text-ink-secondary tabular-nums'>{categoriesOf(document.categories).length}</span>
                 </ListRowComponent>
                 <ListRowComponent icon={<IconTileComponent icon={Trash2} color={NEGATIVE} size={30} />} title={t('settings.reset')} destructive onClick={() => setIsConfirmingReset(true)} />
             </ListGroupComponent>

@@ -49,8 +49,9 @@ const CATALOGUE = new Map(DEFAULT_CATEGORIES.map((category) => [category.id, cat
 /**
  * @function categoriesOf
  * @description The categories to offer: the stored ones, or the shipped catalogue when none were ever stored. As in the
- * app, the catalogue owns how a shipped category looks (its name, symbol and colour) and the stored copy only its
- * limit, so a new icon reaches a budget stored before it.
+ * app, the catalogue owns how a shipped category looks (its name, symbol and colour) and its order, and the stored copy
+ * only its limit, so a new icon reaches a budget stored before it. A category shipped after the budget was stored joins
+ * it with no limit, so it does not eat into limits already dispatched; the rest of the stored ones follow the catalogue.
  *
  * @param {readonly Category[]} categories The stored categories.
  *
@@ -61,11 +62,10 @@ export function categoriesOf(categories: readonly Category[]): readonly Category
         return DEFAULT_CATEGORIES;
     }
 
-    return categories.map((category) => {
-        const shipped = CATALOGUE.get(category.id);
+    const stored = new Map(categories.map((category) => [category.id, category]));
+    const shipped = DEFAULT_CATEGORIES.map((category) => ({ ...category, monthlyLimit: stored.get(category.id)?.monthlyLimit ?? 0 }));
 
-        return shipped === undefined ? category : { ...category, name: shipped.name, symbol: shipped.symbol, colorHex: shipped.colorHex };
-    });
+    return [...shipped, ...categories.filter((category) => !CATALOGUE.has(category.id))];
 }
 
 /**

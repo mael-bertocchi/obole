@@ -24,7 +24,19 @@ describe('categories', () => {
         const stored = [{ id: 'selfcare', name: 'Selfcare', symbol: 'dumbbell', colorHex: 0x000000, monthlyLimit: 55 }, { id: 'pets', name: 'Pets', symbol: 'pawprint', colorHex: 0x123456, monthlyLimit: 20 }];
         const shipped = DEFAULT_CATEGORIES.find((category) => category.id === 'selfcare');
 
-        expect(categoriesOf(stored)).toEqual([{ ...shipped, monthlyLimit: 55 }, stored[1]]);
+        const offered = categoriesOf(stored);
+
+        expect(offered.find((category) => category.id === 'selfcare')).toEqual({ ...shipped, monthlyLimit: 55 });
+        expect(offered.at(-1)).toEqual(stored[1]);
+    });
+
+    it('bring in the categories shipped after the budget was stored, with no limit', () => {
+        const stored = [{ id: 'groceries', name: 'Groceries', symbol: 'cart', colorHex: 0x3ecf8e, monthlyLimit: 180 }];
+        const offered = categoriesOf(stored);
+
+        expect(offered.map((category) => category.id)).toEqual(DEFAULT_CATEGORIES.map((category) => category.id));
+        expect(offered.find((category) => category.id === 'groceries')?.monthlyLimit).toBe(180);
+        expect(offered.find((category) => category.id === 'telecom')?.monthlyLimit).toBe(0);
     });
 
     it('are named in the page language by id, and by their stored name otherwise', () => {
