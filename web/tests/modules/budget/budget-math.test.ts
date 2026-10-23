@@ -61,7 +61,7 @@ describe('categories', () => {
     });
 
     it('reports what the limits leave of the budget', () => {
-        expect(toDispatch(document().categories, liveBudget(document()))).toBe(3000 - 1560);
+        expect(toDispatch(document().categories, liveBudget(document()))).toBe(3000 - 2460);
     });
 });
 

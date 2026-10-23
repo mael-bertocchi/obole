@@ -6,6 +6,7 @@ import { isMessageKey, t } from 'modules/language/language-service';
  * @description The catalogue the app ships with, used when the server has never been sent any category.
  */
 export const DEFAULT_CATEGORIES: readonly Category[] = [
+    { id: 'housing', name: 'Housing', symbol: 'house', colorHex: 0xe57373, monthlyLimit: 900 },
     { id: 'groceries', name: 'Groceries', symbol: 'cart', colorHex: 0x3ecf8e, monthlyLimit: 400 },
     { id: 'restaurant', name: 'Restaurant', symbol: 'fork.knife', colorHex: 0xffa23e, monthlyLimit: 250 },
     { id: 'bar', name: 'Bar', symbol: 'wineglass', colorHex: 0x8fe05c, monthlyLimit: 100 },

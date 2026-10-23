@@ -115,6 +115,7 @@ export const budgetEn = {
     'dates.yesterdayOn': 'Yesterday, {day}',
     'dates.at': '{day} at {time}',
 
+    'category.housing': 'Housing',
     'category.groceries': 'Groceries',
     'category.restaurant': 'Restaurant',
     'category.bar': 'Bar',
