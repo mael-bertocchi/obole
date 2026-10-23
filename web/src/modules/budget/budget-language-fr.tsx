@@ -125,7 +125,7 @@ export const budgetFr: BudgetMessages = {
     'category.shopping': 'Shopping',
     'category.fun': 'Loisirs',
     'category.selfcare': 'Bien-être',
-    'category.school': 'École',
+    'category.school': 'Étude',
     'category.administrative': 'Administratif',
     'category.telecom': 'Télécom',
     'category.rent': 'Loyer',
