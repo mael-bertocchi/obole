@@ -864,6 +864,16 @@
         }
       }
     },
+    "Housing" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logement"
+          }
+        }
+      }
+    },
     "School" : {
       "localizations" : {
         "fr" : {

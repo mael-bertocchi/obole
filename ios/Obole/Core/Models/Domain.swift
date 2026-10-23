@@ -149,6 +149,11 @@ struct MonthlyBudget: Codable, Equatable {
  */
 enum CategoryPalette {
     /**
+     * @constant housing
+     * @description Housing's red
+     */
+    static let housing: UInt32 = 0xE57373
+    /**
      * @constant groceries
      * @description Groceries' green
      */
@@ -211,6 +216,7 @@ extension Category {
      * @description The categories the app ships with, and their default limits
      */
     static let defaults: [Category] = [
+        Category(id: "housing", name: "Housing", symbol: "house", colorHex: CategoryPalette.housing, monthlyLimit: 900),
         Category(id: "groceries", name: "Groceries", symbol: "cart", colorHex: CategoryPalette.groceries, monthlyLimit: 400),
         Category(id: "restaurant", name: "Restaurant", symbol: "fork.knife", colorHex: CategoryPalette.restaurant, monthlyLimit: 250),
         Category(id: "bar", name: "Bar", symbol: "wineglass", colorHex: CategoryPalette.bar, monthlyLimit: 100),
@@ -258,6 +264,7 @@ extension Category {
      */
     var title: String {
         switch id {
+        case "housing": return String(appLocalized: "Housing")
         case "groceries": return String(appLocalized: "Groceries")
         case "restaurant": return String(appLocalized: "Restaurant")
         case "bar": return String(appLocalized: "Bar")
