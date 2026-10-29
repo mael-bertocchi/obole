@@ -23,6 +23,8 @@ export const assistantFr: AssistantMessages = {
     'assistant.privacy': 'Vos messages et les données que l’assistant consulte sont envoyés à Google Gemini.',
     'assistant.notConfigured': 'L’assistant est indisponible : aucune clé d’API Gemini n’est configurée sur le serveur.',
     'assistant.refused': 'L’assistant est indisponible : Gemini a refusé la clé d’API du serveur.',
+    'assistant.unknownModel': 'L’assistant est indisponible : Gemini ne connaît pas le modèle configuré sur le serveur.',
+    'assistant.unreachable': 'L’assistant est indisponible : Gemini ne répond pas pour le moment.',
     'assistant.quota': 'L’assistant a épuisé son quota pour le moment. Réessayez dans un instant.',
     'assistant.invalidDate': 'Cette suggestion porte une date inutilisable.',
     'assistant.rateMissing': 'Aucun taux de change pour {code} ce jour-là.',

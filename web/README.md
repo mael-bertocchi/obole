@@ -32,6 +32,7 @@
 
 - **Ask** • a conversation about the budget and the watchlist, answered by Gemini through the backend, in the page's language. The conversation lives in the page only.
 - **Suggestions, never actions** • to log, change or delete an operation, or to rate a title, the assistant shows a card; nothing happens until you confirm it. A confirmed card goes through the budget's own sync (priced at its day's rate, a deletion to the trash) or the watchlist, exactly like an edit made by hand.
+- **Off when it can't answer** • the portal asks the backend whether Gemini takes its key and knows its model; while it doesn't, the assistant is greyed out in the launcher and on the home page, its tile and its page say why, and its field can't be used.
 
 ## Stack
 
@@ -60,7 +61,7 @@ src/
 │  ├─ toast/         Short messages at the bottom of the page
 │  ├─ budget/        The budget app: manifest, service, store, rates, math, formatting, sentences…
 │  ├─ watchlist/     The watchlist app: manifest, service, store, shelves, formatting, sentences…
-│  └─ assistant/     The assistant app: manifest, service, carrying out a confirmed suggestion, sentences
+│  └─ assistant/     The assistant app: manifest, service, availability, carrying out a confirmed suggestion, sentences
 ├─ pages/         One folder per page area, each page or section in its own folder:
 │  ├─ portal/        Home, account, login, connect
 │  ├─ budget/        The budget's root page, its tabs (overview, history, settings), sheets and home tile

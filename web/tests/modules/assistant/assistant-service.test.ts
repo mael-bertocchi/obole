@@ -1,4 +1,4 @@
-import assistantService from 'modules/assistant/assistant-service';
+import assistantService, { assistantAvailability } from 'modules/assistant/assistant-service';
 import { fetchWithAuthentication, RequestError } from 'utils/request';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -24,5 +24,12 @@ describe('assistantService', () => {
         vi.mocked(fetchWithAuthentication).mockRejectedValueOnce(new RequestError(503, 'Refused', 'assistant-not-configured'));
 
         await expect(assistantService.sendConversation([{ id: '1', role: 'user', text: 'Bonjour', proposals: [] }])).rejects.toThrow('no Gemini API key is set on the server');
+    });
+
+    it('greys the assistant out once the server refuses its key', async () => {
+        vi.mocked(fetchWithAuthentication).mockRejectedValueOnce(new RequestError(503, 'Refused', 'assistant-refused'));
+
+        await expect(assistantService.sendConversation([{ id: '1', role: 'user', text: 'Bonjour', proposals: [] }])).rejects.toThrow('Gemini rejected the server’s API key');
+        expect(assistantAvailability.getSnapshot()).toEqual({ isAvailable: false, reason: 'assistant.refused' });
     });
 });

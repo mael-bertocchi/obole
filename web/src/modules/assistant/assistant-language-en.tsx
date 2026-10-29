@@ -21,6 +21,8 @@ export const assistantEn = {
     'assistant.privacy': 'Your messages and the data the assistant reads are sent to Google Gemini.',
     'assistant.notConfigured': 'The assistant isn’t available: no Gemini API key is set on the server.',
     'assistant.refused': 'The assistant isn’t available: Gemini rejected the server’s API key.',
+    'assistant.unknownModel': 'The assistant isn’t available: Gemini doesn’t know the model set on the server.',
+    'assistant.unreachable': 'The assistant isn’t available: Gemini can’t be reached right now.',
     'assistant.quota': 'The assistant has used up its quota for now. Try again in a moment.',
     'assistant.invalidDate': 'This suggestion has a date that can’t be used.',
     'assistant.rateMissing': 'No exchange rate for {code} on that day.',

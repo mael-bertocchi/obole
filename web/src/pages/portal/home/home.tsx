@@ -1,6 +1,7 @@
 import AppIconComponent from 'components/app-icon/app-icon';
 import FrameComponent from 'components/frame/frame';
 import { ChevronRight } from 'lucide-react';
+import { useAppAvailability } from 'modules/apps/apps-hooks';
 import type { PortalApp } from 'modules/apps/apps-models';
 import { APPS, appPath } from 'modules/apps/apps-registry';
 import { useIdentityContext } from 'modules/identity/identity-hooks';
@@ -51,12 +52,29 @@ function today(now: Date): string {
 
 /**
  * @function AppTileComponent
- * @description An app on the home page: its icon, name and purpose, and a glance at it when it has one.
+ * @description An app on the home page: its icon, name and purpose, and a glance at it when it has one. While the app
+ * can't be used, the tile is greyed out, out of reach, and says why in place of the glance.
  *
  * @param {AppTileComponentProps} props The properties of the component
  */
 function AppTileComponent(props: AppTileComponentProps): JSX.Element {
     const Widget = props.Widget;
+    const availability = useAppAvailability(props.app);
+
+    if (!availability.isAvailable) {
+        return (
+            <div aria-disabled='true' className='card block cursor-not-allowed p-5 sm:p-6'>
+                <div className='flex items-center gap-3.5 opacity-50 grayscale'>
+                    <AppIconComponent app={props.app} size={46} />
+                    <div className='min-w-0 flex-1'>
+                        <p className='text-[17px] font-semibold tracking-tight'>{t(props.app.name)}</p>
+                        <p className='text-[13px] text-ink-secondary'>{t(props.app.summary)}</p>
+                    </div>
+                </div>
+                {availability.reason !== null && <p className='mt-5 border-t border-hairline pt-4 text-[14px] text-ink-secondary'>{t(availability.reason)}</p>}
+            </div>
+        );
+    }
 
     return (
         <Link to={appPath(props.app)} aria-label={t('home.open', { app: t(props.app.name) })} className='card group block p-5 transition hover:-translate-y-0.5 hover:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_14px_36px_rgb(0_0_0/0.08)] sm:p-6'>

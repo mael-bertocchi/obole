@@ -1,5 +1,7 @@
 import AppIconComponent from 'components/app-icon/app-icon';
 import LogoComponent from 'components/logo/logo';
+import { useAppAvailability } from 'modules/apps/apps-hooks';
+import type { PortalApp } from 'modules/apps/apps-models';
 import { APPS, appPath } from 'modules/apps/apps-registry';
 import { t } from 'modules/language/language-service';
 import { useEffect, useRef, type JSX, type ReactNode } from 'react';
@@ -49,6 +51,39 @@ function LauncherTileComponent(props: LauncherTileComponentProps): JSX.Element {
 }
 
 /**
+ * @interface LauncherAppTileComponentProps
+ * @description An app in the launcher
+ */
+interface LauncherAppTileComponentProps {
+    app: PortalApp; /*!< The app */
+    pathname: string; /*!< Where the launcher was opened from */
+    onPick: () => void; /*!< Called when it is picked */
+}
+
+/**
+ * @function LauncherAppTileComponent
+ * @description An app in the launcher, greyed out and out of reach while it can't be used, saying why on hover
+ *
+ * @param {LauncherAppTileComponentProps} props The properties of the component
+ */
+function LauncherAppTileComponent(props: LauncherAppTileComponentProps): JSX.Element {
+    const availability = useAppAvailability(props.app);
+    const path = appPath(props.app);
+    const icon = <AppIconComponent app={props.app} size={ICON_SIZE} />;
+
+    if (!availability.isAvailable) {
+        return (
+            <span aria-disabled='true' title={availability.reason === null ? undefined : t(availability.reason)} className='flex cursor-not-allowed flex-col items-center gap-2 rounded-2xl px-1 py-3 text-center opacity-40 grayscale'>
+                <span>{icon}</span>
+                <span className='text-[13px] font-medium leading-tight text-ink'>{t(props.app.name)}</span>
+            </span>
+        );
+    }
+
+    return <LauncherTileComponent to={path} name={t(props.app.name)} icon={icon} isCurrent={props.pathname === path || props.pathname.startsWith(`${path}/`)} onPick={props.onPick} />;
+}
+
+/**
  * @function LauncherComponent
  * @description The app switcher: it fades in over the page, under the portal's bar, with the home page and every app
  * as large icons, the way the portal's pages are laid out. Picking one leads there; the frame closes it on Escape, from
@@ -74,7 +109,7 @@ function LauncherComponent(props: LauncherComponentProps): JSX.Element {
                 <nav ref={grid} aria-label={t('frame.apps')} className='mt-8 grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-4 md:grid-cols-6'>
                     <LauncherTileComponent to='/' name={t('frame.home')} icon={<LogoComponent size={ICON_SIZE} />} isCurrent={pathname === '/'} onPick={props.onClose} />
                     {APPS.map((app) => (
-                        <LauncherTileComponent key={app.id} to={appPath(app)} name={t(app.name)} icon={<AppIconComponent app={app} size={ICON_SIZE} />} isCurrent={pathname === appPath(app) || pathname.startsWith(`${appPath(app)}/`)} onPick={props.onClose} />
+                        <LauncherAppTileComponent key={app.id} app={app} pathname={pathname} onPick={props.onClose} />
                     ))}
                 </nav>
             </div>

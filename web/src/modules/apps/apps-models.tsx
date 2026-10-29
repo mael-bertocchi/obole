@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import type { Maybe } from 'models';
 import type { MessageKey } from 'modules/language/language-en';
 import type { ComponentType } from 'react';
 
@@ -7,6 +8,24 @@ import type { ComponentType } from 'react';
  * @description What loading a piece of an app hands back: a module whose default export is a component.
  */
 export type AppModule = Promise<{ default: ComponentType }>;
+
+/**
+ * @interface AppAvailability
+ * @description Whether an app can be used right now, and why not when it can't.
+ */
+export interface AppAvailability {
+    isAvailable: boolean; /*!< Whether it can be opened */
+    reason: Maybe<MessageKey>; /*!< Why not, null while it can */
+}
+
+/**
+ * @interface AvailabilitySource
+ * @description Where an app's availability comes from, for `useSyncExternalStore`.
+ */
+export interface AvailabilitySource {
+    subscribe: (listener: () => void) => () => void; /*!< Tells a listener about every change, until it unsubscribes */
+    getSnapshot: () => AppAvailability; /*!< The availability as it stands */
+}
 
 /**
  * @interface PortalApp
@@ -21,4 +40,5 @@ export interface PortalApp {
     colors: readonly [string, string]; /*!< Its icon's gradient, from the top to the bottom */
     load: () => AppModule; /*!< The app itself, mounted under `/<id>/*` with its own routes */
     loadWidget?: () => AppModule; /*!< Its tile's content on the home page, a glance at the app */
+    availability?: AvailabilitySource; /*!< Whether it can be used right now, always when left out */
 }

@@ -6,6 +6,7 @@ import { ArrowUp, SquarePen } from 'lucide-react';
 import type { Maybe } from 'models';
 import type { ProposalServices } from 'modules/assistant/assistant-actions';
 import { applyProposal } from 'modules/assistant/assistant-actions';
+import { useAppAvailability } from 'modules/apps/apps-hooks';
 import { assistant } from 'modules/assistant/assistant-manifest';
 import type { AssistantOperationDraft, ConversationMessage, Proposal, ProposalEntry, ProposalStatus } from 'modules/assistant/assistant-models';
 import assistantService from 'modules/assistant/assistant-service';
@@ -243,7 +244,8 @@ function MessageComponent(props: MessageComponentProps): JSX.Element {
 /**
  * @function AssistantShellComponent
  * @description The conversation: the messages so far, the assistant thinking, and the field to write the next one. The
- * budget is kept in step so a confirmed suggestion lands on the latest one.
+ * budget is kept in step so a confirmed suggestion lands on the latest one. While the server says the assistant can't
+ * answer, the field is greyed out and the page says why.
  *
  * @returns {JSX.Element} The assistant
  */
@@ -259,6 +261,7 @@ function AssistantShellComponent(): JSX.Element {
     const end = useRef<HTMLDivElement>(null);
     const categories = categoriesOf(document?.categories ?? []);
     const services: ProposalServices = { budget: budgetServices, watchlist };
+    const availability = useAppAvailability(assistant);
 
     useCatchUp(budgetServices);
     useEffect(() => budgetServices.store.onRejected(showToast), [budgetServices, showToast]);
@@ -281,7 +284,7 @@ function AssistantShellComponent(): JSX.Element {
     const send = async (): Promise<void> => {
         const text = draft.trim();
 
-        if (text === '' || isThinking) {
+        if (text === '' || isThinking || !availability.isAvailable) {
             return;
         }
 
@@ -349,13 +352,14 @@ function AssistantShellComponent(): JSX.Element {
                             {t('assistant.thinking')}
                         </div>
                     )}
-                    {error !== null && <p className='rounded-2xl bg-fill px-4 py-3 text-[14px] text-warning-text'>{error}</p>}
+                    {availability.isAvailable && error !== null && <p className='rounded-2xl bg-fill px-4 py-3 text-[14px] text-warning-text'>{error}</p>}
+                    {availability.reason !== null && <p className='rounded-2xl bg-fill px-4 py-3 text-[14px] text-warning-text'>{t(availability.reason)}</p>}
                     <div ref={end} />
                 </div>
 
-                <form onSubmit={submit} className='sticky bottom-4 mt-6 flex items-end gap-2 rounded-3xl bg-white p-2 shadow-control'>
-                    <textarea aria-label={t('assistant.placeholder')} value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={sendOnEnter} maxLength={4000} rows={1} placeholder={t('assistant.placeholder')} className='max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-3 py-2 text-[15px] leading-snug outline-none placeholder:text-ink-quaternary' />
-                    <button type='submit' aria-label={t('assistant.send')} disabled={draft.trim() === '' || isThinking} className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white transition hover:bg-accent/90 disabled:opacity-40'>
+                <form onSubmit={submit} className={`sticky bottom-4 mt-6 flex items-end gap-2 rounded-3xl bg-white p-2 shadow-control ${availability.isAvailable ? '' : 'opacity-50'}`}>
+                    <textarea aria-label={t('assistant.placeholder')} value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={sendOnEnter} maxLength={4000} rows={1} disabled={!availability.isAvailable} placeholder={t('assistant.placeholder')} className='max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-3 py-2 text-[15px] leading-snug outline-none placeholder:text-ink-quaternary disabled:cursor-not-allowed' />
+                    <button type='submit' aria-label={t('assistant.send')} disabled={draft.trim() === '' || isThinking || !availability.isAvailable} className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white transition hover:bg-accent/90 disabled:opacity-40'>
                         <ArrowUp size={20} />
                     </button>
                 </form>

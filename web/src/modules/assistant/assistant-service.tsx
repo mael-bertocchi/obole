@@ -1,10 +1,13 @@
 import type { Perhaps } from 'models';
+import type { AssistantStatus } from 'modules/assistant/assistant-availability';
+import { AssistantAvailabilityStore, assistantReason } from 'modules/assistant/assistant-availability';
 import type { AssistantReply, ConversationMessage } from 'modules/assistant/assistant-models';
 import { AssistantReplySchema } from 'modules/assistant/assistant-models';
 import { dayKey } from 'modules/budget/budget-dates';
 import type { MessageKey } from 'modules/language/language-en';
 import { currentLanguage, t } from 'modules/language/language-service';
 import { fetchWithAuthentication, RequestError } from 'utils/request';
+import { z } from 'zod';
 
 /**
  * @constant HISTORY_SENT
@@ -13,19 +16,34 @@ import { fetchWithAuthentication, RequestError } from 'utils/request';
 const HISTORY_SENT = 40;
 
 /**
- * @constant ASSISTANT_REASONS
- * @description What to say when the server tells why the assistant can't answer: only the owner can fix these, on the
- * server, so the page names what to fix
+ * @constant AssistantStatusSchema
+ * @description What the server answers when asked whether the assistant can answer
  */
-const ASSISTANT_REASONS: Partial<Record<string, MessageKey>> = {
-    'assistant-not-configured': 'assistant.notConfigured',
-    'assistant-refused': 'assistant.refused'
-};
+const AssistantStatusSchema = z.object({
+    isAvailable: z.boolean(),
+    reason: z.string().nullable()
+});
+
+/**
+ * @function readStatus
+ * @description Asks the server whether the assistant can answer
+ *
+ * @returns {Promise<AssistantStatus>} Whether it can, and why not
+ */
+async function readStatus(): Promise<AssistantStatus> {
+    return await fetchWithAuthentication('/v1/assistant/status', { method: 'GET' }, AssistantStatusSchema);
+}
+
+/**
+ * @constant assistantAvailability
+ * @description Whether the assistant can answer, shared by the launcher, the home page and the assistant itself
+ */
+export const assistantAvailability = new AssistantAvailabilityStore(readStatus);
 
 /**
  * @function explainingAssistant
- * @description Rewords a refusal whose reason is the assistant's set-up, or its spent quota, leaving every other failure
- * as it is
+ * @description Rewords a refusal whose reason is the assistant's set-up, turning the assistant off until the server
+ * says otherwise, or its spent quota, leaving every other failure as it is
  *
  * @param {unknown} error The failure
  * @returns {never} Rethrows it
@@ -35,9 +53,11 @@ function explainingAssistant(error: unknown): never {
         throw error;
     }
 
-    const key: Perhaps<MessageKey> = error.reason !== null ? ASSISTANT_REASONS[error.reason] : undefined;
+    const key: Perhaps<MessageKey> = assistantReason(error.reason);
 
     if (key !== undefined) {
+        assistantAvailability.note({ isAvailable: false, reason: error.reason });
+
         throw new RequestError(error.status, t(key), error.reason);
     }
 
@@ -62,9 +82,14 @@ async function sendConversation(messages: readonly ConversationMessage[]): Promi
         today: dayKey(new Date())
     };
 
-    return await fetchWithAuthentication('/v1/assistant/messages', { method: 'POST', body: JSON.stringify(body) }, AssistantReplySchema).catch(explainingAssistant);
+    const reply = await fetchWithAuthentication('/v1/assistant/messages', { method: 'POST', body: JSON.stringify(body) }, AssistantReplySchema).catch(explainingAssistant);
+
+    assistantAvailability.note({ isAvailable: true, reason: null });
+
+    return reply;
 }
 
 export default {
+    readStatus,
     sendConversation
 };
