@@ -2,8 +2,8 @@ import FrameActionComponent from 'components/frame-action/frame-action';
 import FrameComponent from 'components/frame/frame';
 import RatingComponent from 'components/rating/rating';
 import SpinnerComponent from 'components/spinner/spinner';
-import { ArrowUp, SquarePen } from 'lucide-react';
-import type { Maybe } from 'models';
+import { ArrowUp, Check, Copy, RotateCcw, SquarePen } from 'lucide-react';
+import type { Maybe, Perhaps } from 'models';
 import type { ProposalServices } from 'modules/assistant/assistant-actions';
 import { applyProposal } from 'modules/assistant/assistant-actions';
 import { useAppAvailability } from 'modules/apps/apps-hooks';
@@ -193,6 +193,76 @@ function ProposalCardComponent(props: ProposalCardComponentProps): JSX.Element {
 }
 
 /**
+ * @constant COPIED_FOR
+ * @description How long the copy button shows its tick, in milliseconds
+ */
+const COPIED_FOR = 2000;
+
+/**
+ * @constant MESSAGE_ACTION_CLASS
+ * @description The look of the small buttons under an answer
+ */
+const MESSAGE_ACTION_CLASS = 'flex h-7 w-7 items-center justify-center rounded-full text-ink-tertiary transition hover:bg-fill hover:text-ink disabled:pointer-events-none disabled:opacity-40';
+
+/**
+ * @interface MessageActionsComponentProps
+ * @description Properties of the buttons under an answer
+ */
+interface MessageActionsComponentProps {
+    text: string; /*!< The answer's text, to copy */
+    canRetry: boolean; /*!< Whether the answer can be asked again */
+    onRetry: Perhaps<() => void>; /*!< Asks the question again, for the latest answer only */
+}
+
+/**
+ * @function MessageActionsComponent
+ * @description The small buttons under an answer: copy its text, and ask again for the latest one. They show when the
+ * answer is hovered or focused, and always on a touch screen, which can't hover.
+ *
+ * @param {MessageActionsComponentProps} props The properties of the component
+ */
+function MessageActionsComponent(props: MessageActionsComponentProps): JSX.Element {
+    const { showToast }: ToastContextProps = useToastContext();
+    const [isCopied, setIsCopied] = useState(false);
+
+    useEffect(() => {
+        if (!isCopied) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => setIsCopied(false), COPIED_FOR);
+
+        return () => window.clearTimeout(timer);
+    }, [isCopied]);
+
+    /**
+     * @function copy
+     * @description Puts the answer's text on the clipboard
+     */
+    const copy = async (): Promise<void> => {
+        try {
+            await navigator.clipboard.writeText(props.text);
+            setIsCopied(true);
+        } catch {
+            showToast(t('assistant.copyFailed'));
+        }
+    };
+
+    return (
+        <div className='-mt-1 flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100'>
+            <button type='button' aria-label={isCopied ? t('assistant.copied') : t('assistant.copy')} title={isCopied ? t('assistant.copied') : t('assistant.copy')} onClick={() => void copy()} className={MESSAGE_ACTION_CLASS}>
+                {isCopied ? <Check size={15} /> : <Copy size={15} />}
+            </button>
+            {props.onRetry !== undefined && (
+                <button type='button' aria-label={t('assistant.retry')} title={t('assistant.retry')} disabled={!props.canRetry} onClick={props.onRetry} className={MESSAGE_ACTION_CLASS}>
+                    <RotateCcw size={15} />
+                </button>
+            )}
+        </div>
+    );
+}
+
+/**
  * @interface MessageComponentProps
  * @description Properties of one message of the conversation
  */
@@ -201,11 +271,14 @@ interface MessageComponentProps {
     categories: readonly Category[]; /*!< The budget's categories */
     onSettle: (index: number, status: ProposalStatus, error?: string) => void; /*!< Records where one of its suggestions stands */
     services: ProposalServices; /*!< What carrying out a suggestion goes through */
+    canRetry: boolean; /*!< Whether asking again is possible right now */
+    onRetry: Perhaps<() => void>; /*!< Asks the question again, given to the latest answer only */
 }
 
 /**
  * @function MessageComponent
- * @description One message: the owner's on the right, the assistant's on the left with its suggestions under it
+ * @description One message: the owner's on the right, the assistant's on the left with its suggestions and its small
+ * buttons under it
  *
  * @param {MessageComponentProps} props The properties of the component
  */
@@ -228,7 +301,7 @@ function MessageComponent(props: MessageComponentProps): JSX.Element {
     };
 
     return (
-        <div className={`flex flex-col gap-2 ${isOwner ? 'items-end' : 'items-start'}`}>
+        <div className={`group flex flex-col gap-2 ${isOwner ? 'items-end' : 'items-start'}`}>
             {props.message.text !== '' && (
                 <p className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-[15px] leading-snug ${isOwner ? 'bg-accent text-white' : 'bg-fill text-ink'}`}>{props.message.text}</p>
             )}
@@ -237,6 +310,7 @@ function MessageComponent(props: MessageComponentProps): JSX.Element {
                     <ProposalCardComponent entry={entry} categories={props.categories} onConfirm={() => void confirm(index, entry.proposal)} onDismiss={() => props.onSettle(index, 'dismissed')} />
                 </div>
             ))}
+            {!isOwner && props.message.text !== '' && <MessageActionsComponent text={props.message.text} canRetry={props.canRetry} onRetry={props.onRetry} />}
         </div>
     );
 }
@@ -262,6 +336,7 @@ function AssistantShellComponent(): JSX.Element {
     const categories = categoriesOf(document?.categories ?? []);
     const services: ProposalServices = { budget: budgetServices, watchlist };
     const availability = useAppAvailability(assistant);
+    const canRetry = !isThinking && availability.isAvailable;
 
     useCatchUp(budgetServices);
     useEffect(() => budgetServices.store.onRejected(showToast), [budgetServices, showToast]);
@@ -278,20 +353,11 @@ function AssistantShellComponent(): JSX.Element {
     };
 
     /**
-     * @function send
-     * @description Sends the owner's message with the conversation so far, and shows the answer
+     * @function ask
+     * @description Sends a conversation ending with the owner's message, and shows the answer
      */
-    const send = async (): Promise<void> => {
-        const text = draft.trim();
-
-        if (text === '' || isThinking || !availability.isAvailable) {
-            return;
-        }
-
-        const next: ConversationMessage[] = [...messages, { id: crypto.randomUUID(), role: 'user', text, proposals: [] }];
-
+    const ask = async (next: ConversationMessage[]): Promise<void> => {
         setMessages(next);
-        setDraft('');
         setError(null);
         setIsThinking(true);
 
@@ -304,6 +370,33 @@ function AssistantShellComponent(): JSX.Element {
         } finally {
             setIsThinking(false);
         }
+    };
+
+    /**
+     * @function send
+     * @description Sends the owner's message with the conversation so far
+     */
+    const send = async (): Promise<void> => {
+        const text = draft.trim();
+
+        if (text === '' || isThinking || !availability.isAvailable) {
+            return;
+        }
+
+        setDraft('');
+        await ask([...messages, { id: crypto.randomUUID(), role: 'user', text, proposals: [] }]);
+    };
+
+    /**
+     * @function retry
+     * @description Drops the latest answer and asks the owner's last message again
+     */
+    const retry = (): void => {
+        if (isThinking || !availability.isAvailable || messages.at(-1)?.role !== 'assistant') {
+            return;
+        }
+
+        void ask(messages.slice(0, -1));
     };
 
     /**
@@ -343,8 +436,8 @@ function AssistantShellComponent(): JSX.Element {
                 <p className='mt-1 text-[15px] text-ink-secondary'>{t('assistant.intro')}</p>
 
                 <div className='mt-8 flex flex-col gap-4 pb-36'>
-                    {messages.map((message) => (
-                        <MessageComponent key={message.id} message={message} categories={categories} services={services} onSettle={(index, status, reason) => settle(message.id, index, status, reason)} />
+                    {messages.map((message, index) => (
+                        <MessageComponent key={message.id} message={message} categories={categories} services={services} canRetry={canRetry} onRetry={index === messages.length - 1 ? retry : undefined} onSettle={(position, status, reason) => settle(message.id, position, status, reason)} />
                     ))}
                     {isThinking && (
                         <div className='flex items-center gap-2 text-[14px] text-ink-tertiary'>
