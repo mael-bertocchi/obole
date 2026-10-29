@@ -16,6 +16,12 @@ import { z } from 'zod';
 const HISTORY_SENT = 40;
 
 /**
+ * @constant ASSISTANT_TIMEOUT
+ * @description How long to wait for an answer: the model may think and read through several tools before it answers
+ */
+const ASSISTANT_TIMEOUT = 2 * 60 * 1000;
+
+/**
  * @constant AssistantStatusSchema
  * @description What the server answers when asked whether the assistant can answer
  */
@@ -61,6 +67,10 @@ function explainingAssistant(error: unknown): never {
         throw new RequestError(error.status, t(key), error.reason);
     }
 
+    if (error.reason === 'assistant-timeout') {
+        throw new RequestError(error.status, t('assistant.timeout'), error.reason);
+    }
+
     if (error.status === 429) {
         throw new RequestError(error.status, t('assistant.quota'));
     }
@@ -82,7 +92,7 @@ async function sendConversation(messages: readonly ConversationMessage[]): Promi
         today: dayKey(new Date())
     };
 
-    const reply = await fetchWithAuthentication('/v1/assistant/messages', { method: 'POST', body: JSON.stringify(body) }, AssistantReplySchema).catch(explainingAssistant);
+    const reply = await fetchWithAuthentication('/v1/assistant/messages', { method: 'POST', body: JSON.stringify(body), signal: AbortSignal.timeout(ASSISTANT_TIMEOUT) }, AssistantReplySchema).catch(explainingAssistant);
 
     assistantAvailability.note({ isAvailable: true, reason: null });
 

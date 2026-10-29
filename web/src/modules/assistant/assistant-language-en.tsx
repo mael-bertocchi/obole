@@ -24,6 +24,7 @@ export const assistantEn = {
     'assistant.unknownModel': 'The assistant isn’t available: Gemini doesn’t know the model set on the server.',
     'assistant.unreachable': 'The assistant isn’t available: Gemini can’t be reached right now.',
     'assistant.quota': 'The assistant has used up its quota for now. Try again in a moment.',
+    'assistant.timeout': 'The assistant took too long to answer. Try again.',
     'assistant.invalidDate': 'This suggestion has a date that can’t be used.',
     'assistant.rateMissing': 'No exchange rate for {code} on that day.',
 

@@ -20,7 +20,7 @@ const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : PROD
 
 /**
  * @constant REQUEST_TIMEOUT
- * @description How long to wait on the server before calling it unreachable
+ * @description How long to wait on the server before calling it unreachable, unless the request brings its own signal
  */
 const REQUEST_TIMEOUT = 15 * 1000;
 
@@ -155,7 +155,7 @@ async function send(path: string, init: RequestInit, accessToken?: string): Prom
     }
 
     try {
-        return await fetch(`${API_URL}${path}`, { ...init, headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT) });
+        return await fetch(`${API_URL}${path}`, { ...init, headers, signal: init.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT) });
     } catch {
         throw new RequestError(0, t('error.unreachable'));
     }

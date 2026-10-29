@@ -26,6 +26,7 @@ export const assistantFr: AssistantMessages = {
     'assistant.unknownModel': 'L’assistant est indisponible : Gemini ne connaît pas le modèle configuré sur le serveur.',
     'assistant.unreachable': 'L’assistant est indisponible : Gemini ne répond pas pour le moment.',
     'assistant.quota': 'L’assistant a épuisé son quota pour le moment. Réessayez dans un instant.',
+    'assistant.timeout': 'L’assistant a mis trop de temps à répondre. Réessayez.',
     'assistant.invalidDate': 'Cette suggestion porte une date inutilisable.',
     'assistant.rateMissing': 'Aucun taux de change pour {code} ce jour-là.',
 
