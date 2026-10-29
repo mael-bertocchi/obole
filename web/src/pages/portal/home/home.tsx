@@ -77,7 +77,7 @@ function AppTileComponent(props: AppTileComponentProps): JSX.Element {
     }
 
     return (
-        <Link to={appPath(props.app)} aria-label={t('home.open', { app: t(props.app.name) })} className='card group block p-5 transition hover:-translate-y-0.5 hover:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_14px_36px_rgb(0_0_0/0.08)] sm:p-6'>
+        <Link to={appPath(props.app)} aria-label={t('home.open', { app: t(props.app.name) })} className='card group block p-5 sm:p-6'>
             <div className='flex items-center gap-3.5'>
                 <AppIconComponent app={props.app} size={46} />
                 <div className='min-w-0 flex-1'>
