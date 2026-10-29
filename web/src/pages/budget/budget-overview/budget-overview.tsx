@@ -3,8 +3,9 @@ import EmptyStateComponent from 'components/empty-state/empty-state';
 import RingComponent from 'components/ring/ring';
 import TrackBarComponent from 'components/track-bar/track-bar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Maybe } from 'models';
 import { categoryName, hexColor } from 'modules/budget/budget-categories';
-import { monthStart, shiftMonth } from 'modules/budget/budget-dates';
+import { dayKey, daysInMonth, monthKey, monthStart, parseMonthKey, shiftMonth } from 'modules/budget/budget-dates';
 import { euro, monthTitle } from 'modules/budget/budget-formatting';
 import { useDocument } from 'modules/budget/budget-hooks';
 import type { CategorySpend } from 'modules/budget/budget-math';
@@ -12,7 +13,7 @@ import { categorySpends, monthlyBudgetFor, operationsIn, summary, toDispatch } f
 import { t } from 'modules/language/language-service';
 import BudgetLimitsComponent from 'pages/budget/budget-limits/budget-limits';
 import { useState, type JSX } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 /**
  * @constant ACCENT
@@ -25,6 +26,40 @@ const ACCENT = '#6E56CF';
  * @description The colour of anything over budget.
  */
 const NEGATIVE = '#FF3B30';
+
+/**
+ * @function shownMonth
+ * @description The month the address names, or the current one when it names none, a malformed one or one still to
+ * come.
+ *
+ * @param {Maybe<string>} key The month in the address, in YYYY-MM form.
+ * @param {Date} now The current date.
+ *
+ * @returns {Date} The first day of the month to show.
+ */
+function shownMonth(key: Maybe<string>, now: Date): Date {
+    const current = monthStart(now);
+    const month = key === null ? null : parseMonthKey(key);
+
+    return month === null || month.getTime() > current.getTime() ? current : month;
+}
+
+/**
+ * @function historyPath
+ * @description The History tab filtered on a category and on every day of a month, so a category opened from a past
+ * month lists that month's operations.
+ *
+ * @param {string} categoryId The category to filter on.
+ * @param {Date} month The first day of the month to filter on.
+ *
+ * @returns {string} The address of the filtered History tab.
+ */
+function historyPath(categoryId: string, month: Date): string {
+    const lastDay = new Date(month.getFullYear(), month.getMonth(), daysInMonth(month));
+    const params = new URLSearchParams({ category: categoryId, from: dayKey(month), to: dayKey(lastDay) });
+
+    return `/budget/history?${params.toString()}`;
+}
 
 /**
  * @interface StatTileComponentProps
@@ -85,15 +120,17 @@ function CategoryRowComponent(props: CategoryRowComponentProps): JSX.Element {
 /**
  * @function BudgetOverviewComponent
  * @description The Budget tab: what is left to spend in a month, the spent, days-left and per-day figures, and every
- * category against its limit. Each month is measured against its own budget, which can be edited at any time.
+ * category against its limit. Each month is measured against its own budget, which can be edited at any time. The
+ * month shown lives in the address, so coming back from a category's operations lands on the same month.
  */
 function BudgetOverviewComponent(): JSX.Element {
     const document = useDocument();
     const navigate = useNavigate();
-    const [month, setMonth] = useState(() => monthStart(new Date()));
+    const [params, setParams] = useSearchParams();
     const [showLimits, setShowLimits] = useState(false);
 
     const now = new Date();
+    const month = shownMonth(params.get('month'), now);
     const budget = monthlyBudgetFor(document, month);
     const hasOperations = operationsIn(document.operations, month).length > 0;
     const figures = summary(document.operations, month, budget, now);
@@ -101,6 +138,14 @@ function BudgetOverviewComponent(): JSX.Element {
     const canGoForward = month.getTime() < monthStart(now).getTime();
     const dispatch = toDispatch(document.categories, budget);
     const spends = categorySpends(document.operations, document.categories, month, budget).filter((spend) => spend.limit > 0 || spend.spent > 0);
+
+    /**
+     * @function showMonth
+     * @description Puts a month in the address, or takes it out for the current one.
+     */
+    const showMonth = (next: Date): void => {
+        setParams(next.getTime() === monthStart(now).getTime() ? {} : { month: monthKey(next) }, { replace: true });
+    };
 
     return (
         <div className='animate-rise'>
@@ -112,10 +157,10 @@ function BudgetOverviewComponent(): JSX.Element {
                     </h1>
                 </div>
                 <div className='flex gap-2 pb-1'>
-                    <button type='button' aria-label={t('budget.previousMonth')} onClick={() => setMonth(shiftMonth(month, -1))} className='flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-control transition hover:bg-fill'>
+                    <button type='button' aria-label={t('budget.previousMonth')} onClick={() => showMonth(shiftMonth(month, -1))} className='flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-control transition hover:bg-fill'>
                         <ChevronLeft size={19} strokeWidth={2.4} />
                     </button>
-                    <button type='button' aria-label={t('budget.nextMonth')} disabled={!canGoForward} onClick={() => setMonth(shiftMonth(month, 1))} className='flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-control transition hover:bg-fill disabled:opacity-35 disabled:hover:bg-white'>
+                    <button type='button' aria-label={t('budget.nextMonth')} disabled={!canGoForward} onClick={() => showMonth(shiftMonth(month, 1))} className='flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-control transition hover:bg-fill disabled:opacity-35 disabled:hover:bg-white'>
                         <ChevronRight size={19} strokeWidth={2.4} />
                     </button>
                 </div>
@@ -160,7 +205,7 @@ function BudgetOverviewComponent(): JSX.Element {
                             <EmptyStateComponent message={t('budget.noSpending')} />
                         )}
                         {hasOperations && spends.map((spend) => (
-                            <CategoryRowComponent key={spend.category.id} spend={spend} onOpen={() => navigate(`/budget/history?category=${encodeURIComponent(spend.category.id)}`)} />
+                            <CategoryRowComponent key={spend.category.id} spend={spend} onOpen={() => navigate(historyPath(spend.category.id, month))} />
                         ))}
                     </div>
                 </section>
