@@ -285,7 +285,8 @@ struct AssistantView: View {
 
     /**
      * @method messageView
-     * @description A message as a bubble, the person's on the right, with the cards of the changes suggested in it
+     * @description A message as a bubble, the person's on the right as typed, the assistant's in Markdown, with the cards
+     * of the changes suggested in it
      *
      * @param item The message
      * @returns The message
@@ -298,7 +299,13 @@ struct AssistantView: View {
             if isUser {
                 Spacer(minLength: 48)
             }
-            Text(Self.rendered(item.text))
+            Group {
+                if isUser {
+                    Text(verbatim: item.text)
+                } else {
+                    MarkdownText(text: item.text)
+                }
+            }
                 .font(Theme.font(14))
                 .foregroundStyle(Theme.text)
                 .lineSpacing(3)
@@ -401,18 +408,6 @@ struct AssistantView: View {
         preferences.tap()
         items.removeLast()
         ask(items[items.count - 1].text)
-    }
-
-    /**
-     * @method rendered
-     * @description A message with its inline Markdown (bold, italics, code) applied, as the assistant writes it
-     *
-     * @param text The message
-     * @returns The text to show
-     */
-    private static func rendered(_ text: String) -> AttributedString {
-        let options = AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace)
-        return (try? AttributedString(markdown: text, options: options)) ?? AttributedString(text)
     }
 
     /**
