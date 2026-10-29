@@ -357,7 +357,7 @@ struct AssistantView: View {
         if let error = error as? APIError, case .throttled = error {
             return String(appLocalized: "The assistant has used up its quota for now. Try again in a moment.")
         }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        return error.userMessage
     }
 
     /**

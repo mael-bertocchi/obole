@@ -4,7 +4,7 @@ import Foundation
  * @type ProposalError
  * @description Why a suggestion the person confirmed couldn't be carried out, worded for them
  */
-enum ProposalError: Error, LocalizedError {
+enum ProposalError: UserFacingError {
     case invalidDate /*!< The suggestion names a day that can't be used, such as one to come */
     case rateMissing(String) /*!< No rate is known for the currency on that day */
     case rateFailed(String) /*!< The day's rates couldn't be loaded, with why */

@@ -438,7 +438,7 @@ final class ApplicationSession {
         if let error = error as? APIError {
             handle(error)
         } else {
-            syncState = .error(error.localizedDescription)
+            syncState = .error(error.userMessage)
         }
     }
 
@@ -456,7 +456,7 @@ final class ApplicationSession {
         case .transport:
             syncState = .offline
         default:
-            syncState = .error(error.localizedDescription)
+            syncState = .error(error.userMessage)
         }
     }
 

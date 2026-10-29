@@ -295,7 +295,7 @@ final class ExchangeRates {
                 dated[day] = try await api.getRates(on: day)
                 failures.removeValue(forKey: day)
             } catch {
-                failures[day] = (error as? APIError)?.errorDescription ?? error.localizedDescription
+                failures[day] = error.userMessage
             }
 
             inFlight.removeValue(forKey: day)
@@ -334,8 +334,7 @@ final class ExchangeRates {
             Self.store(fresh)
             refreshState = .idle
         } catch {
-            let message = (error as? APIError)?.errorDescription ?? error.localizedDescription
-            refreshState = .failed(message)
+            refreshState = .failed(error.userMessage)
         }
     }
 

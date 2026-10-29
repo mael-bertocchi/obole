@@ -143,7 +143,7 @@ struct TrashSheet: View {
                 failure = nil
                 preferences.success()
             } catch {
-                failure = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                failure = error.userMessage
             }
             restoring.remove(trashed.id)
         }

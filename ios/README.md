@@ -29,6 +29,7 @@ Obole/
 ├─ Application/    App entry, root shell (auth gate + native TabView)
 ├─ Core/
 │  ├─ Assistant/   The assistant's messages and suggestions, and ProposalApplier carrying out a confirmed one
+│  ├─ Errors/      UserFacingError: the failures written for the person, and the generic message for any other
 │  ├─ Budget/      Derived selectors (month summary, category spend, day groups)
 │  ├─ Formatting/  Euro, amount, rate and date formatting, in the interface's language
 │  ├─ Models/      Domain types (Category, Operation, BudgetSettings)

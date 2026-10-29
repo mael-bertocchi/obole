@@ -168,7 +168,7 @@ private struct EntryRating: Encodable {
  * @type APIError
  * @description Why a request to the server failed, worded for the person in the interface's language
  */
-enum APIError: Error, LocalizedError {
+enum APIError: UserFacingError {
     case notConfigured /*!< No server address is set */
     case unauthorized /*!< The session expired and couldn't be renewed */
     case connectionRefused /*!< The portal's one-time code was refused */

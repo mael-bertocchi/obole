@@ -106,7 +106,7 @@ struct SignInView: View {
             } catch let error as ASWebAuthenticationSessionError where error.code == .canceledLogin {
                 return
             } catch let error as APIError {
-                withAnimation { errorMessage = error.errorDescription }
+                withAnimation { errorMessage = error.userMessage }
             } catch {
                 withAnimation { errorMessage = String(appLocalized: "The sign-in didn't go through. Try again.") }
             }
