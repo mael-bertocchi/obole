@@ -104,10 +104,7 @@ struct AssistantView: View {
                             thinking
                         }
                         if isAvailable, let failure {
-                            Text(failure)
-                                .font(Theme.font(12))
-                                .foregroundStyle(Theme.negative)
-                                .fixedSize(horizontal: false, vertical: true)
+                            failureRow(failure)
                         }
                     }
 
@@ -397,6 +394,46 @@ struct AssistantView: View {
     }
 
     /**
+     * @method failureRow
+     * @description Why the last question went unanswered, with the button asking it again
+     *
+     * @param failure Why
+     * @returns The row
+     */
+    private func failureRow(_ failure: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Text(failure)
+                .font(Theme.font(12))
+                .foregroundStyle(Theme.negative)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            Button(action: retryUnanswered) {
+                Image(systemName: "arrow.counterclockwise")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.faint)
+                    .frame(width: 18, height: 18)
+                    .expandedTapTarget(vertical: 8, horizontal: 6)
+            }
+            .buttonStyle(.plain)
+            .disabled(isSending)
+            .accessibilityLabel("Try again")
+        }
+    }
+
+    /**
+     * @method retryUnanswered
+     * @description Asks again the person's last question, which went unanswered
+     */
+    private func retryUnanswered() {
+        guard !isSending, isAvailable, let question = items.last, question.role == .user else {
+            return
+        }
+
+        preferences.tap()
+        ask(question.text)
+    }
+
+    /**
      * @method retry
      * @description Drops the latest answer and asks the person's last question again
      */
@@ -432,7 +469,7 @@ struct AssistantView: View {
     /**
      * @method ask
      * @description Sends the conversation, which ends with the person's question, and shows the answer. A question that
-     * goes unanswered is taken back into the field, so it can be sent again
+     * goes unanswered stays in the conversation, with why and a button to ask it again
      *
      * @param question The question the conversation ends with
      */
@@ -450,8 +487,6 @@ struct AssistantView: View {
                 let reply = try await session.ask(messages)
                 items.append(ConversationItem(role: .assistant, text: reply.text, proposals: reply.proposals.map { ProposalEntry(proposal: $0) }))
             } catch {
-                items.removeLast()
-                draft = question
                 failure = Self.describe(error)
             }
             isSending = false
