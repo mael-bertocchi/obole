@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /**
  * @class ProposalEntry
@@ -48,6 +49,7 @@ struct AssistantView: View {
     @State private var draft = "" /*!< The question being typed */
     @State private var isSending = false /*!< Whether a question is waiting for its answer */
     @State private var failure: String? /*!< Why the last question went unanswered */
+    @State private var copiedId: UUID? /*!< The answer just copied, whose button shows a tick for a moment */
 
     @FocusState private var isComposing: Bool /*!< Whether the question field has the keyboard */
 
@@ -61,6 +63,11 @@ struct AssistantView: View {
      * @description How many messages a question may carry, as the server allows
      */
     private static let historyLimit = 40
+    /**
+     * @constant copiedFor
+     * @description How long the copy button shows its tick
+     */
+    private static let copiedFor: Duration = .seconds(2)
 
     /**
      * @method body
@@ -315,6 +322,85 @@ struct AssistantView: View {
         ForEach(item.proposals) { entry in
             ProposalCard(entry: entry, onConfirm: { confirm(entry.id, in: item.id) }, onDismiss: { dismiss(entry.id, in: item.id) })
         }
+
+        if !isUser && !item.text.isEmpty {
+            messageActions(item)
+        }
+    }
+
+    /**
+     * @method messageActions
+     * @description The small buttons under an answer: copy its text, and ask again for the latest one. A phone can't
+     * hover, so they always show
+     *
+     * @param item The answer
+     * @returns The buttons
+     */
+    private func messageActions(_ item: ConversationItem) -> some View {
+        let isCopied = copiedId == item.id
+
+        return HStack(spacing: 14) {
+            Button {
+                copy(item)
+            } label: {
+                Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.faint)
+                    .frame(width: 18, height: 18)
+                    .expandedTapTarget(vertical: 8, horizontal: 6)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isCopied ? String(appLocalized: "Copied") : String(appLocalized: "Copy"))
+
+            if item.id == items.last?.id {
+                Button(action: retry) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.faint)
+                        .frame(width: 18, height: 18)
+                        .expandedTapTarget(vertical: 8, horizontal: 6)
+                }
+                .buttonStyle(.plain)
+                .disabled(isSending || !isAvailable)
+                .opacity(isSending || !isAvailable ? 0.4 : 1)
+                .accessibilityLabel("Try again")
+            }
+        }
+        .padding(.leading, 6)
+        .padding(.top, -4)
+    }
+
+    /**
+     * @method copy
+     * @description Puts an answer's text on the clipboard, and ticks its button for a moment
+     *
+     * @param item The answer
+     */
+    private func copy(_ item: ConversationItem) {
+        UIPasteboard.general.string = item.text
+        preferences.tap()
+        copiedId = item.id
+
+        Task {
+            try? await Task.sleep(for: Self.copiedFor)
+            if copiedId == item.id {
+                copiedId = nil
+            }
+        }
+    }
+
+    /**
+     * @method retry
+     * @description Drops the latest answer and asks the person's last question again
+     */
+    private func retry() {
+        guard !isSending, isAvailable, items.last?.role == .assistant, items.count >= 2, items[items.count - 2].role == .user else {
+            return
+        }
+
+        preferences.tap()
+        items.removeLast()
+        ask(items[items.count - 1].text)
     }
 
     /**
@@ -331,8 +417,7 @@ struct AssistantView: View {
 
     /**
      * @method send
-     * @description Sends a question with the conversation so far. A question that goes unanswered is taken back into
-     * the field, so it can be sent again
+     * @description Sends a question with the conversation so far
      *
      * @param text The question
      */
@@ -344,10 +429,21 @@ struct AssistantView: View {
         }
 
         preferences.tap()
-        failure = nil
         draft = ""
-        isSending = true
         items.append(ConversationItem(role: .user, text: question))
+        ask(question)
+    }
+
+    /**
+     * @method ask
+     * @description Sends the conversation, which ends with the person's question, and shows the answer. A question that
+     * goes unanswered is taken back into the field, so it can be sent again
+     *
+     * @param question The question the conversation ends with
+     */
+    private func ask(_ question: String) {
+        failure = nil
+        isSending = true
 
         let messages = items
             .filter { !$0.text.isEmpty }

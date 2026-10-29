@@ -294,6 +294,26 @@
         }
       }
     },
+    "Copied" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié"
+          }
+        }
+      }
+    },
+    "Copy" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier"
+          }
+        }
+      }
+    },
     "Currency" : {
       "localizations" : {
         "fr" : {
