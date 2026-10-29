@@ -33,6 +33,7 @@ final class ApplicationSession {
     private(set) var identityState: IdentityState = .loading /*!< Whether the app is signed in */
     private(set) var syncState: SyncState = .idle /*!< Where the budget stands with the server */
     private(set) var lastSyncedAt: Date? /*!< When the budget was last in step with the server */
+    private(set) var assistantUnavailableReason: String? /*!< Why the assistant can't answer, nil while it can */
 
     let serverURLString = ApplicationSession.serverURL /*!< The server's address */
 
@@ -77,6 +78,7 @@ final class ApplicationSession {
         identityState = .signedIn
         wireLocalChanges()
         refreshRates()
+        checkAssistant()
         await reconcile()
         repriceRecentOperations()
     }
@@ -95,6 +97,7 @@ final class ApplicationSession {
         identityState = .signedIn
         wireLocalChanges()
         refreshRates()
+        checkAssistant()
         await reconcile()
         repriceRecentOperations()
     }
@@ -112,6 +115,7 @@ final class ApplicationSession {
         SyncBase.clear()
         syncState = .idle
         lastSyncedAt = nil
+        assistantUnavailableReason = nil
         identityState = .signedOut
     }
 
@@ -150,7 +154,32 @@ final class ApplicationSession {
             language: Localization.isFrench ? "fr" : "en",
             today: ExchangeRates.day(from: .now)
         )
-        return try await api.converse(conversation)
+        do {
+            let reply = try await api.converse(conversation)
+            assistantUnavailableReason = nil
+            return reply
+        } catch APIError.explained(let status, let reason) where APIError.assistantMessage(reason: reason) != nil {
+            assistantUnavailableReason = APIError.assistantMessage(reason: reason)
+            throw APIError.explained(status: status, reason: reason)
+        }
+    }
+
+    /**
+     * @method checkAssistant
+     * @description Asks the server whether the assistant can answer, so its tab can be turned off when it can't. A
+     * failed question changes nothing
+     */
+    private func checkAssistant() {
+        guard !isDemo else {
+            return
+        }
+
+        Task { [api] in
+            guard let status = try? await api.getAssistantStatus() else {
+                return
+            }
+            assistantUnavailableReason = status.isAvailable ? nil : APIError.assistantMessage(reason: status.reason ?? "") ?? String(appLocalized: "The assistant isn't available: Gemini can't be reached right now.")
+        }
     }
 
     /**
@@ -197,6 +226,7 @@ final class ApplicationSession {
             return
         }
         refreshRates()
+        checkAssistant()
 
         Task {
             await reconcile()

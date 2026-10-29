@@ -73,8 +73,20 @@ struct AssistantView: View {
                     header
                         .padding(.bottom, 18)
 
+                    if let unavailableReason = session.assistantUnavailableReason {
+                        Label(unavailableReason, systemImage: "exclamationmark.triangle")
+                            .font(Theme.font(13))
+                            .foregroundStyle(Theme.warning)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(14)
+                            .glassCard()
+                            .padding(.bottom, 12)
+                    }
+
                     if items.isEmpty {
                         introduction
+                            .opacity(isAvailable ? 1 : 0.4)
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
@@ -84,7 +96,7 @@ struct AssistantView: View {
                         if isSending {
                             thinking
                         }
-                        if let failure {
+                        if isAvailable, let failure {
                             Text(failure)
                                 .font(Theme.font(12))
                                 .foregroundStyle(Theme.negative)
@@ -180,7 +192,7 @@ struct AssistantView: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .disabled(isSending)
+                .disabled(isSending || !isAvailable)
             }
         }
         .padding(.bottom, 12)
@@ -229,6 +241,7 @@ struct AssistantView: View {
                 .padding(.vertical, 9)
                 .frame(minHeight: 40)
                 .glassInput(radius: 20)
+                .disabled(!isAvailable)
             Button {
                 send(draft)
             } label: {
@@ -244,6 +257,15 @@ struct AssistantView: View {
         }
         .padding(.horizontal, Theme.screenPadding)
         .padding(.vertical, 10)
+        .opacity(isAvailable ? 1 : 0.4)
+    }
+
+    /**
+     * @method isAvailable
+     * @description Whether the assistant can answer, as the server last said
+     */
+    private var isAvailable: Bool {
+        session.assistantUnavailableReason == nil
     }
 
     /**
@@ -251,7 +273,7 @@ struct AssistantView: View {
      * @description Whether the question typed can be sent now
      */
     private var canSend: Bool {
-        !isSending && !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        isAvailable && !isSending && !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     /**
@@ -317,7 +339,7 @@ struct AssistantView: View {
     private func send(_ text: String) {
         let question = text.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !question.isEmpty, !isSending else {
+        guard !question.isEmpty, !isSending, isAvailable else {
             return
         }
 

@@ -199,3 +199,12 @@ struct AssistantReply: Decodable {
     let text: String /*!< Its message */
     let proposals: [AssistantProposal] /*!< The changes it suggests */
 }
+
+/**
+ * @class AssistantStatus
+ * @description Whether the assistant can answer, as the server tells it
+ */
+struct AssistantStatus: Decodable {
+    let isAvailable: Bool /*!< Whether Gemini takes the server's key and knows its model */
+    let reason: String? /*!< Why not, one of the assistant's reasons */
+}

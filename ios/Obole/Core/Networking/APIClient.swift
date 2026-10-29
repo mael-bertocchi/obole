@@ -195,8 +195,7 @@ enum APIError: UserFacingError {
         case .notFound: return String(appLocalized: "The server refused the request.")
         case .server(let status, _) where status >= 500: return String(appLocalized: "The server is unavailable right now.")
         case .server: return String(appLocalized: "The server refused the request.")
-        case .explained(_, let reason) where reason == Self.assistantNotConfigured: return String(appLocalized: "The assistant isn't available: no Gemini API key is set on the server.")
-        case .explained(_, let reason) where reason == Self.assistantRefused: return String(appLocalized: "The assistant isn't available: Gemini rejected the server's API key.")
+        case .explained(_, let reason) where Self.assistantMessage(reason: reason) != nil: return Self.assistantMessage(reason: reason)
         case .explained(let status, _) where status >= 500: return String(appLocalized: "The server is unavailable right now.")
         case .explained: return String(appLocalized: "The server refused the request.")
         case .transport: return String(appLocalized: "Can't reach the server.")
@@ -205,15 +204,21 @@ enum APIError: UserFacingError {
     }
 
     /**
-     * @constant assistantNotConfigured
-     * @description Why the assistant can't answer when the server has no Gemini key
+     * @method assistantMessage
+     * @description What to tell the person when the server says why the assistant can't answer
+     *
+     * @param reason The server's reason
+     * @returns The message, or nil when the reason isn't the assistant's
      */
-    static let assistantNotConfigured = "assistant-not-configured"
-    /**
-     * @constant assistantRefused
-     * @description Why the assistant can't answer when Gemini refuses the server's key
-     */
-    static let assistantRefused = "assistant-refused"
+    static func assistantMessage(reason: String) -> String? {
+        switch reason {
+        case "assistant-not-configured": return String(appLocalized: "The assistant isn't available: no Gemini API key is set on the server.")
+        case "assistant-refused": return String(appLocalized: "The assistant isn't available: Gemini rejected the server's API key.")
+        case "assistant-unknown-model": return String(appLocalized: "The assistant isn't available: Gemini doesn't know the model set on the server.")
+        case "assistant-unreachable": return String(appLocalized: "The assistant isn't available: Gemini can't be reached right now.")
+        default: return nil
+        }
+    }
 
     /**
      * @method isOffline
@@ -388,6 +393,16 @@ final class APIClient {
      */
     func converse(_ conversation: AssistantConversation) async throws -> AssistantReply {
         try await send("/v1/assistant/messages", method: "POST", body: conversation)
+    }
+
+    /**
+     * @method getAssistantStatus
+     * @description Asks whether the assistant can answer: whether Gemini takes the server's key and knows its model
+     *
+     * @returns Whether it can, and why not
+     */
+    func getAssistantStatus() async throws -> AssistantStatus {
+        try await send("/v1/assistant/status", method: "GET")
     }
 
     /**

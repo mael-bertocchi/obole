@@ -1264,6 +1264,26 @@
         }
       }
     },
+    "The assistant isn't available: Gemini can't be reached right now." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’assistant est indisponible : Gemini ne répond pas pour le moment."
+          }
+        }
+      }
+    },
+    "The assistant isn't available: Gemini doesn't know the model set on the server." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’assistant est indisponible : Gemini ne connaît pas le modèle configuré sur le serveur."
+          }
+        }
+      }
+    },
     "The assistant isn't available: Gemini rejected the server's API key." : {
       "localizations" : {
         "fr" : {
