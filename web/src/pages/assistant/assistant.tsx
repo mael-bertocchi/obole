@@ -245,7 +245,7 @@ function MessageComponent(props: MessageComponentProps): JSX.Element {
  * @function AssistantShellComponent
  * @description The conversation: the messages so far, the assistant thinking, and the field to write the next one. The
  * budget is kept in step so a confirmed suggestion lands on the latest one. While the server says the assistant can't
- * answer, the field is greyed out and the page says why.
+ * answer, the field is greyed out and the page says why. The field stays pinned to the bottom of the screen.
  *
  * @returns {JSX.Element} The assistant
  */
@@ -342,7 +342,7 @@ function AssistantShellComponent(): JSX.Element {
                 <h1 className='mt-1 text-[34px] font-semibold leading-tight tracking-tight'>{t('assistant.title')}</h1>
                 <p className='mt-1 text-[15px] text-ink-secondary'>{t('assistant.intro')}</p>
 
-                <div className='mt-8 flex flex-col gap-4'>
+                <div className='mt-8 flex flex-col gap-4 pb-36'>
                     {messages.map((message) => (
                         <MessageComponent key={message.id} message={message} categories={categories} services={services} onSettle={(index, status, reason) => settle(message.id, index, status, reason)} />
                     ))}
@@ -354,16 +354,20 @@ function AssistantShellComponent(): JSX.Element {
                     )}
                     {availability.isAvailable && error !== null && <p className='rounded-2xl bg-fill px-4 py-3 text-[14px] text-warning-text'>{error}</p>}
                     {availability.reason !== null && <p className='rounded-2xl bg-fill px-4 py-3 text-[14px] text-warning-text'>{t(availability.reason)}</p>}
-                    <div ref={end} />
+                    <div ref={end} className='scroll-mb-40' />
                 </div>
 
-                <form onSubmit={submit} className={`sticky bottom-4 mt-6 flex items-end gap-2 rounded-3xl bg-white p-2 shadow-control ${availability.isAvailable ? '' : 'opacity-50'}`}>
-                    <textarea aria-label={t('assistant.placeholder')} value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={sendOnEnter} maxLength={4000} rows={1} disabled={!availability.isAvailable} placeholder={t('assistant.placeholder')} className='max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-3 py-2 text-[15px] leading-snug outline-none placeholder:text-ink-quaternary disabled:cursor-not-allowed' />
-                    <button type='submit' aria-label={t('assistant.send')} disabled={draft.trim() === '' || isThinking || !availability.isAvailable} className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white transition hover:bg-accent/90 disabled:opacity-40'>
-                        <ArrowUp size={20} />
-                    </button>
-                </form>
-                <p className='mt-3 text-center text-[12px] text-ink-quaternary'>{t('assistant.privacy')}</p>
+                <div className='fixed inset-x-0 bottom-0 z-10 bg-gradient-to-t from-canvas from-70% to-canvas/0 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-6'>
+                    <div className='mx-auto max-w-[calc(42rem+2.5rem)] px-5 sm:max-w-[calc(42rem+4rem)] sm:px-8'>
+                        <form onSubmit={submit} className={`flex items-end gap-2 rounded-3xl bg-white p-2 shadow-control ${availability.isAvailable ? '' : 'opacity-50'}`}>
+                            <textarea aria-label={t('assistant.placeholder')} value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={sendOnEnter} maxLength={4000} rows={1} disabled={!availability.isAvailable} placeholder={t('assistant.placeholder')} className='max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-3 py-2 text-[15px] leading-snug outline-none placeholder:text-ink-quaternary disabled:cursor-not-allowed' />
+                            <button type='submit' aria-label={t('assistant.send')} disabled={draft.trim() === '' || isThinking || !availability.isAvailable} className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white transition hover:bg-accent/90 disabled:opacity-40'>
+                                <ArrowUp size={20} />
+                            </button>
+                        </form>
+                        <p className='mt-3 text-center text-[12px] text-ink-quaternary'>{t('assistant.privacy')}</p>
+                    </div>
+                </div>
             </div>
         </FrameComponent>
     );

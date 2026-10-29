@@ -16,7 +16,7 @@ export const assistantFr: AssistantMessages = {
     'assistant.eyebrow': 'Assistant',
     'assistant.title': 'Posez votre question',
     'assistant.intro': 'Interrogez-le sur vos dépenses ou votre watchlist, ou décrivez une dépense à ajouter. Rien ne change sans votre confirmation.',
-    'assistant.placeholder': 'Combien ai-je dépensé en restaurants ce mois-ci ?',
+    'assistant.placeholder': 'Demandez à l’assistant',
     'assistant.send': 'Envoyer',
     'assistant.thinking': 'Réflexion',
     'assistant.newConversation': 'Nouvelle conversation',

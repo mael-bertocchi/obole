@@ -14,7 +14,7 @@ export const assistantEn = {
     'assistant.eyebrow': 'Assistant',
     'assistant.title': 'Ask away',
     'assistant.intro': 'Ask about your spending or your watchlist, or describe an expense to log. Nothing changes until you confirm it.',
-    'assistant.placeholder': 'How much did I spend on restaurants this month?',
+    'assistant.placeholder': 'Ask the assistant',
     'assistant.send': 'Send',
     'assistant.thinking': 'Thinking',
     'assistant.newConversation': 'New conversation',
