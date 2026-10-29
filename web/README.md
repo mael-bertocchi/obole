@@ -16,7 +16,7 @@
 - **History** • operations grouped by day with day totals, each at the time it happened (latest first, read in the browser's time zone), a search, and a filter chip per category.
 - **New & edit operation** • amount in any currency with the euro equivalent at the rate of the operation's own day (bank markup included), category, name, note, date and time, online, place, recurring. Delete with a confirmation.
 - **Limits** • the monthly budget and each category's limit, with what is left to dispatch.
-- **Settings** • sync state, budget and limits, default currency, exchange rates, operation and category counts, reset.
+- **Settings** • sync state, budget and limits, default currency, exchange rates, operation and category counts, the trash (restore a deleted operation), reset.
 - **English & French** • the page follows the browser's language, or the one picked in the account settings, and switches on the spot. Amounts and dates are written as in the app: `€1,234.50` in English, `1 234,50 €` in French.
 - **Works on a phone too** • the tabs move to a bottom tab bar and sheets rise from the bottom edge.
 
@@ -27,6 +27,11 @@
 - **A title** • poster, year, length or seasons, genres, summary, where to watch it in France (subscription, free, rent, buy) and, for a film, its saga with what is watched and what is left.
 - **Watched** • mark a title watched on a day, with a rating in half stars and a comment, or rate one you have already seen in one go; list them the latest watched first or the best rated first. A title can go back to the list, or off it.
 - **Credits** • data and images come from TMDB and offers from JustWatch, credited as they ask.
+
+## The assistant
+
+- **Ask** • a conversation about the budget and the watchlist, answered by Gemini through the backend, in the page's language. The conversation lives in the page only.
+- **Suggestions, never actions** • to log, change or delete an operation, or to rate a title, the assistant shows a card; nothing happens until you confirm it. A confirmed card goes through the budget's own sync (priced at its day's rate, a deletion to the trash) or the watchlist, exactly like an edit made by hand.
 
 ## Stack
 
@@ -54,11 +59,13 @@ src/
 │  ├─ language/      English and French, the picker's state
 │  ├─ toast/         Short messages at the bottom of the page
 │  ├─ budget/        The budget app: manifest, service, store, rates, math, formatting, sentences…
-│  └─ watchlist/     The watchlist app: manifest, service, store, shelves, formatting, sentences…
+│  ├─ watchlist/     The watchlist app: manifest, service, store, shelves, formatting, sentences…
+│  └─ assistant/     The assistant app: manifest, service, carrying out a confirmed suggestion, sentences
 ├─ pages/         One folder per page area, each page or section in its own folder:
 │  ├─ portal/        Home, account, login, connect
 │  ├─ budget/        The budget's root page, its tabs (overview, history, settings), sheets and home tile
-│  └─ watchlist/     The watchlist's root page, its tabs (to watch, watched), search and title sheets and home tile
+│  ├─ watchlist/     The watchlist's root page, its tabs (to watch, watched), search and title sheets and home tile
+│  └─ assistant/     The conversation, its suggestion cards and home tile
 ├─ styles/        Tailwind entry
 ├─ types/         Vite's environment types
 └─ utils/         Requests (with the session's renewal), tokens, small tools

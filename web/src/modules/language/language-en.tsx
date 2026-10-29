@@ -1,3 +1,4 @@
+import { assistantEn } from 'modules/assistant/assistant-language-en';
 import { budgetEn } from 'modules/budget/budget-language-en';
 import { watchlistEn } from 'modules/watchlist/watchlist-language-en';
 
@@ -121,7 +122,7 @@ function combine<Taken extends object, Added extends object>(taken: Taken, added
  * @description Every sentence the page shows, in English: the portal's, then each app's. An app's keys start with its
  * id (the budget, the first app, predates the rule).
  */
-export const en = combine(combine(portalEn, budgetEn), watchlistEn);
+export const en = combine(combine(combine(portalEn, budgetEn), watchlistEn), assistantEn);
 
 /**
  * @type MessageKey
