@@ -142,6 +142,19 @@ enum BudgetMath {
     }
 
     /**
+     * @method isPastMonth
+     * @description Whether a month is over: it keeps a budget of its own, while the current month and the next ones
+     * share the live one
+     *
+     * @param month Any day of the month
+     * @param now The current date
+     * @returns Whether it is over
+     */
+    static func isPastMonth(_ month: Date, now: Date = .now) -> Bool {
+        monthStart(month) < monthStart(now)
+    }
+
+    /**
      * @method operations
      * @description The operations of one month
      *

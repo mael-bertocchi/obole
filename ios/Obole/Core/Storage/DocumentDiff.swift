@@ -11,8 +11,8 @@ enum BudgetWrite: Equatable {
     case storeCategory(Category, position: Int) /*!< Creates or replaces a category, at its place in the list */
     case deleteCategory(id: String) /*!< Removes a category */
     case storeSettings(BudgetSettings) /*!< Stores the monthly budget */
-    case storeMonth(String, MonthlyBudget) /*!< Freezes the budget of a finished month */
-    case deleteMonth(String) /*!< Forgets a frozen month */
+    case storeMonth(String, MonthlyBudget) /*!< Stores the budget of a finished month */
+    case deleteMonth(String) /*!< Forgets the budget of a finished month */
 }
 
 /**

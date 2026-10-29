@@ -2,9 +2,12 @@ import SwiftUI
 
 /**
  * @class CategoryLimitsSheet
- * @description The sheet editing the monthly budget and each category's limit, with what is left to dispatch
+ * @description The sheet editing a month's budget and each category's limit, with what is left to dispatch. A past
+ * month's budget is its own; the current month's carries on to the next ones
  */
 struct CategoryLimitsSheet: View {
+    var month: Date = BudgetMath.monthStart(.now) /*!< The month whose budget is edited */
+
     @Environment(LocalStore.self) private var store /*!< The budget */
     @Environment(Preferences.self) private var preferences /*!< The device's settings, for the haptics */
     @Environment(\.dismiss) private var dismiss /*!< Closes the sheet */
@@ -31,6 +34,11 @@ struct CategoryLimitsSheet: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 SheetHeader(title: String(appLocalized: "Edit limits")) { dismiss() }
+                    .padding(.bottom, 8)
+
+                Text(scopeText)
+                    .font(Theme.font(13))
+                    .foregroundStyle(Theme.muted)
                     .padding(.bottom, 20)
 
                 FieldLabel(String(appLocalized: "Monthly budget"))
@@ -96,6 +104,17 @@ struct CategoryLimitsSheet: View {
                 limits = formatted
             }
         }
+    }
+
+    /**
+     * @method scopeText
+     * @description Which months the limits apply to, in words
+     */
+    private var scopeText: String {
+        guard BudgetMath.isPastMonth(month) else {
+            return String(appLocalized: "This month and the next ones: past months keep their budget.")
+        }
+        return String(appLocalized: "\(Formatting.monthWithYear(month)) only: the other months keep their budget.")
     }
 
     /**
@@ -183,29 +202,24 @@ struct CategoryLimitsSheet: View {
 
     /**
      * @method loadValues
-     * @description Fills the fields with the budget as stored
+     * @description Fills the fields with the month's budget as stored
      */
     private func loadValues() {
-        monthlyLimit = Formatting.amountInput(store.budget.monthlyLimit)
+        let stored = store.monthlyBudget(for: month)
+        monthlyLimit = Formatting.amountInput(stored.monthlyLimit)
         limits = Dictionary(
-            uniqueKeysWithValues: store.categories.map { ($0.id, Formatting.amountInput($0.monthlyLimit)) }
+            uniqueKeysWithValues: store.categories.map { ($0.id, Formatting.amountInput(stored.limit(for: $0.id))) }
         )
     }
 
     /**
      * @method save
-     * @description Stores the budget and the limits typed, then closes the sheet
+     * @description Stores the month's budget and limits typed, keeping any left empty as they were, then closes the
+     * sheet
      */
     private func save() {
-        if let value = Formatting.parseAmountInput(monthlyLimit) {
-            store.setMonthlyLimit(value)
-        }
-        for (categoryId, text) in limits {
-            guard let value = Formatting.parseAmountInput(text) else {
-                continue
-            }
-            store.updateLimit(categoryId: categoryId, limit: value)
-        }
+        let categoryLimits = limits.compactMapValues { Formatting.parseAmountInput($0) }
+        store.setMonthlyBudget(monthlyLimit: Formatting.parseAmountInput(monthlyLimit), categoryLimits: categoryLimits, for: month)
         preferences.success()
         dismiss()
     }

@@ -58,7 +58,7 @@ struct BudgetView: View {
         .scrollIndicators(.hidden)
         .scrollTopBlur()
         .sheet(isPresented: $showLimits) {
-            CategoryLimitsSheet()
+            CategoryLimitsSheet(month: month)
         }
     }
 
@@ -96,14 +96,6 @@ struct BudgetView: View {
      */
     private var isOverBudget: Bool {
         hasOperations && summary.left < 0
-    }
-
-    /**
-     * @method isCurrentMonth
-     * @description Whether the month shown is the current one, the only one whose limits can be edited
-     */
-    private var isCurrentMonth: Bool {
-        BudgetMath.isSameMonth(month, .now)
     }
 
     /**
@@ -178,17 +170,15 @@ struct BudgetView: View {
 
     /**
      * @method categoryHeader
-     * @description The categories' title, with the link to edit the limits on the current month
+     * @description The categories' title, with the link to edit the month's limits
      */
     private var categoryHeader: some View {
         HStack {
             SectionLabel(String(appLocalized: "By category"))
             Spacer(minLength: 12)
-            if isCurrentMonth {
-                InlineLink(title: String(appLocalized: "Edit limits")) {
-                    preferences.tap()
-                    showLimits = true
-                }
+            InlineLink(title: String(appLocalized: "Edit limits")) {
+                preferences.tap()
+                showLimits = true
             }
         }
     }

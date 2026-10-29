@@ -38,7 +38,7 @@ final class LocalStore {
     private(set) var categories: [Category] = [] /*!< The spending categories: the shipped catalogue first, then any kept for their operations */
     private(set) var operations: [Operation] = [] /*!< Every operation, latest first */
     private(set) var budget: BudgetSettings = .default /*!< The monthly budget */
-    private(set) var budgetHistory: [String: MonthlyBudget] = [:] /*!< The budget frozen against each finished month, by month */
+    private(set) var budgetHistory: [String: MonthlyBudget] = [:] /*!< Each finished month's own budget, by month */
 
     @ObservationIgnored var onChange: (() -> Void)? /*!< Called after every local change, to push it */
     @ObservationIgnored private var isApplyingRemote = false /*!< Whether the change comes from the server, which needs no pushing back */
@@ -109,21 +109,6 @@ final class LocalStore {
      */
     func categoryOrFallback(id: String) -> Category {
         category(id: id) ?? .fallback
-    }
-
-    /**
-     * @method updateLimit
-     * @description Sets a category's monthly limit
-     *
-     * @param categoryId The category's id
-     * @param limit The limit, never below zero
-     */
-    func updateLimit(categoryId: String, limit: Double) {
-        guard let index = categories.firstIndex(where: { $0.id == categoryId }) else {
-            return
-        }
-        categories[index].monthlyLimit = max(0, limit)
-        save()
     }
 
     /**
@@ -205,7 +190,7 @@ final class LocalStore {
 
     /**
      * @method monthlyBudget
-     * @description The budget a month is measured against: frozen when it ended, the live one otherwise
+     * @description The budget a month is measured against: its own once it is over, the live one otherwise
      *
      * @param month Any day of the month
      * @returns The month's budget
@@ -216,8 +201,8 @@ final class LocalStore {
 
     /**
      * @method sealCompletedMonths
-     * @description Freezes the live budget against every finished month that has none yet, so changing a limit later
-     * doesn't rewrite the past
+     * @description Gives every finished month that has none yet a budget of its own, copied from the live one, so
+     * changing the live limits later doesn't rewrite the past. That budget stays editable on its own
      *
      * @param now The current date
      */
@@ -251,13 +236,34 @@ final class LocalStore {
     }
 
     /**
-     * @method setMonthlyLimit
-     * @description Sets the monthly budget
+     * @method setMonthlyBudget
+     * @description Stores the budget typed for a month. A past month only changes its own budget; the current month
+     * changes the live one, which every month after it starts from
      *
-     * @param limit The budget, never below zero
+     * @param monthlyLimit The monthly budget, never below zero, nil to keep it
+     * @param categoryLimits Each category's limit by category id, never below zero, a missing one keeping it
+     * @param month Any day of the month
+     * @param now The current date
      */
-    func setMonthlyLimit(_ limit: Double) {
-        budget.monthlyLimit = max(0, limit)
+    func setMonthlyBudget(monthlyLimit: Double?, categoryLimits: [String: Double], for month: Date, now: Date = .now) {
+        guard BudgetMath.isPastMonth(month, now: now) else {
+            if let monthlyLimit {
+                budget.monthlyLimit = max(0, monthlyLimit)
+            }
+            for index in categories.indices {
+                if let limit = categoryLimits[categories[index].id] {
+                    categories[index].monthlyLimit = max(0, limit)
+                }
+            }
+            save()
+            return
+        }
+        var stored = monthlyBudget(for: month)
+        if let monthlyLimit {
+            stored.monthlyLimit = max(0, monthlyLimit)
+        }
+        stored.categoryLimits.merge(categoryLimits.mapValues { max(0, $0) }) { _, typed in typed }
+        budgetHistory[BudgetMath.monthKey(month)] = stored
         save()
     }
 

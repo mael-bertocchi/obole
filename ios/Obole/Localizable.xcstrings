@@ -24,6 +24,16 @@
         }
       }
     },
+    "%@ only: the other months keep their budget." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ uniquement : les autres mois gardent leur budget."
+          }
+        }
+      }
+    },
     "%@ over budget" : {
       "localizations" : {
         "fr" : {
@@ -1410,6 +1420,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réflexion"
+          }
+        }
+      }
+    },
+    "This month and the next ones: past months keep their budget." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce mois-ci et les suivants : les mois passés gardent leur budget."
           }
         }
       }
