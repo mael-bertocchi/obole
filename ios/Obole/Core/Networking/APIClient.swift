@@ -131,6 +131,40 @@ private struct CategoryFields: Encodable {
 }
 
 /**
+ * @class EntryRating
+ * @description A rating for a title of the watchlist, as the server takes it. A missing comment is written as null,
+ * which clears it
+ */
+private struct EntryRating: Encodable {
+    let watchedAt: Date /*!< When it was watched */
+    let rating: Int /*!< The rating, in half stars */
+    let comment: String? /*!< The comment, if any */
+
+    /**
+     * @type CodingKeys
+     * @description The fields the server takes
+     */
+    private enum CodingKeys: String, CodingKey {
+        case watchedAt /*!< When it was watched */
+        case rating /*!< The rating */
+        case comment /*!< The comment */
+    }
+
+    /**
+     * @method encode
+     * @description Writes the fields, a null comment included
+     *
+     * @param encoder The encoder
+     */
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(watchedAt, forKey: .watchedAt)
+        try container.encode(rating, forKey: .rating)
+        try container.encode(comment, forKey: .comment)
+    }
+}
+
+/**
  * @type APIError
  * @description Why a request to the server failed, worded for the person in the interface's language
  */
@@ -142,6 +176,7 @@ enum APIError: Error, LocalizedError {
     case conflict /*!< The server already holds what the request creates */
     case notFound /*!< The server doesn't know the entry the request names */
     case server(status: Int, message: String) /*!< The server refused the request, with its status and message */
+    case explained(status: Int, reason: String) /*!< The server refused the request and named why, for the app to word it */
     case transport(Error) /*!< The server couldn't be reached */
     case decoding(Error) /*!< The server answered something unexpected */
 
@@ -160,10 +195,25 @@ enum APIError: Error, LocalizedError {
         case .notFound: return String(appLocalized: "The server refused the request.")
         case .server(let status, _) where status >= 500: return String(appLocalized: "The server is unavailable right now.")
         case .server: return String(appLocalized: "The server refused the request.")
+        case .explained(_, let reason) where reason == Self.assistantNotConfigured: return String(appLocalized: "The assistant isn't set up: add ASSISTANT_GEMINI_KEY to the server's environment.")
+        case .explained(_, let reason) where reason == Self.assistantRefused: return String(appLocalized: "Gemini refused the key: check ASSISTANT_GEMINI_KEY on the server.")
+        case .explained(let status, _) where status >= 500: return String(appLocalized: "The server is unavailable right now.")
+        case .explained: return String(appLocalized: "The server refused the request.")
         case .transport: return String(appLocalized: "Can't reach the server.")
         case .decoding: return String(appLocalized: "The server sent an unexpected response.")
         }
     }
+
+    /**
+     * @constant assistantNotConfigured
+     * @description Why the assistant can't answer when the server has no Gemini key
+     */
+    static let assistantNotConfigured = "assistant-not-configured"
+    /**
+     * @constant assistantRefused
+     * @description Why the assistant can't answer when Gemini refuses the server's key
+     */
+    static let assistantRefused = "assistant-refused"
 
     /**
      * @method isOffline
@@ -225,10 +275,19 @@ final class APIClient {
 
     /**
      * @class ErrorEnvelope
-     * @description The message an error answer carries
+     * @description The message an error answer carries, and why the server refused when it says
      */
     private struct ErrorEnvelope: Decodable {
         let message: String /*!< The server's message, for its logs */
+        let data: ErrorDetails? /*!< What the server adds about the refusal, if anything */
+    }
+
+    /**
+     * @class ErrorDetails
+     * @description What an error answer adds about the refusal
+     */
+    private struct ErrorDetails: Decodable {
+        let reason: String? /*!< Why the server refused, for the app to word it */
     }
 
     /**
@@ -317,6 +376,31 @@ final class APIClient {
      */
     func restoreOperation(id: String) async throws {
         try await sendDiscarding(entryPath("operations", id, "restore"), method: "POST")
+    }
+
+    /**
+     * @method converse
+     * @description Asks the assistant: the conversation goes whole each time, ending with the new question, since the
+     * server keeps none of it
+     *
+     * @param conversation The conversation, the language to answer in and the person's day
+     * @returns The assistant's answer and the changes it suggests
+     */
+    func converse(_ conversation: AssistantConversation) async throws -> AssistantReply {
+        try await send("/v1/assistant/messages", method: "POST", body: conversation)
+    }
+
+    /**
+     * @method rateWatchlistEntry
+     * @description Marks a title of the watchlist watched, with a rating and a comment
+     *
+     * @param id The entry's id
+     * @param rating The rating, in half stars from 1 to 10
+     * @param comment The comment, if any
+     * @param watchedAt When it was watched
+     */
+    func rateWatchlistEntry(id: String, rating: Int, comment: String?, watchedAt: Date) async throws {
+        try await sendDiscarding("/v1/watchlist/entries/\(id)", method: "PATCH", body: EntryRating(watchedAt: watchedAt, rating: rating, comment: comment))
     }
 
     /**
@@ -531,8 +615,11 @@ final class APIClient {
         }
 
         guard (200..<300).contains(http.statusCode) else {
-            let message = (try? JSONCoding.decoder.decode(ErrorEnvelope.self, from: data))?.message ?? "Request failed"
-            throw APIError.server(status: http.statusCode, message: message)
+            let envelope = try? JSONCoding.decoder.decode(ErrorEnvelope.self, from: data)
+            if let reason = envelope?.data?.reason {
+                throw APIError.explained(status: http.statusCode, reason: reason)
+            }
+            throw APIError.server(status: http.statusCode, message: envelope?.message ?? "Request failed")
         }
 
         return data

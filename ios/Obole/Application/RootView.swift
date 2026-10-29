@@ -7,6 +7,7 @@ import SwiftUI
 enum AppTab: String, CaseIterable, Identifiable {
     case budget /*!< The budget ring and the categories */
     case history /*!< The operations, day by day */
+    case assistant /*!< The conversation with the assistant */
     case settings /*!< The settings */
 
     var id: String { rawValue } /*!< Its identifier, for the tab view */
@@ -94,6 +95,10 @@ struct MainShell: View {
                     onNewOperation: { editorRoute = .new }
                 )
                 .screenBackground()
+            }
+            Tab("Assistant", systemImage: "sparkles", value: AppTab.assistant) {
+                AssistantView()
+                    .screenBackground()
             }
             Tab("Settings", systemImage: "gearshape", value: AppTab.settings) {
                 SettingsView()

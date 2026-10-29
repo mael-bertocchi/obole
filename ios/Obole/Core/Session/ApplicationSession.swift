@@ -127,6 +127,33 @@ final class ApplicationSession {
     }
 
     /**
+     * @method catchUp
+     * @description Reconciles with the server at once, so the budget holds what the web interface wrote last
+     */
+    func catchUp() async {
+        guard identityState == .signedIn else {
+            return
+        }
+        await reconcile()
+    }
+
+    /**
+     * @method ask
+     * @description Asks the assistant, in the interface's language and on the person's day
+     *
+     * @param messages The conversation, ending with the question
+     * @returns The assistant's answer and the changes it suggests
+     */
+    func ask(_ messages: [AssistantMessage]) async throws -> AssistantReply {
+        let conversation = AssistantConversation(
+            messages: messages,
+            language: Localization.isFrench ? "fr" : "en",
+            today: ExchangeRates.day(from: .now)
+        )
+        return try await api.converse(conversation)
+    }
+
+    /**
      * @method trash
      * @description Reads the operations in the trash
      *
@@ -145,6 +172,20 @@ final class ApplicationSession {
     func restore(id: String) async throws {
         try await api.restoreOperation(id: id)
         await reconcile()
+    }
+
+    /**
+     * @method rateTitle
+     * @description Marks a title of the watchlist watched, with a rating and a comment. The app has no watchlist of its
+     * own, so this goes straight to the server
+     *
+     * @param entryId The entry's id
+     * @param rating The rating, in half stars from 1 to 10
+     * @param comment The comment, if any
+     * @param watchedAt When it was watched
+     */
+    func rateTitle(entryId: String, rating: Int, comment: String?, watchedAt: Date) async throws {
+        try await api.rateWatchlistEntry(id: entryId, rating: rating, comment: comment, watchedAt: watchedAt)
     }
 
     /**
