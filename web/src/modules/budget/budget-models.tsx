@@ -45,7 +45,7 @@ export const TrashedOperationSchema = OperationSchema.extend({
 
 /**
  * @constant MonthlyBudgetSchema
- * @description Zod schema for the budget frozen against one finished month.
+ * @description Zod schema for the budget of one finished month, editable at any time.
  */
 export const MonthlyBudgetSchema = z.object({
     monthlyLimit: z.number(),
@@ -101,7 +101,7 @@ export type TrashedOperation = z.infer<typeof TrashedOperationSchema>;
 
 /**
  * @type MonthlyBudget
- * @description The budget frozen against one finished month
+ * @description The budget of one finished month, editable at any time
  */
 export type MonthlyBudget = z.infer<typeof MonthlyBudgetSchema>;
 
@@ -135,8 +135,8 @@ export interface BudgetServer {
     storeCategory: (category: Category, position: number) => Promise<void>; /*!< Creates or replaces a category */
     deleteCategory: (id: string) => Promise<void>; /*!< Removes a category */
     storeSettings: (monthlyLimit: number) => Promise<void>; /*!< Stores the monthly budget */
-    storeMonth: (month: string, budget: MonthlyBudget) => Promise<void>; /*!< Freezes the budget of a finished month */
-    deleteMonth: (month: string) => Promise<void>; /*!< Forgets a frozen month */
+    storeMonth: (month: string, budget: MonthlyBudget) => Promise<void>; /*!< Stores the budget of a finished month */
+    deleteMonth: (month: string) => Promise<void>; /*!< Forgets the budget of a finished month */
     getRates: () => Promise<RateSnapshot>; /*!< Reads the latest reference rates */
     getRatesOn: (day: string) => Promise<RateSnapshot>; /*!< Reads one day's reference rates */
 }

@@ -46,6 +46,8 @@ export const budgetFr: BudgetMessages = {
     'limits.dispatched': 'Entièrement réparti',
     'limits.categoryLimit': 'Limite {category}',
     'limits.save': 'Enregistrer les limites',
+    'limits.scopeCurrent': 'Ce mois-ci et les suivants : les mois passés gardent leur budget.',
+    'limits.scopePast': '{month} uniquement : les autres mois gardent leur budget.',
 
     'history.eyebrow': 'Historique',
     'history.title': 'Opérations',

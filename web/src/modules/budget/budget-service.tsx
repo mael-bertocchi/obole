@@ -139,7 +139,7 @@ async function storeSettings(monthlyLimit: number): Promise<void> {
 
 /**
  * @function storeMonth
- * @description Freezes the budget of a finished month
+ * @description Stores the budget of a finished month
  *
  * @param {string} month The month, as `YYYY-MM`
  * @param {MonthlyBudget} budget Its budget
@@ -151,7 +151,7 @@ async function storeMonth(month: string, budget: MonthlyBudget): Promise<void> {
 
 /**
  * @function deleteMonth
- * @description Forgets the budget frozen against a month
+ * @description Forgets the budget of a finished month
  *
  * @param {string} month The month, as `YYYY-MM`
  * @returns {Promise<void>} Resolves once it is forgotten

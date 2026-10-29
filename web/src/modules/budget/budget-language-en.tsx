@@ -44,6 +44,8 @@ export const budgetEn = {
     'limits.dispatched': 'Fully dispatched',
     'limits.categoryLimit': '{category} limit',
     'limits.save': 'Save limits',
+    'limits.scopeCurrent': 'This month and the next ones: past months keep their budget.',
+    'limits.scopePast': '{month} only: the other months keep their budget.',
 
     'history.eyebrow': 'History',
     'history.title': 'Operations',

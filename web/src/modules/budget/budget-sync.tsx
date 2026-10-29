@@ -43,7 +43,7 @@ function sameCategory(lhs: Category, rhs: Category): boolean {
 
 /**
  * @function sameMonth
- * @description Whether two frozen months hold the same budget.
+ * @description Whether two finished months hold the same budget.
  */
 function sameMonth(lhs: MonthlyBudget, rhs: MonthlyBudget): boolean {
     const keys = new Set([...Object.keys(lhs.categoryLimits), ...Object.keys(rhs.categoryLimits)]);

@@ -4,7 +4,7 @@ import RingComponent from 'components/ring/ring';
 import TrackBarComponent from 'components/track-bar/track-bar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { categoryName, hexColor } from 'modules/budget/budget-categories';
-import { isSameMonth, monthStart, shiftMonth } from 'modules/budget/budget-dates';
+import { monthStart, shiftMonth } from 'modules/budget/budget-dates';
 import { euro, monthTitle } from 'modules/budget/budget-formatting';
 import { useDocument } from 'modules/budget/budget-hooks';
 import type { CategorySpend } from 'modules/budget/budget-math';
@@ -85,7 +85,7 @@ function CategoryRowComponent(props: CategoryRowComponentProps): JSX.Element {
 /**
  * @function BudgetOverviewComponent
  * @description The Budget tab: what is left to spend in a month, the spent, days-left and per-day figures, and every
- * category against its limit. A past month is measured against the budget frozen when it ended.
+ * category against its limit. Each month is measured against its own budget, which can be edited at any time.
  */
 function BudgetOverviewComponent(): JSX.Element {
     const document = useDocument();
@@ -98,7 +98,6 @@ function BudgetOverviewComponent(): JSX.Element {
     const hasOperations = operationsIn(document.operations, month).length > 0;
     const figures = summary(document.operations, month, budget, now);
     const isOverBudget = hasOperations && figures.left < 0;
-    const isCurrentMonth = isSameMonth(month, now);
     const canGoForward = month.getTime() < monthStart(now).getTime();
     const dispatch = toDispatch(document.categories, budget);
     const spends = categorySpends(document.operations, document.categories, month, budget).filter((spend) => spend.limit > 0 || spend.spent > 0);
@@ -145,11 +144,9 @@ function BudgetOverviewComponent(): JSX.Element {
                 <section className='card p-6 sm:p-8 lg:col-span-3'>
                     <div className='flex items-baseline justify-between gap-4'>
                         <h2 className='text-[20px] font-semibold tracking-tight'>{t('budget.byCategory')}</h2>
-                        {isCurrentMonth && (
-                            <button type='button' onClick={() => setShowLimits(true)} className='text-[15px] font-medium text-accent hover:text-accent-strong'>
-                                {t('budget.editLimits')}
-                            </button>
-                        )}
+                        <button type='button' onClick={() => setShowLimits(true)} className='text-[15px] font-medium text-accent hover:text-accent-strong'>
+                            {t('budget.editLimits')}
+                        </button>
                     </div>
                     {hasOperations && dispatch > 0 && (
                         <p className='mt-1 text-[13px] text-accent'>
@@ -169,7 +166,7 @@ function BudgetOverviewComponent(): JSX.Element {
                 </section>
             </div>
 
-            <BudgetLimitsComponent open={showLimits} onClose={() => setShowLimits(false)} />
+            <BudgetLimitsComponent month={month} open={showLimits} onClose={() => setShowLimits(false)} />
         </div>
     );
 }

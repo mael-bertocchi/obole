@@ -6,6 +6,7 @@ import SyncBadgeComponent from 'components/sync-badge/sync-badge';
 import { ArchiveRestore, ChevronRight, Euro, LayoutGrid, List, RefreshCw, Target, Trash2 } from 'lucide-react';
 import { categoriesOf, DEFAULT_CATEGORIES } from 'modules/budget/budget-categories';
 import { BANK_MARKUP, bankRate, CURRENCIES, currencyName, EURO } from 'modules/budget/budget-currencies';
+import { monthStart } from 'modules/budget/budget-dates';
 import { euro, percent, rate } from 'modules/budget/budget-formatting';
 import { useBudget, useDocument, useRates } from 'modules/budget/budget-hooks';
 import { useBudgetContext } from 'modules/budget/budget-hooks';
@@ -42,6 +43,7 @@ function BudgetSettingsComponent(): JSX.Element {
     const [isConfirmingReset, setIsConfirmingReset] = useState(false);
     const [showTrash, setShowTrash] = useState(false);
     const latest = rates.latest;
+    const currentMonth = monthStart(new Date());
 
     /**
      * @function reset
@@ -131,7 +133,7 @@ function BudgetSettingsComponent(): JSX.Element {
                 <ListRowComponent icon={<IconTileComponent icon={Trash2} color={NEGATIVE} size={30} />} title={t('settings.reset')} destructive onClick={() => setIsConfirmingReset(true)} />
             </ListGroupComponent>
 
-            <BudgetLimitsComponent open={showLimits} onClose={() => setShowLimits(false)} />
+            <BudgetLimitsComponent month={currentMonth} open={showLimits} onClose={() => setShowLimits(false)} />
             <BudgetTrashComponent open={showTrash} onClose={() => setShowTrash(false)} />
             <AlertComponent open={isConfirmingReset} title={t('settings.confirmReset')} message={t('settings.resetMessage')} action={t('settings.resetAction')} onConfirm={reset} onCancel={() => setIsConfirmingReset(false)} />
         </div>

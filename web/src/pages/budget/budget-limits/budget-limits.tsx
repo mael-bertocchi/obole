@@ -2,9 +2,10 @@ import CategoryIconComponent from 'components/category-icon/category-icon';
 import SheetComponent from 'components/sheet/sheet';
 import type { Maybe } from 'models';
 import { categoriesOf, categoryName } from 'modules/budget/budget-categories';
-import { euro } from 'modules/budget/budget-formatting';
+import { euro, monthWithYear } from 'modules/budget/budget-formatting';
 import { useDocument } from 'modules/budget/budget-hooks';
 import { useBudgetContext } from 'modules/budget/budget-hooks';
+import { isPastMonth, monthlyBudgetFor, withMonthlyBudget } from 'modules/budget/budget-math';
 import { amountInputOf, groupAmountInput, sanitizeAmountInput } from 'modules/budget/budget-operations';
 import { t } from 'modules/language/language-service';
 import { useState, type FormEvent, type JSX } from 'react';
@@ -24,6 +25,7 @@ function parseLimit(text: string): Maybe<number> {
  * @description Properties of the limits form
  */
 interface LimitsFormComponentProps {
+    month: Date; /*!< The month whose budget is edited */
     onDone: () => void; /*!< Called once saved */
 }
 
@@ -37,8 +39,10 @@ function LimitsFormComponent(props: LimitsFormComponentProps): JSX.Element {
     const document = useDocument();
     const { store } = useBudgetContext();
     const categories = categoriesOf(document.categories);
-    const [monthly, setMonthly] = useState(amountInputOf(document.budget.monthlyLimit));
-    const [limits, setLimits] = useState<Record<string, string>>(() => Object.fromEntries(categories.map((category) => [category.id, amountInputOf(category.monthlyLimit)])));
+    const stored = monthlyBudgetFor(document, props.month);
+    const [monthly, setMonthly] = useState(amountInputOf(stored.monthlyLimit));
+    const [limits, setLimits] = useState<Record<string, string>>(() => Object.fromEntries(categories.map((category) => [category.id, amountInputOf(stored.categoryLimits[category.id] ?? 0)])));
+    const scope = isPastMonth(props.month) ? t('limits.scopePast', { month: monthWithYear(props.month) }) : t('limits.scopeCurrent');
 
     const budget = parseLimit(monthly) ?? 0;
     const remaining = budget - categories.reduce((total, category) => total + (parseLimit(limits[category.id] ?? '') ?? 0), 0);
@@ -53,17 +57,12 @@ function LimitsFormComponent(props: LimitsFormComponentProps): JSX.Element {
 
     /**
      * @function save
-     * @description Stores the limits, keeping any left empty as they were.
+     * @description Stores the month's limits, keeping any left empty as they were.
      */
     const save = (): void => {
-        const monthlyLimit = parseLimit(monthly);
-        const parsed = Object.fromEntries(Object.entries(limits).map(([id, text]) => [id, parseLimit(text)]));
+        const edit = { monthlyLimit: parseLimit(monthly), categoryLimits: Object.fromEntries(Object.entries(limits).map(([id, text]) => [id, parseLimit(text)])) };
 
-        store.apply((current) => ({
-            ...current,
-            budget: { monthlyLimit: monthlyLimit ?? current.budget.monthlyLimit },
-            categories: categoriesOf(current.categories).map((category) => ({ ...category, monthlyLimit: parsed[category.id] ?? category.monthlyLimit }))
-        }));
+        store.apply((current) => withMonthlyBudget(current, props.month, edit));
         props.onDone();
     };
 
@@ -78,6 +77,7 @@ function LimitsFormComponent(props: LimitsFormComponentProps): JSX.Element {
 
     return (
         <form id='limits-form' onSubmit={submit}>
+            <p className='mb-5 text-[14px] text-ink-secondary'>{scope}</p>
             <label className='field-label' htmlFor='monthly-limit'>{t('limits.monthly')}</label>
             <div className='relative'>
                 <span className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[15px] text-ink-tertiary'>
@@ -109,13 +109,15 @@ function LimitsFormComponent(props: LimitsFormComponentProps): JSX.Element {
  * @description Properties of the limits sheet
  */
 interface BudgetLimitsComponentProps {
+    month: Date; /*!< The month whose budget is edited */
     open: boolean; /*!< Whether it is shown */
     onClose: () => void; /*!< Called when it is dismissed */
 }
 
 /**
  * @function BudgetLimitsComponent
- * @description The Edit limits sheet: the monthly budget, each category's limit, and what is left to dispatch.
+ * @description The Edit limits sheet: a month's budget, each category's limit, and what is left to dispatch. A past
+ * month's budget is its own; the current month's carries on to the next ones.
  *
  * @param {BudgetLimitsComponentProps} props The properties of the component
  */
@@ -132,7 +134,7 @@ function BudgetLimitsComponent(props: BudgetLimitsComponentProps): JSX.Element {
 
     return (
         <SheetComponent open={props.open} title={t('limits.title')} onClose={props.onClose} footer={footer}>
-            <LimitsFormComponent onDone={props.onClose} />
+            <LimitsFormComponent month={props.month} onDone={props.onClose} />
         </SheetComponent>
     );
 }

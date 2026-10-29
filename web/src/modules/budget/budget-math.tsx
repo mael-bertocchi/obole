@@ -81,11 +81,64 @@ export function liveBudget(document: BudgetDocument): MonthlyBudget {
 }
 
 /**
+ * @function isPastMonth
+ * @description Whether a month is over: it keeps a budget of its own, while the current month and the next ones share
+ * the live one.
+ */
+export function isPastMonth(month: Date, now: Date = new Date()): boolean {
+    return monthStart(month).getTime() < monthStart(now).getTime();
+}
+
+/**
  * @function monthlyBudgetFor
- * @description The budget a month is measured against: the one frozen when it ended, or the live one.
+ * @description The budget a month is measured against: its own once it is over, or the live one.
  */
 export function monthlyBudgetFor(document: BudgetDocument, month: Date): MonthlyBudget {
     return document.budgetHistory[monthKey(month)] ?? liveBudget(document);
+}
+
+/**
+ * @interface BudgetEdit
+ * @description A month's budget as typed in the limits sheet, where a value left empty keeps the stored one.
+ */
+export interface BudgetEdit {
+    monthlyLimit: Maybe<number>; /*!< The monthly budget, none to keep it */
+    categoryLimits: Record<string, Maybe<number>>; /*!< Each category's limit by id, none to keep it */
+}
+
+/**
+ * @function withMonthlyBudget
+ * @description Stores the budget typed for a month. A past month only changes its own budget; the current month
+ * changes the live one, which every month after it starts from.
+ *
+ * @param {BudgetDocument} document The document.
+ * @param {Date} month The month edited.
+ * @param {BudgetEdit} edit The budget typed.
+ * @param {Date} now The current date.
+ *
+ * @returns {BudgetDocument} The document with the month's budget stored.
+ */
+export function withMonthlyBudget(document: BudgetDocument, month: Date, edit: BudgetEdit, now: Date = new Date()): BudgetDocument {
+    if (!isPastMonth(month, now)) {
+        return {
+            ...document,
+            budget: { monthlyLimit: edit.monthlyLimit ?? document.budget.monthlyLimit },
+            categories: categoriesOf(document.categories).map((category) => ({ ...category, monthlyLimit: edit.categoryLimits[category.id] ?? category.monthlyLimit }))
+        };
+    }
+
+    const stored = monthlyBudgetFor(document, month);
+    const categoryLimits = { ...stored.categoryLimits };
+
+    for (const [id, limit] of Object.entries(edit.categoryLimits)) {
+        if (limit !== null) {
+            categoryLimits[id] = limit;
+        }
+    }
+
+    const budget = { monthlyLimit: edit.monthlyLimit ?? stored.monthlyLimit, categoryLimits };
+
+    return { ...document, budgetHistory: { ...document.budgetHistory, [monthKey(month)]: budget } };
 }
 
 /**
@@ -174,8 +227,9 @@ export function dayGroups(operations: readonly Operation[]): DayGroup[] {
 
 /**
  * @function sealCompletedMonths
- * @description Freezes the live budget onto every finished month that has none yet, so changing a limit later never
- * rewrites how a past month went. The app does the same on launch; whichever side gets there first seals the month.
+ * @description Gives every finished month that has none yet a budget of its own, copied from the live one, so changing
+ * the live limits later never rewrites how a past month went. That budget stays editable on its own. The app does the
+ * same on launch; whichever side gets there first seals the month.
  *
  * @param {BudgetDocument} document The document.
  * @param {Date} now The current date.

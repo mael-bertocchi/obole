@@ -2,6 +2,7 @@ import {
     categorySpends,
     dayGroups,
     daysLeft,
+    isPastMonth,
     lastUsedCurrency,
     latestLocation,
     liveBudget,
@@ -9,7 +10,8 @@ import {
     recentLocations,
     sealCompletedMonths,
     summary,
-    toDispatch
+    toDispatch,
+    withMonthlyBudget
 } from 'modules/budget/budget-math';
 import { describe, expect, it } from 'vitest';
 
@@ -87,6 +89,44 @@ describe('sealCompletedMonths', () => {
         expect(Object.keys(result.budgetHistory).sort()).toEqual(['2026-06', '2026-07', '2026-08']);
         expect(result.budgetHistory['2026-07']).toBe(sealed);
         expect(monthlyBudgetFor(result, new Date(2026, 5, 1)).monthlyLimit).toBe(3000);
+    });
+});
+
+describe('withMonthlyBudget', () => {
+    const edit = { monthlyLimit: 1500, categoryLimits: { restaurant: 200, groceries: null } };
+
+    it('tells a past month from the current one', () => {
+        expect(isPastMonth(new Date(2026, 7, 1), NOW)).toBe(true);
+        expect(isPastMonth(september, NOW)).toBe(false);
+    });
+
+    it('changes only the past month edited, keeping the limits left empty', () => {
+        const sealed = { monthlyLimit: 2000, categoryLimits: { restaurant: 100, groceries: 300 } };
+        const budget = document([], { budgetHistory: { '2026-07': sealed, '2026-08': sealed } });
+        const result = withMonthlyBudget(budget, new Date(2026, 6, 1), edit, NOW);
+
+        expect(result.budgetHistory['2026-07']).toEqual({ monthlyLimit: 1500, categoryLimits: { restaurant: 200, groceries: 300 } });
+        expect(result.budgetHistory['2026-08']).toBe(sealed);
+        expect(result.budget).toEqual(budget.budget);
+        expect(result.categories).toEqual(budget.categories);
+    });
+
+    it('gives a past month without a budget its own, starting from the live one', () => {
+        const budget = document();
+        const result = withMonthlyBudget(budget, new Date(2026, 6, 1), edit, NOW);
+        const live = liveBudget(budget);
+
+        expect(result.budgetHistory['2026-07']).toEqual({ monthlyLimit: 1500, categoryLimits: { ...live.categoryLimits, restaurant: 200 } });
+        expect(liveBudget(result)).toEqual(live);
+    });
+
+    it('changes the live budget from the current month on', () => {
+        const budget = document();
+        const result = withMonthlyBudget(budget, september, edit, NOW);
+
+        expect(result.budget.monthlyLimit).toBe(1500);
+        expect(liveBudget(result).categoryLimits['restaurant']).toBe(200);
+        expect(result.budgetHistory).toEqual({});
     });
 });
 
