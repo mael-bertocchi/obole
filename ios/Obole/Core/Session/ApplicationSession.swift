@@ -274,66 +274,41 @@ final class ApplicationSession {
 
     /**
      * @method performPush
-     * @description Stores the budget on top of the base's revision; a conflict turns into a reconcile
+     * @description Sends the device's edits, unless the budget still matches the base, in which case there is nothing
+     * to send
      */
     private func performPush() async {
-        guard let base else {
-            await performReconcile()
-            return
-        }
-
-        let document = store.document()
-
-        guard !DocumentMerge.sameContent(document, base.document) else {
+        if let base, DocumentMerge.sameContent(store.document(), base.document) {
             markSynced()
             return
         }
 
-        syncState = .syncing
-        do {
-            let stored = try await api.putState(document, revision: base.revision)
-            commit(document, revision: stored.revision)
-        } catch APIError.conflict {
-            await performReconcile()
-        } catch {
-            fail(error)
-        }
+        await performReconcile()
     }
 
     /**
      * @method performReconcile
-     * @description Pulls the server's budget, merges it with the device's against the base, applies the result and
-     * pushes it back when the server lacks anything, a few rounds at most
+     * @description Pulls the server's budget, merges it with the device's against the base, applies the result, then
+     * sends the server only the entries it lacks, one write each: no write can replace the whole budget, so what
+     * another device wrote to other entries in between is never touched
      */
     private func performReconcile() async {
         syncState = .syncing
         do {
-            for _ in 0..<Self.reconcileAttempts {
-                let remote = try await api.getState()
-                let merged = resolve(remote)
+            let remote = try await api.getState()
+            let merged = resolve(remote)
 
-                if !DocumentMerge.sameContent(merged, store.document()) {
-                    store.applyRemote(merged)
-                }
-
-                adopt(remote.document, revision: remote.revision)
-
-                let result = store.document()
-
-                if DocumentMerge.sameContent(result, remote.document) {
-                    markSynced()
-                    return
-                }
-
-                do {
-                    let stored = try await api.putState(result, revision: remote.revision)
-                    commit(result, revision: stored.revision)
-                    return
-                } catch APIError.conflict {
-                    continue
-                }
+            if !DocumentMerge.sameContent(merged, store.document()) {
+                store.applyRemote(merged)
             }
-            syncState = .error(APIError.conflict.localizedDescription)
+
+            let result = store.document()
+
+            for write in DocumentDiff.writes(from: remote.document, to: result) {
+                try await api.write(write)
+            }
+
+            commit(result, revision: remote.revision)
         } catch {
             fail(error)
         }
@@ -434,13 +409,6 @@ final class ApplicationSession {
      * @description The smallest rate difference worth rewriting an operation for
      */
     private static let rateEpsilon = 1e-9
-    /**
-     * @constant reconcileAttempts
-     * @description How many pull-merge-push rounds a reconcile tries before giving up on a server that keeps changing
-     * under it
-     */
-    private static let reconcileAttempts = 3
-
     /**
      * @constant serverURL
      * @description The server's address

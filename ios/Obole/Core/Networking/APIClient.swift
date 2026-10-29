@@ -11,7 +11,7 @@ struct IdentityTokens: Codable {
 
 /**
  * @class RemoteState
- * @description The budget document as the server stores it, with the revision a push has to name to replace it
+ * @description The budget document as the server stores it, with its revision: a counter every write moves on
  */
 struct RemoteState: Decodable {
     var document: BudgetDocument /*!< The budget */
@@ -38,32 +38,66 @@ struct RemoteState: Decodable {
 }
 
 /**
- * @class StatePush
- * @description A budget pushed to the server, naming the revision it was edited from
+ * @class OperationFields
+ * @description What an operation holds, as the server takes it on creation or change. A missing note or place is
+ * written as null rather than left out, since a change leaves out only what stays as it is
  */
-private struct StatePush: Encodable {
-    let document: BudgetDocument /*!< The budget */
-    let revision: Int /*!< The revision it was edited from */
+private struct OperationFields: Encodable {
+    let operation: Operation /*!< The operation */
+    let includesId: Bool /*!< Whether to send its id, which only a creation names */
 
     /**
      * @type CodingKeys
-     * @description The key the revision sits under, next to the document's own
+     * @description The fields the server takes
      */
     private enum CodingKeys: String, CodingKey {
-        case revision /*!< The revision */
+        case id /*!< Its identifier */
+        case date /*!< When it happened */
+        case name /*!< Its name */
+        case description /*!< Its note */
+        case categoryId /*!< Its category */
+        case location /*!< Its place */
+        case amount /*!< Its amount */
+        case currencyCode /*!< Its currency */
+        case rateToEuro /*!< Its rate to the euro */
+        case isOnline /*!< Whether it was paid online */
+        case isRecurring /*!< Whether it repeats */
     }
 
     /**
      * @method encode
-     * @description Writes the document and its revision into the same object
+     * @description Writes the fields, nulls included
      *
      * @param encoder The encoder
      */
     func encode(to encoder: Encoder) throws {
-        try document.encode(to: encoder)
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(revision, forKey: .revision)
+        if includesId {
+            try container.encode(operation.id, forKey: .id)
+        }
+        try container.encode(operation.date, forKey: .date)
+        try container.encode(operation.name, forKey: .name)
+        try container.encode(operation.description, forKey: .description)
+        try container.encode(operation.categoryId, forKey: .categoryId)
+        try container.encode(operation.location, forKey: .location)
+        try container.encode(operation.amount, forKey: .amount)
+        try container.encode(operation.currencyCode, forKey: .currencyCode)
+        try container.encode(operation.rateToEuro, forKey: .rateToEuro)
+        try container.encode(operation.isOnline, forKey: .isOnline)
+        try container.encode(operation.isRecurring, forKey: .isRecurring)
     }
+}
+
+/**
+ * @class CategoryFields
+ * @description What a category holds, with its place in the list, as the server stores it
+ */
+private struct CategoryFields: Encodable {
+    let name: String /*!< Its name */
+    let symbol: String /*!< Its symbol */
+    let colorHex: UInt32 /*!< Its colour */
+    let monthlyLimit: Double /*!< Its monthly limit */
+    let position: Int /*!< Its place in the list */
 }
 
 /**
@@ -75,7 +109,8 @@ enum APIError: Error, LocalizedError {
     case unauthorized /*!< The session expired and couldn't be renewed */
     case connectionRefused /*!< The portal's one-time code was refused */
     case throttled /*!< Too many requests */
-    case conflict /*!< The budget changed on the server since it was read */
+    case conflict /*!< The server already holds what the request creates */
+    case notFound /*!< The server doesn't know the entry the request names */
     case server(status: Int, message: String) /*!< The server refused the request, with its status and message */
     case transport(Error) /*!< The server couldn't be reached */
     case decoding(Error) /*!< The server answered something unexpected */
@@ -92,6 +127,7 @@ enum APIError: Error, LocalizedError {
         case .connectionRefused: return String(appLocalized: "The sign-in didn't go through. Try again.")
         case .throttled: return String(appLocalized: "Too many attempts. Try again in a moment.")
         case .conflict: return String(appLocalized: "The budget changed on the server.")
+        case .notFound: return String(appLocalized: "The server refused the request.")
         case .server(let status, _) where status >= 500: return String(appLocalized: "The server is unavailable right now.")
         case .server: return String(appLocalized: "The server refused the request.")
         case .transport: return String(appLocalized: "Can't reach the server.")
@@ -234,17 +270,80 @@ final class APIClient {
     }
 
     /**
-     * @method putState
-     * @description Stores the document, provided the server still holds `revision`. Throws `APIError.conflict` when
-     * someone else wrote since, leaving the server untouched
+     * @method write
+     * @description Sends one write. Every write can be sent again safely: a creation the server already holds (an
+     * earlier send whose answer was lost) becomes a change, a change to an operation in the trash restores it first,
+     * so an edit always beats a deletion as in the merge, and deleting what is already gone is a success
      *
-     * @param document The budget
-     * @param revision The revision it was edited from
-     * @returns The budget as stored
+     * @param write The write
      */
-    @discardableResult
-    func putState(_ document: BudgetDocument, revision: Int) async throws -> RemoteState {
-        try await send("/v1/budget/state", method: "PUT", body: StatePush(document: document, revision: revision))
+    func write(_ write: BudgetWrite) async throws {
+        switch write {
+        case .createOperation(let operation):
+            do {
+                try await sendDiscarding("/v1/budget/operations", method: "POST", body: OperationFields(operation: operation, includesId: true))
+            } catch APIError.conflict {
+                try await self.write(.updateOperation(operation))
+            }
+        case .updateOperation(let operation):
+            do {
+                try await updateOperation(operation)
+            } catch APIError.notFound {
+                try await sendDiscarding(entryPath("operations", operation.id, "restore"), method: "POST")
+                try await updateOperation(operation)
+            }
+        case .deleteOperation(let id):
+            try await ignoringNotFound { try await sendDiscarding(entryPath("operations", id), method: "DELETE") }
+        case .storeCategory(let category, let position):
+            let fields = CategoryFields(name: category.name, symbol: category.symbol, colorHex: category.colorHex, monthlyLimit: category.monthlyLimit, position: position)
+            try await sendDiscarding(entryPath("categories", category.id), method: "PUT", body: fields)
+        case .deleteCategory(let id):
+            try await ignoringNotFound { try await sendDiscarding(entryPath("categories", id), method: "DELETE") }
+        case .storeSettings(let settings):
+            try await sendDiscarding("/v1/budget/settings", method: "PUT", body: settings)
+        case .storeMonth(let month, let budget):
+            try await sendDiscarding(entryPath("history", month), method: "PUT", body: budget)
+        case .deleteMonth(let month):
+            try await ignoringNotFound { try await sendDiscarding(entryPath("history", month), method: "DELETE") }
+        }
+    }
+
+    /**
+     * @method updateOperation
+     * @description Changes an operation. Throws `APIError.notFound` when it is unknown or in the trash
+     *
+     * @param operation The operation, as it should now be
+     */
+    private func updateOperation(_ operation: Operation) async throws {
+        try await sendDiscarding(entryPath("operations", operation.id), method: "PATCH", body: OperationFields(operation: operation, includesId: false))
+    }
+
+    /**
+     * @method ignoringNotFound
+     * @description Runs a deletion, counting an entry already gone as deleted
+     *
+     * @param work The deletion
+     */
+    private func ignoringNotFound(_ work: () async throws -> Void) async throws {
+        do {
+            try await work()
+        } catch APIError.notFound {
+            return
+        }
+    }
+
+    /**
+     * @method entryPath
+     * @description The path of one budget entry. Ids are UUIDs or plain names, which the URL takes as they are
+     *
+     * @param collection The kind of entry
+     * @param id Its id
+     * @param action A sub-route, if any
+     * @returns Its path
+     */
+    private func entryPath(_ collection: String, _ id: String, _ action: String? = nil) -> String {
+        let path = "/v1/budget/\(collection)/\(id)"
+        return action.map { "\(path)/\($0)" } ?? path
     }
 
     /**
@@ -278,8 +377,26 @@ final class APIClient {
     }
 
     /**
+     * @method sendDiscarding
+     * @description Sends a request whose answer doesn't matter, such as a write answered with no content, renewing the
+     * tokens once and replaying it when the access token lapsed
+     *
+     * @param path The path, from `/v1`
+     * @param method The HTTP method
+     * @param body The body, if any
+     */
+    private func sendDiscarding(_ path: String, method: String, body: Encodable? = nil) async throws {
+        do {
+            _ = try await exchange(path, method: method, body: body, authorized: true)
+        } catch APIError.unauthorized {
+            try await refreshTokens()
+            _ = try await exchange(path, method: method, body: body, authorized: true)
+        }
+    }
+
+    /**
      * @method perform
-     * @description Sends one request and reads its answer, turning each refusal into its `APIError`
+     * @description Sends one request and reads its answer
      *
      * @param path The path, from `/v1`
      * @param method The HTTP method
@@ -293,6 +410,31 @@ final class APIClient {
         body: Encodable?,
         authorized: Bool
     ) async throws -> Response {
+        let data = try await exchange(path, method: method, body: body, authorized: authorized)
+
+        do {
+            return try JSONCoding.decoder.decode(Envelope<Response>.self, from: data).data
+        } catch {
+            throw APIError.decoding(error)
+        }
+    }
+
+    /**
+     * @method exchange
+     * @description Sends one request and returns the raw answer, turning each refusal into its `APIError`
+     *
+     * @param path The path, from `/v1`
+     * @param method The HTTP method
+     * @param body The body, if any
+     * @param authorized Whether to send the access token
+     * @returns The answer's body
+     */
+    private func exchange(
+        _ path: String,
+        method: String,
+        body: Encodable?,
+        authorized: Bool
+    ) async throws -> Data {
         guard let baseURL else {
             throw APIError.notConfigured
         }
@@ -330,6 +472,10 @@ final class APIClient {
             throw APIError.conflict
         }
 
+        if http.statusCode == 404 {
+            throw APIError.notFound
+        }
+
         if http.statusCode == 429 {
             throw APIError.throttled
         }
@@ -339,11 +485,7 @@ final class APIClient {
             throw APIError.server(status: http.statusCode, message: message)
         }
 
-        do {
-            return try JSONCoding.decoder.decode(Envelope<Response>.self, from: data).data
-        } catch {
-            throw APIError.decoding(error)
-        }
+        return data
     }
 
     /**

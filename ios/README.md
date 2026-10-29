@@ -50,8 +50,9 @@ State lives in `@Observable` objects injected through the environment: `LocalSto
 
 The local JSON store is the working copy; the server holds the durable one, and the app is not its only writer: the web interface writes to it too. The app keeps the last document both sides agreed on, and its revision, as a *base* (`sync-base.json`).
 
-- Every mutation debounces a full-document `PUT /v1/budget/state` naming the base's revision. If someone else wrote since, the server answers `409` and the push turns into a reconcile.
-- On launch, on sign-in and each time the app becomes active, it **reconciles**: it pulls the server's document, merges it with the local one against the base (`DocumentMerge`), applies the result and pushes it back if the server lacks anything. Each side's edits are kept; only when both changed the same entry does the device win, and an edit always beats a deletion.
+- Every mutation debounces a sync; when the local document still matches the base, there is nothing to send.
+- A sync, and the **reconcile** run on launch, on sign-in and each time the app becomes active, pulls the server's document, merges it with the local one against the base (`DocumentMerge`), applies the result, then sends the server only the entries it lacks (`DocumentDiff`), one write each: an operation created, changed or moved to the trash, a category, the monthly budget, a frozen month. No write can replace the whole budget. Each side's edits are kept; only when both changed the same entry does the device win, and an edit always beats a deletion: an operation edited here but deleted elsewhere is restored from the server's trash.
+- Every write can be sent again safely, so a sync cut off halfway simply picks up where it stopped.
 - Without a base (a first sign-in, or a server that was reset), the server wins, unless it is empty, in which case the device's budget seeds it.
 
 A failed push flips the Settings badge to **Offline**, and the next reconcile catches up. Access tokens refresh automatically on a `401`; when the refresh token is gone, the app returns to the sign-in screen.

@@ -58,7 +58,7 @@ enum DocumentMerge {
      * @param rhs The other
      * @returns Whether they match
      */
-    private static func sameOperation(_ lhs: Operation, _ rhs: Operation) -> Bool {
+    static func sameOperation(_ lhs: Operation, _ rhs: Operation) -> Bool {
         comparable(lhs) == comparable(rhs)
     }
 
