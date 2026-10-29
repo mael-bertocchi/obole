@@ -564,16 +564,6 @@
         }
       }
     },
-    "Gemini refused the key: check ASSISTANT_GEMINI_KEY on the server." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gemini a refusé la clé : vérifiez ASSISTANT_GEMINI_KEY sur le serveur."
-          }
-        }
-      }
-    },
     "General" : {
       "localizations" : {
         "fr" : {
@@ -1264,12 +1254,22 @@
         }
       }
     },
-    "The assistant isn't set up: add ASSISTANT_GEMINI_KEY to the server's environment." : {
+    "The assistant isn't available: Gemini rejected the server's API key." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’assistant n’est pas configuré : ajoutez ASSISTANT_GEMINI_KEY à l’environnement du serveur."
+            "value" : "L’assistant est indisponible : Gemini a refusé la clé d’API du serveur."
+          }
+        }
+      }
+    },
+    "The assistant isn't available: no Gemini API key is set on the server." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’assistant est indisponible : aucune clé d’API Gemini n’est configurée sur le serveur."
           }
         }
       }
