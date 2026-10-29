@@ -38,6 +38,36 @@ struct RemoteState: Decodable {
 }
 
 /**
+ * @class TrashedOperation
+ * @description An operation in the trash, with when it was deleted
+ */
+struct TrashedOperation: Decodable, Identifiable {
+    let operation: Operation /*!< The operation */
+    let deletedAt: Date /*!< When it was deleted */
+
+    var id: String { operation.id } /*!< Its identifier, the operation's */
+
+    /**
+     * @type CodingKeys
+     * @description The key the deletion date sits under, next to the operation's own
+     */
+    private enum CodingKeys: String, CodingKey {
+        case deletedAt /*!< When it was deleted */
+    }
+
+    /**
+     * @constructor init
+     * @description Reads the operation and its deletion date from the same object
+     *
+     * @param decoder The decoder
+     */
+    init(from decoder: Decoder) throws {
+        operation = try Operation(from: decoder)
+        deletedAt = try decoder.container(keyedBy: CodingKeys.self).decode(Date.self, forKey: .deletedAt)
+    }
+}
+
+/**
  * @class OperationFields
  * @description What an operation holds, as the server takes it on creation or change. A missing note or place is
  * written as null rather than left out, since a change leaves out only what stays as it is
@@ -267,6 +297,26 @@ final class APIClient {
      */
     func getState() async throws -> RemoteState {
         try await send("/v1/budget/state", method: "GET")
+    }
+
+    /**
+     * @method getTrash
+     * @description Reads the operations in the trash, the latest deleted first
+     *
+     * @returns The operations, with when each was deleted
+     */
+    func getTrash() async throws -> [TrashedOperation] {
+        try await send("/v1/budget/operations/trash", method: "GET")
+    }
+
+    /**
+     * @method restoreOperation
+     * @description Takes an operation out of the trash, back into the budget
+     *
+     * @param id Its id
+     */
+    func restoreOperation(id: String) async throws {
+        try await sendDiscarding(entryPath("operations", id, "restore"), method: "POST")
     }
 
     /**

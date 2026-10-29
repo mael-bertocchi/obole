@@ -344,6 +344,26 @@
         }
       }
     },
+    "Deleted operations stay here, out of the budget, until you restore them." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les opérations supprimées restent ici, hors du budget, jusqu’à ce que vous les restauriez."
+          }
+        }
+      }
+    },
+    "Deleted: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimée : %@"
+          }
+        }
+      }
+    },
     "Description" : {
       "localizations" : {
         "fr" : {
@@ -470,6 +490,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Retour haptique"
+          }
+        }
+      }
+    },
+    "Restore" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer"
           }
         }
       }
@@ -1064,6 +1094,26 @@
         }
       }
     },
+    "The trash couldn't be loaded." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La corbeille n’a pas pu être chargée."
+          }
+        }
+      }
+    },
+    "The trash is empty." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La corbeille est vide."
+          }
+        }
+      }
+    },
     "To" : {
       "localizations" : {
         "fr" : {
@@ -1124,6 +1174,16 @@
         }
       }
     },
+    "Trash" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corbeille"
+          }
+        }
+      }
+    },
     "Uncategorized" : {
       "localizations" : {
         "fr" : {
@@ -1180,6 +1240,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hier, %@"
+          }
+        }
+      }
+    },
+    "Your limits go back to their defaults too. The operations go to the trash, where you can restore them." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos plafonds reviennent aussi à leurs valeurs par défaut. Les opérations vont dans la corbeille, d’où vous pourrez les restaurer."
           }
         }
       }

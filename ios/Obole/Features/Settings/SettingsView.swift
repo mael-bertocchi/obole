@@ -13,6 +13,7 @@ struct SettingsView: View {
 
     @State private var showLimits = false /*!< Whether the limits sheet is open */
     @State private var showCurrencyPicker = false /*!< Whether the currency picker is open */
+    @State private var showTrash = false /*!< Whether the trash is open */
     @State private var showResetConfirmation = false /*!< Whether the reset is being confirmed */
     @State private var showSignOutConfirmation = false /*!< Whether signing out is being confirmed */
 
@@ -150,6 +151,10 @@ struct SettingsView: View {
                     RowDivider()
                     infoRow(symbol: "square.grid.2x2", title: String(appLocalized: "Categories"), value: "\(store.categories.count)")
                     RowDivider()
+                    valueRow(symbol: "arrow.uturn.backward", color: Theme.accent, title: String(appLocalized: "Trash"), value: "") {
+                        showTrash = true
+                    }
+                    RowDivider()
                     Button {
                         showResetConfirmation = true
                     } label: {
@@ -182,6 +187,9 @@ struct SettingsView: View {
         .sheet(isPresented: $showLimits) {
             CategoryLimitsSheet()
         }
+        .sheet(isPresented: $showTrash) {
+            TrashSheet()
+        }
         .sheet(isPresented: $showCurrencyPicker) {
             CurrencyPickerSheet(selection: $preferences.lastUsedCurrencyCode)
                 .presentationDetents([.medium, .large])
@@ -192,6 +200,8 @@ struct SettingsView: View {
                 preferences.success()
             }
             Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your limits go back to their defaults too. The operations go to the trash, where you can restore them.")
         }
         .confirmationDialog("Sign out of this device?", isPresented: $showSignOutConfirmation, titleVisibility: .visible) {
             Button("Sign out", role: .destructive) {

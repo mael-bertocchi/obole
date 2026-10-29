@@ -127,6 +127,27 @@ final class ApplicationSession {
     }
 
     /**
+     * @method trash
+     * @description Reads the operations in the trash
+     *
+     * @returns The operations, the latest deleted first
+     */
+    func trash() async throws -> [TrashedOperation] {
+        try await api.getTrash()
+    }
+
+    /**
+     * @method restore
+     * @description Takes an operation out of the trash, then reconciles so it shows in the budget again
+     *
+     * @param id Its id
+     */
+    func restore(id: String) async throws {
+        try await api.restoreOperation(id: id)
+        await reconcile()
+    }
+
+    /**
      * @method applicationBecameActive
      * @description Catches up with the server whenever the app comes back to the foreground
      */
