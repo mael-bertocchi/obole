@@ -404,6 +404,18 @@ function AssistantShellComponent(): JSX.Element {
     };
 
     /**
+     * @function retryUnanswered
+     * @description Asks again the owner's last message, which went unanswered
+     */
+    const retryUnanswered = (): void => {
+        if (isThinking || !availability.isAvailable || messages.at(-1)?.role !== 'user') {
+            return;
+        }
+
+        void ask(messages);
+    };
+
+    /**
      * @function submit
      * @description Sends the message when the form is submitted
      */
@@ -449,7 +461,14 @@ function AssistantShellComponent(): JSX.Element {
                             {t('assistant.thinking')}
                         </div>
                     )}
-                    {availability.isAvailable && error !== null && <p className='rounded-2xl bg-fill px-4 py-3 text-[14px] text-warning-text'>{error}</p>}
+                    {availability.isAvailable && error !== null && (
+                        <div className='flex items-center gap-3 rounded-2xl bg-fill px-4 py-3'>
+                            <p className='flex-1 text-[14px] text-warning-text'>{error}</p>
+                            <button type='button' aria-label={t('assistant.retry')} title={t('assistant.retry')} disabled={!canRetry} onClick={retryUnanswered} className={MESSAGE_ACTION_CLASS}>
+                                <RotateCcw size={15} />
+                            </button>
+                        </div>
+                    )}
                     {availability.reason !== null && <p className='rounded-2xl bg-fill px-4 py-3 text-[14px] text-warning-text'>{t(availability.reason)}</p>}
                     <div ref={end} className='scroll-mb-40' />
                 </div>
