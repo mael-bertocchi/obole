@@ -79,6 +79,27 @@ export type GeminiPart = z.infer<typeof GeminiPartSchema>;
 export type GeminiContent = z.infer<typeof GeminiContentSchema>;
 
 /**
+ * @function failureOf
+ * @description Why a request to Gemini never got an answer, in words: the error's name and message, then its cause's,
+ * where Node keeps the network's own reason (a timeout, a refused connection, an unknown host).
+ *
+ * @param {unknown} error What `fetch` threw.
+ *
+ * @returns {string} Why.
+ */
+export function failureOf(error: unknown): string {
+    if (!(error instanceof Error)) {
+        return String(error);
+    }
+
+    const cause: unknown = error.cause;
+    const code = typeof cause === 'object' && cause !== null && 'code' in cause && typeof cause.code === 'string' ? ` [${cause.code}]` : '';
+    const reason = cause instanceof Error ? ` (${cause.message}${code})` : code;
+
+    return `${error.name}: ${error.message}${reason}`;
+}
+
+/**
  * @function generate
  * @description Asks Gemini for its next turn. Nothing is kept on Gemini's side between turns: the whole conversation is
  * sent every time.
@@ -110,7 +131,7 @@ export async function generate(variables: Variables, logger: FastifyBaseLogger, 
             signal: AbortSignal.timeout(GEMINI_TIMEOUT)
         });
     } catch (error: unknown) {
-        logger.error({ error }, 'Gemini unreachable');
+        logger.error({ url: variables.ASSISTANT_GEMINI_URL, failure: failureOf(error) }, 'Gemini unreachable');
 
         throw new RequestError(StatusCodes.SERVICE_UNAVAILABLE, 'The assistant is unavailable', { reason: ASSISTANT_UNREACHABLE });
     }

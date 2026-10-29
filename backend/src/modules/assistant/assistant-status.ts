@@ -1,5 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { StatusCodes } from 'http-status-codes';
+import { failureOf } from 'src/modules/assistant/assistant-gemini';
 import type { AssistantAvailability } from 'src/modules/assistant/assistant-models';
 import { ASSISTANT_NOT_CONFIGURED, ASSISTANT_REFUSED, ASSISTANT_UNKNOWN_MODEL, ASSISTANT_UNREACHABLE } from 'src/modules/assistant/assistant-models';
 import type { Variables } from 'src/plugins/environment';
@@ -171,7 +172,9 @@ export class AssistantStatus {
 
         try {
             response = await fetch(`${this.variables.ASSISTANT_GEMINI_URL}/models/${this.variables.ASSISTANT_GEMINI_MODEL}`, { headers: { 'x-goog-api-key': this.variables.ASSISTANT_GEMINI_KEY }, signal: AbortSignal.timeout(PROBE_TIMEOUT) });
-        } catch {
+        } catch (error: unknown) {
+            this.logger.error({ url: this.variables.ASSISTANT_GEMINI_URL, failure: failureOf(error) }, 'Gemini unreachable');
+
             return unavailable(ASSISTANT_UNREACHABLE);
         }
 
