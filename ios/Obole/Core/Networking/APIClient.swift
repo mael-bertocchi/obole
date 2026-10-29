@@ -196,6 +196,7 @@ enum APIError: UserFacingError {
         case .server(let status, _) where status >= 500: return String(appLocalized: "The server is unavailable right now.")
         case .server: return String(appLocalized: "The server refused the request.")
         case .explained(_, let reason) where Self.assistantMessage(reason: reason) != nil: return Self.assistantMessage(reason: reason)
+        case .explained(_, let reason) where reason == "assistant-timeout": return String(appLocalized: "The assistant took too long to answer. Try again.")
         case .explained(let status, _) where status >= 500: return String(appLocalized: "The server is unavailable right now.")
         case .explained: return String(appLocalized: "The server refused the request.")
         case .transport: return String(appLocalized: "Can't reach the server.")
@@ -242,6 +243,7 @@ final class APIClient {
     private(set) var baseURL: URL? /*!< The server's address */
     private let tokens: TokenStore /*!< The session's tokens */
     private let session: URLSession /*!< The URL session the requests go through */
+    private let slowSession: URLSession /*!< The URL session of the requests the server takes long to answer, such as the assistant's */
     private var refreshTask: Task<Void, Error>? /*!< The renewal under way, shared by the requests that need it */
 
     /**
@@ -258,6 +260,10 @@ final class APIClient {
         configuration.timeoutIntervalForRequest = 20
         configuration.waitsForConnectivity = false
         self.session = URLSession(configuration: configuration)
+        let slowConfiguration = URLSessionConfiguration.default
+        slowConfiguration.timeoutIntervalForRequest = Self.slowTimeout
+        slowConfiguration.waitsForConnectivity = false
+        self.slowSession = URLSession(configuration: slowConfiguration)
     }
 
     /**
@@ -392,7 +398,7 @@ final class APIClient {
      * @returns The assistant's answer and the changes it suggests
      */
     func converse(_ conversation: AssistantConversation) async throws -> AssistantReply {
-        try await send("/v1/assistant/messages", method: "POST", body: conversation)
+        try await send("/v1/assistant/messages", method: "POST", body: conversation, isSlow: true)
     }
 
     /**
@@ -509,19 +515,21 @@ final class APIClient {
      * @param method The HTTP method
      * @param body The body, if any
      * @param authorized Whether to send the access token
+     * @param isSlow Whether the server takes long to answer it
      * @returns The answer's data
      */
     private func send<Response: Decodable>(
         _ path: String,
         method: String,
         body: Encodable? = nil,
-        authorized: Bool = true
+        authorized: Bool = true,
+        isSlow: Bool = false
     ) async throws -> Response {
         do {
-            return try await perform(path, method: method, body: body, authorized: authorized)
+            return try await perform(path, method: method, body: body, authorized: authorized, isSlow: isSlow)
         } catch APIError.unauthorized where authorized {
             try await refreshTokens()
-            return try await perform(path, method: method, body: body, authorized: true)
+            return try await perform(path, method: method, body: body, authorized: true, isSlow: isSlow)
         }
     }
 
@@ -551,15 +559,17 @@ final class APIClient {
      * @param method The HTTP method
      * @param body The body, if any
      * @param authorized Whether to send the access token
+     * @param isSlow Whether the server takes long to answer it
      * @returns The answer's data
      */
     private func perform<Response: Decodable>(
         _ path: String,
         method: String,
         body: Encodable?,
-        authorized: Bool
+        authorized: Bool,
+        isSlow: Bool = false
     ) async throws -> Response {
-        let data = try await exchange(path, method: method, body: body, authorized: authorized)
+        let data = try await exchange(path, method: method, body: body, authorized: authorized, isSlow: isSlow)
 
         do {
             return try JSONCoding.decoder.decode(Envelope<Response>.self, from: data).data
@@ -576,13 +586,15 @@ final class APIClient {
      * @param method The HTTP method
      * @param body The body, if any
      * @param authorized Whether to send the access token
+     * @param isSlow Whether the server takes long to answer it
      * @returns The answer's body
      */
     private func exchange(
         _ path: String,
         method: String,
         body: Encodable?,
-        authorized: Bool
+        authorized: Bool,
+        isSlow: Bool = false
     ) async throws -> Data {
         guard let baseURL else {
             throw APIError.notConfigured
@@ -604,7 +616,7 @@ final class APIClient {
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await session.data(for: request)
+            (data, response) = try await (isSlow ? slowSession : session).data(for: request)
         } catch {
             throw APIError.transport(error)
         }
@@ -639,6 +651,13 @@ final class APIClient {
 
         return data
     }
+
+    /**
+     * @constant slowTimeout
+     * @description How long to wait on a request the server takes long to answer: the assistant may think and read
+     * through several tools before it answers
+     */
+    private static let slowTimeout: TimeInterval = 120
 
     /**
      * @method refreshTokens

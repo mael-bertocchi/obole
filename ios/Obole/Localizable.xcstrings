@@ -1304,6 +1304,16 @@
         }
       }
     },
+    "The assistant took too long to answer. Try again." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’assistant a mis trop de temps à répondre. Réessayez."
+          }
+        }
+      }
+    },
     "The budget changed on the server." : {
       "localizations" : {
         "fr" : {
