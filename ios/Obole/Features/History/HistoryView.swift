@@ -42,6 +42,19 @@ struct DayRange: Hashable {
     }
 
     /**
+     * @constructor init
+     * @description Every day of a month
+     *
+     * @param month Any date in the month
+     */
+    init(month: Date) {
+        let start = BudgetMath.monthStart(month)
+        let next = BudgetMath.shiftMonth(start, by: 1)
+        let end = BudgetMath.calendar.date(byAdding: .day, value: -1, to: next) ?? start
+        self.init(start, end)
+    }
+
+    /**
      * @method isSingleDay
      * @description Whether it spans a single day
      */
@@ -69,6 +82,7 @@ struct DayRange: Hashable {
  */
 struct HistoryView: View {
     @Binding var filter: HistoryFilter /*!< The category filter, which the Budget tab can set */
+    @Binding var dateRange: DayRange? /*!< The days shown, every date when nil, which the Budget tab can set */
     var onSelect: (Operation) -> Void = { _ in } /*!< Opens an operation */
     var onNewOperation: () -> Void = {} /*!< Opens the operation sheet on a new operation */
 
@@ -76,7 +90,6 @@ struct HistoryView: View {
     @Environment(Preferences.self) private var preferences /*!< The device's settings, for the haptics */
 
     @State private var query = "" /*!< The search typed */
-    @State private var dateRange: DayRange? /*!< The days shown, every date when nil */
     @State private var showDateSheet = false /*!< Whether the date filter sheet is open */
 
     /**

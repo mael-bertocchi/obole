@@ -6,7 +6,7 @@ import SwiftUI
  * category against its limit, month by month
  */
 struct BudgetView: View {
-    var onOpenCategory: (Category) -> Void = { _ in } /*!< Opens a category's operations in History */
+    var onOpenCategory: (Category, Date) -> Void = { _, _ in } /*!< Opens a category's operations of a month in History */
     var onNewOperation: () -> Void = {} /*!< Opens the operation sheet on a new operation */
 
     @Environment(LocalStore.self) private var store /*!< The budget */
@@ -198,7 +198,7 @@ struct BudgetView: View {
                 ForEach(spends) { spend in
                     Button {
                         preferences.tap()
-                        onOpenCategory(spend.category)
+                        onOpenCategory(spend.category, month)
                     } label: {
                         CategoryProgressRow(spend: spend)
                     }

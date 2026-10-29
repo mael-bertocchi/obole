@@ -73,6 +73,7 @@ struct MainShell: View {
     @State private var selection: AppTab = .budget /*!< The tab shown */
     @State private var editorRoute: OperationEditorRoute? /*!< What the operation sheet is open on, none while closed */
     @State private var historyFilter: HistoryFilter = .all /*!< The History filter, which the Budget tab sets when a category is opened */
+    @State private var historyDateRange: DayRange? /*!< The History date filter, which the Budget tab sets to the month a category is opened from */
     @State private var timeZone = TimeZone.current.identifier /*!< The time zone the dates are read in */
 
     /**
@@ -91,6 +92,7 @@ struct MainShell: View {
             Tab("History", systemImage: "clock.arrow.circlepath", value: AppTab.history) {
                 HistoryView(
                     filter: $historyFilter,
+                    dateRange: $historyDateRange,
                     onSelect: { editorRoute = .edit($0.id) },
                     onNewOperation: { editorRoute = .new }
                 )
@@ -144,12 +146,15 @@ struct MainShell: View {
 
     /**
      * @method openCategoryInHistory
-     * @description Shows a category's operations in History
+     * @description Shows a category's operations of a month in History, so a category opened from a past month lists
+     * that month's operations
      *
      * @param category The category
+     * @param month The month it was opened from
      */
-    private func openCategoryInHistory(_ category: Category) {
+    private func openCategoryInHistory(_ category: Category, month: Date) {
         historyFilter = .category(category.id)
+        historyDateRange = DayRange(month: month)
         withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
             selection = .history
         }
