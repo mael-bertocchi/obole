@@ -36,6 +36,12 @@ export interface User {
 }
 ```
 
+### No other comments
+
+- Write no comment other than the documentation blocks `/** ... */`, the property comments `/*!< ... */`, and the copyright header.
+- Do not write `//` or `/* */` comments, inside or outside function bodies.
+- When code needs an explanation, put it in the `@description` of the documented function or constant, or move the code into a named and documented function or constant.
+
 ## Coding standards
 
 ### Types and nullability
@@ -69,6 +75,30 @@ if (x) {
 ### Functions
 
 - Always specify an explicit return type, such as `: void` or `: Promise<void>`.
+
+### Line breaks
+
+- Keep each expression and each list on one line, whatever its length: ternaries, boolean and arithmetic expressions, method chains, call arguments, parameters, type arguments and unions, and import and export lists.
+- Only the inside of an object literal, an array literal or a function body may span several lines, and a line may break only right after the `{` or `[` that opens one of them.
+- When a line would be hard to read, move its parts into named constants or functions instead of breaking it.
+
+```typescript
+// Bad
+const label: string = isActive
+    ? 'Active'
+    : 'Inactive';
+const total: number = items
+    .filter(isVisible)
+    .reduce(sum, 0);
+await client.send(
+    new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix })
+);
+
+// Good
+const label: string = isActive ? 'Active' : 'Inactive';
+const total: number = items.filter(isVisible).reduce(sum, 0);
+await client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix }));
+```
 
 ### HTML and JSX
 
