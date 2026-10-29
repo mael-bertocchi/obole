@@ -44,7 +44,7 @@ interface LauncherTileComponentProps {
 function LauncherTileComponent(props: LauncherTileComponentProps): JSX.Element {
     return (
         <Link to={props.to} onClick={props.onPick} aria-current={props.isCurrent ? 'page' : undefined} className='group flex flex-col items-center gap-2 rounded-2xl px-1 py-3 text-center outline-none transition hover:bg-fill-strong/60 focus-visible:ring-2 focus-visible:ring-accent/40'>
-            <span className='transition group-hover:scale-105 group-active:scale-95'>{props.icon}</span>
+            <span className='transition group-active:scale-95'>{props.icon}</span>
             <span className={`text-[13px] font-medium leading-tight ${props.isCurrent ? 'text-accent' : 'text-ink'}`}>{props.name}</span>
         </Link>
     );
