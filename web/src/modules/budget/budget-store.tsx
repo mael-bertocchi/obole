@@ -1,6 +1,9 @@
 import type { Maybe } from 'models';
 import { sealCompletedMonths } from 'modules/budget/budget-math';
 import type { BudgetDocument, BudgetServer, StoredState } from 'modules/budget/budget-models';
+import type { BudgetWrite } from 'modules/budget/budget-sync';
+import { diffDocuments, sendWrite } from 'modules/budget/budget-sync';
+import { t } from 'modules/language/language-service';
 import { RequestError } from 'utils/request';
 import { messageOf } from 'utils/tools';
 
@@ -58,14 +61,15 @@ function applyQuietly(document: BudgetDocument, changes: readonly Change[]): Bud
 
 /**
  * @class BudgetStore
- * @description The page's copy of the budget. Edits show at once and are sent in order behind the scenes, each write
- * naming the revision it was made from. When the app wrote in between, the server refuses it; the store reads the new
- * revision and applies the pending edits again on top, so neither side erases the other. While the page is in view it
+ * @description The page's copy of the budget. Edits show at once and are sent in order behind the scenes, entry by
+ * entry: the store applies them to the server's latest budget and sends only the operations, categories, settings and
+ * months that differ, so what the app wrote to other entries in between is never touched. While the page is in view it
  * also picks up what the app writes.
  */
 export class BudgetStore {
     private readonly api: BudgetServer; /*!< The server */
     private confirmed: Maybe<StoredState> = null; /*!< The server's latest known budget */
+    private stale = false; /*!< Whether a send failed partway, so the server's budget has to be read again before the next */
     private pending: Change[] = []; /*!< Edits not yet stored, oldest first */
     private sending: Maybe<Promise<void>> = null; /*!< The send in progress */
     private retry: Maybe<ReturnType<typeof setTimeout>> = null; /*!< The scheduled retry of a failed send */
@@ -159,6 +163,7 @@ export class BudgetStore {
      */
     reset(): void {
         this.confirmed = null;
+        this.stale = false;
         this.pending = [];
 
         if (this.retry !== null) {
@@ -194,7 +199,10 @@ export class BudgetStore {
 
         try {
             while (this.pending.length > 0) {
-                this.confirmed ??= await this.api.getState();
+                if (this.confirmed === null || this.stale) {
+                    this.confirmed = await this.api.getState();
+                    this.stale = false;
+                }
 
                 const batch = [...this.pending];
                 let next = sealCompletedMonths(withoutRevision(this.confirmed));
@@ -204,29 +212,51 @@ export class BudgetStore {
                         next = change(next);
                     } catch (error: unknown) {
                         this.pending = this.pending.filter((candidate) => candidate !== change);
-
-                        for (const listener of this.rejectionListeners) {
-                            listener(messageOf(error));
-                        }
+                        this.reject(messageOf(error));
                     }
                 }
 
-                try {
-                    this.confirmed = await this.api.putState(next, this.confirmed.revision);
-                    this.pending = this.pending.filter((change) => !batch.includes(change));
-                } catch (error: unknown) {
-                    if (!(error instanceof RequestError) || !error.isConflict) {
-                        throw error;
+                for (const write of diffDocuments(withoutRevision(this.confirmed), next)) {
+                    if (!await this.sendOrForget(write)) {
+                        this.reject(t('operation.deletedElsewhere'));
                     }
-
-                    this.confirmed = await this.api.getState();
                 }
+
+                this.pending = this.pending.filter((change) => !batch.includes(change));
+                this.confirmed = await this.api.getState();
             }
 
             this.publish('synced', null);
         } catch (error: unknown) {
             this.fail(error);
             this.retry = setTimeout(() => void this.send(), RETRY_AFTER);
+        }
+    }
+
+    /**
+     * @method sendOrForget
+     * @description Sends one write. When it fails partway through the edits, the server's budget is forgotten, so the
+     * next try reads it again and only sends what is still missing.
+     *
+     * @param {BudgetWrite} write The write.
+     * @returns {Promise<boolean>} Whether it landed.
+     */
+    private async sendOrForget(write: BudgetWrite): Promise<boolean> {
+        try {
+            return await sendWrite(this.api, write);
+        } catch (error: unknown) {
+            this.stale = true;
+            throw error;
+        }
+    }
+
+    /**
+     * @method reject
+     * @description Tells the listeners an edit had to be dropped.
+     */
+    private reject(message: string): void {
+        for (const listener of this.rejectionListeners) {
+            listener(message);
         }
     }
 

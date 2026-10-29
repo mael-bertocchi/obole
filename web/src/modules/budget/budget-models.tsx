@@ -57,7 +57,7 @@ export const BudgetDocumentSchema = z.object({
 
 /**
  * @constant StoredStateSchema
- * @description Zod schema for the document as the backend stores it, with the revision a write has to name.
+ * @description Zod schema for the document as the backend stores it, with its revision: a counter every write moves on.
  */
 export const StoredStateSchema = BudgetDocumentSchema.extend({
     revision: z.number().int()
@@ -115,7 +115,14 @@ export type RateSnapshot = z.infer<typeof RateSnapshotSchema>;
  */
 export interface BudgetServer {
     getState: () => Promise<StoredState>; /*!< Reads the whole budget and its revision */
-    putState: (document: BudgetDocument, revision: number) => Promise<StoredState>; /*!< Stores the whole budget on top of a revision */
+    createOperation: (operation: Operation) => Promise<void>; /*!< Logs an operation under its id */
+    updateOperation: (operation: Operation) => Promise<void>; /*!< Changes an operation */
+    deleteOperation: (id: string) => Promise<void>; /*!< Moves an operation to the trash */
+    storeCategory: (category: Category, position: number) => Promise<void>; /*!< Creates or replaces a category */
+    deleteCategory: (id: string) => Promise<void>; /*!< Removes a category */
+    storeSettings: (monthlyLimit: number) => Promise<void>; /*!< Stores the monthly budget */
+    storeMonth: (month: string, budget: MonthlyBudget) => Promise<void>; /*!< Freezes the budget of a finished month */
+    deleteMonth: (month: string) => Promise<void>; /*!< Forgets a frozen month */
     getRates: () => Promise<RateSnapshot>; /*!< Reads the latest reference rates */
     getRatesOn: (day: string) => Promise<RateSnapshot>; /*!< Reads one day's reference rates */
 }

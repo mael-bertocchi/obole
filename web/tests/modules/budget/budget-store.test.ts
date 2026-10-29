@@ -1,10 +1,11 @@
-import type { BudgetDocument, BudgetServer, StoredState } from 'modules/budget/budget-models';
+import type { BudgetDocument, BudgetServer, MonthlyBudget, Operation, StoredState } from 'modules/budget/budget-models';
 import { upsertOperation } from 'modules/budget/budget-operations';
 import { BudgetStore } from 'modules/budget/budget-store';
 import { RequestError } from 'utils/request';
 import type { Mock } from 'vitest';
 import { describe, expect, it, vi } from 'vitest';
 
+import { unusedServer } from '../../support/budget-server';
 import { document, NOW, operation } from '../../support/fixtures';
 
 /**
@@ -13,9 +14,9 @@ import { document, NOW, operation } from '../../support/fixtures';
  */
 interface FakeServerState {
     stored: StoredState; /*!< The budget it holds, and its revision */
-    rivals: ((current: BudgetDocument) => BudgetDocument)[]; /*!< Writes from another device, landing before the next push */
+    rivals: ((current: BudgetDocument) => BudgetDocument)[]; /*!< Writes from another device, landing before the next write */
     offline: boolean; /*!< Whether it can be reached */
-    puts: number; /*!< How many pushes it took */
+    writes: string[]; /*!< The writes it took, as `route id` */
 }
 
 /**
@@ -29,43 +30,51 @@ interface FakeServer {
 
 /**
  * @function server
- * @description A fake server holding one budget, which refuses a write made from an old revision, can be made to take
- * a rival write before the next one lands, or to be unreachable.
+ * @description A fake server holding one budget, written entry by entry, which can be made to take a rival write
+ * before the next one lands, or to be unreachable.
  */
 function server(initial: BudgetDocument): FakeServer {
-    const state: FakeServerState = { stored: { ...initial, revision: 1 }, rivals: [], offline: false, puts: 0 };
-    const api = {
-        getState: vi.fn(() => (state.offline ? Promise.reject(new RequestError(0, "Can't reach the server.")) : Promise.resolve(structuredClone(state.stored)))),
-        putState: vi.fn((next: BudgetDocument, revision: number) => {
-            if (state.offline) {
-                return Promise.reject(new RequestError(0, "Can't reach the server."));
-            }
-
-            const rival = state.rivals.shift();
-
-            if (rival !== undefined) {
-                state.stored = { ...rival(state.stored), revision: state.stored.revision + 1 };
-            }
-
-            if (revision !== state.stored.revision) {
-                return Promise.reject(new RequestError(409, 'The budget changed on the server since it was last read'));
-            }
-
-            state.puts += 1;
-            state.stored = { ...structuredClone(next), revision: revision + 1 };
-
-            return Promise.resolve(structuredClone(state.stored));
-        })
-    };
-
-    return {
-        state,
-        api: {
-            ...api,
-            getRates: vi.fn(() => Promise.reject(new Error('Not used'))),
-            getRatesOn: vi.fn(() => Promise.reject(new Error('Not used')))
+    const state: FakeServerState = { stored: { ...initial, revision: 1 }, rivals: [], offline: false, writes: [] };
+    const unreachable = (): Promise<never> => Promise.reject(new RequestError(0, "Can't reach the server."));
+    const write = (label: string, edit: (current: BudgetDocument) => BudgetDocument): Promise<void> => {
+        if (state.offline) {
+            return unreachable();
         }
+
+        const rival = state.rivals.shift();
+
+        if (rival !== undefined) {
+            state.stored = { ...rival(state.stored), revision: state.stored.revision + 1 };
+        }
+
+        state.writes.push(label);
+        state.stored = { ...edit(structuredClone(state.stored)), revision: state.stored.revision + 1 };
+
+        return Promise.resolve();
     };
+    const api: FakeServer['api'] = {
+        ...unusedServer(),
+        getState: vi.fn(() => (state.offline ? unreachable() : Promise.resolve(structuredClone(state.stored)))),
+        createOperation: vi.fn((created: Operation) => {
+            if (state.stored.operations.some((entry) => entry.id === created.id)) {
+                return Promise.reject(new RequestError(409, 'An operation with this id already exists'));
+            }
+
+            return write(`createOperation ${created.id}`, (current) => ({ ...current, operations: [...current.operations, created] }));
+        }),
+        updateOperation: vi.fn((changed: Operation) => {
+            if (!state.stored.operations.some((entry) => entry.id === changed.id)) {
+                return Promise.reject(new RequestError(404, 'Unknown operation'));
+            }
+
+            return write(`updateOperation ${changed.id}`, (current) => ({ ...current, operations: current.operations.map((entry) => (entry.id === changed.id ? changed : entry)) }));
+        }),
+        deleteOperation: vi.fn((id: string) => write(`deleteOperation ${id}`, (current) => ({ ...current, operations: current.operations.filter((entry) => entry.id !== id) }))),
+        storeSettings: vi.fn((monthlyLimit: number) => write('storeSettings', (current) => ({ ...current, budget: { monthlyLimit } }))),
+        storeMonth: vi.fn((month: string, budget: MonthlyBudget) => write(`storeMonth ${month}`, (current) => ({ ...current, budgetHistory: { ...current.budgetHistory, [month]: budget } })))
+    };
+
+    return { state, api };
 }
 
 /**
@@ -79,7 +88,7 @@ async function settle(): Promise<void> {
 }
 
 describe('BudgetStore', () => {
-    it('shows an edit at once and stores it on top of the revision it read', async () => {
+    it('shows an edit at once and sends only that entry', async () => {
         const { state, api } = server(document());
         const store = new BudgetStore(api);
 
@@ -88,11 +97,11 @@ describe('BudgetStore', () => {
 
         expect(store.getSnapshot().document?.operations).toHaveLength(1);
         await settle();
-        expect(state.stored.revision).toBe(2);
+        expect(state.writes).toEqual(['createOperation A']);
         expect(store.getSnapshot()).toMatchObject({ status: 'synced', hasPendingChanges: false });
     });
 
-    it('applies its edit again on top of what the app wrote in between, erasing nothing', async () => {
+    it('leaves alone what the app wrote in between, erasing nothing', async () => {
         const { state, api } = server(document());
         const store = new BudgetStore(api);
 
@@ -153,5 +162,35 @@ describe('BudgetStore', () => {
         await store.refresh();
 
         expect(store.getSnapshot().document?.budget.monthlyLimit).toBe(1234);
+    });
+
+    it('takes a creation the server already holds as a change, so a retried send never fails', async () => {
+        const { state, api } = server(document());
+        const store = new BudgetStore(api);
+
+        await store.refresh();
+        state.stored = { ...upsertOperation(state.stored, operation({ id: 'A', date: NOW, amount: 5 })), revision: 2 };
+        store.apply((current) => upsertOperation(current, operation({ id: 'A', date: NOW, amount: 12 })));
+        await settle();
+
+        expect(state.stored.operations).toEqual([expect.objectContaining({ id: 'A', amount: 12 })]);
+        expect(store.getSnapshot().status).toBe('synced');
+    });
+
+    it('drops a change to an operation deleted elsewhere in the meantime and says so', async () => {
+        const { state, api } = server(document([operation({ id: 'A', date: NOW })]));
+        const store = new BudgetStore(api);
+        const rejected = vi.fn();
+
+        store.onRejected(rejected);
+        await store.refresh();
+        state.stored = { ...state.stored, operations: [] };
+        vi.mocked(api.getState).mockResolvedValueOnce(structuredClone({ ...state.stored, operations: [operation({ id: 'A', date: NOW })] }));
+        store.apply((current) => upsertOperation(current, operation({ id: 'A', date: NOW, amount: 99 })));
+        await settle();
+
+        expect(rejected).toHaveBeenCalledWith('This operation was deleted on another device.');
+        expect(state.stored.operations).toEqual([]);
+        expect(store.getSnapshot()).toMatchObject({ status: 'synced', hasPendingChanges: false });
     });
 });

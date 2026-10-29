@@ -38,7 +38,7 @@ The only way in is the owner's passkey, bound to the portal's own host (see the 
 
 ## How the budget syncs
 
-The page is a second client of the backend, next to the app, and both write the same budget document. An edit shows at once and is sent in the background, naming the revision it was made from. If the app wrote in between, the backend refuses it; the page reads the new revision and applies the edit again on top, so neither side erases the other. While it is open, the page also picks up what the app writes: when it comes back into view, when the connection returns, and every minute.
+The page is a second client of the backend, next to the app, and both write the same budget. An edit shows at once and is sent in the background, entry by entry: the page applies it to the server's latest budget and sends only the operations, categories, settings and months that differ, so what the app wrote to other entries is never touched. A deleted operation goes to the server's trash. While it is open, the page also picks up what the app writes: when it comes back into view, when the connection returns, and every minute.
 
 ## Architecture
 

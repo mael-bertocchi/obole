@@ -3,13 +3,12 @@ import { ExchangeRates } from 'modules/budget/budget-rates';
 import { repriceRecent } from 'modules/budget/budget-reprice';
 import { describe, expect, it, vi } from 'vitest';
 
+import { unusedServer } from '../../support/budget-server';
 import { document, NOW, operation } from '../../support/fixtures';
 
 describe('repriceRecent', () => {
     const server: BudgetServer = {
-        getState: vi.fn(() => Promise.reject(new Error('Not used'))),
-        putState: vi.fn(() => Promise.reject(new Error('Not used'))),
-        getRates: vi.fn(() => Promise.reject(new Error('Not used'))),
+        ...unusedServer(),
         getRatesOn: vi.fn((day: string) => Promise.resolve({ quoteDate: day, fetchedAt: NOW, rates: { USD: 0.9 } }))
     };
     const rates = new ExchangeRates(server);
