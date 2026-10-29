@@ -3,18 +3,19 @@ import FrameComponent from 'components/frame/frame';
 import IconTileComponent from 'components/icon-tile/icon-tile';
 import ListGroupComponent from 'components/list-group/list-group';
 import ListRowComponent from 'components/list-row/list-row';
+import SheetComponent from 'components/sheet/sheet';
 import SpinnerComponent from 'components/spinner/spinner';
-import { KeyRound, Languages, LogOut, Plus, Trash2 } from 'lucide-react';
+import { KeyRound, Languages, LogOut, Pencil, Plus, Trash2 } from 'lucide-react';
 import type { Maybe } from 'models';
 import { useIdentityContext } from 'modules/identity/identity-hooks';
 import type { Passkey } from 'modules/identity/identity-models';
 import type { IdentityContextProps } from 'modules/identity/identity-models';
-import { createPasskey, forgetPasskey, PasskeyError, passkeyName } from 'modules/identity/identity-passkeys';
+import { authenticatorName, createPasskey, forgetPasskey, PasskeyError, passkeyName } from 'modules/identity/identity-passkeys';
 import identityService from 'modules/identity/identity-service';
 import { chooseLanguage, currentLanguage, isLanguageChoice, LANGUAGES, languageChoice, t } from 'modules/language/language-service';
 import { useToastContext } from 'modules/toast/toast-hooks';
 import type { ToastContextProps } from 'modules/toast/toast-models';
-import { useEffect, useState, type ChangeEvent, type JSX } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent, type JSX } from 'react';
 import { messageOf } from 'utils/tools';
 
 /**
@@ -28,6 +29,18 @@ const ACCENT = '#6E56CF';
  * @description The colour of the destructive setting tiles.
  */
 const NEGATIVE = '#FF3B30';
+
+/**
+ * @constant RENAME_FORM_ID
+ * @description The rename form's id, so the save button pinned under it can send it.
+ */
+const RENAME_FORM_ID = 'passkey-name-form';
+
+/**
+ * @constant NAME_LENGTH
+ * @description The longest name a passkey may be given, as the server allows.
+ */
+const NAME_LENGTH = 64;
 
 /**
  * @function day
@@ -44,13 +57,14 @@ function day(date: Date): string {
 interface PasskeyRowComponentProps {
     passkey: Passkey; /*!< The passkey */
     canRemove: boolean; /*!< Whether it may be removed, which the last one may not */
+    onRename: () => void; /*!< Called to rename it */
     onRemove: () => void; /*!< Called to remove it */
 }
 
 /**
  * @function PasskeyRowComponent
- * @description One passkey: where it lives, when it was created and last used, and a button to remove it unless it is
- * the last one.
+ * @description One passkey: its name, when it was created and last used, a button to rename it, and one to remove it
+ * unless it is the last one.
  *
  * @param {PasskeyRowComponentProps} props The properties of the component
  */
@@ -80,6 +94,9 @@ function PasskeyRowComponent(props: PasskeyRowComponentProps): JSX.Element {
 
     return (
         <ListRowComponent icon={<IconTileComponent icon={KeyRound} color={ACCENT} size={30} />} title={title}>
+            <button type='button' onClick={props.onRename} aria-label={t('account.renamePasskey', { name })} className='flex h-8 w-8 items-center justify-center rounded-full text-ink-tertiary transition hover:bg-fill hover:text-ink'>
+                <Pencil size={16} />
+            </button>
             {props.canRemove && (
                 <button type='button' onClick={props.onRemove} aria-label={t('account.removePasskey', { name })} className='flex h-8 w-8 items-center justify-center rounded-full text-ink-tertiary transition hover:bg-negative-soft hover:text-negative-text'>
                     <Trash2 size={17} />
@@ -90,8 +107,47 @@ function PasskeyRowComponent(props: PasskeyRowComponentProps): JSX.Element {
 }
 
 /**
+ * @interface PasskeyNameFormComponentProps
+ * @description Properties of the rename form
+ */
+interface PasskeyNameFormComponentProps {
+    passkey: Passkey; /*!< The passkey being renamed */
+    onSave: (name: Maybe<string>) => void; /*!< Called with its new name, or null to go back to its authenticator's */
+}
+
+/**
+ * @function PasskeyNameFormComponent
+ * @description The name to give a passkey, its authenticator's shown in its place while it is empty.
+ *
+ * @param {PasskeyNameFormComponentProps} props The properties of the component
+ */
+function PasskeyNameFormComponent(props: PasskeyNameFormComponentProps): JSX.Element {
+    const [name, setName] = useState(props.passkey.name ?? '');
+
+    /**
+     * @function submit
+     * @description Saves the name instead of sending the form, an empty one taking the name back
+     */
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+
+        const trimmed = name.trim();
+
+        props.onSave(trimmed === '' ? null : trimmed);
+    };
+
+    return (
+        <form id={RENAME_FORM_ID} onSubmit={submit}>
+            <label className='field-label' htmlFor='passkey-name'>{t('account.passkeyName')}</label>
+            <input id='passkey-name' className='field' value={name} maxLength={NAME_LENGTH} onChange={(event) => setName(event.target.value)} placeholder={authenticatorName(props.passkey)} autoComplete='off' autoFocus />
+            <p className='mt-2 text-[13px] text-ink-secondary'>{t('account.passkeyNameNote')}</p>
+        </form>
+    );
+}
+
+/**
  * @function AccountPage
- * @description The portal's account settings: the passkeys that open it (add one, remove one), the language every app
+ * @description The portal's account settings: the passkeys that open it (add one, rename one, remove one), the language every app
  * speaks, and signing out.
  */
 function AccountPage(): JSX.Element {
@@ -99,6 +155,7 @@ function AccountPage(): JSX.Element {
     const { showToast }: ToastContextProps = useToastContext();
     const [passkeys, setPasskeys] = useState<Maybe<Passkey[]>>(null);
     const [isAdding, setIsAdding] = useState(false);
+    const [renaming, setRenaming] = useState<Maybe<Passkey>>(null);
     const [removing, setRemoving] = useState<Maybe<Passkey>>(null);
     const [isConfirmingSignOut, setIsConfirmingSignOut] = useState(false);
     const [language, setLanguage] = useState(languageChoice);
@@ -120,15 +177,17 @@ function AccountPage(): JSX.Element {
 
     /**
      * @function add
-     * @description Creates another passkey and stores it.
+     * @description Creates another passkey, stores it, and offers to name it.
      */
     const add = async (): Promise<void> => {
         setIsAdding(true);
 
         try {
-            await identityService.addPasskey(await createPasskey(await identityService.getPasskeyOptions()));
+            const added = await identityService.addPasskey(await createPasskey(await identityService.getPasskeyOptions()));
+
             showToast(t('account.passkeyAdded'));
             setRevision((current) => current + 1);
+            setRenaming(added);
         } catch (failure: unknown) {
             if (!(failure instanceof PasskeyError && failure.isCancelled)) {
                 showToast(messageOf(failure));
@@ -136,6 +195,39 @@ function AccountPage(): JSX.Element {
         } finally {
             setIsAdding(false);
         }
+    };
+
+    /**
+     * @function rename
+     * @description Saves the name given to the passkey being renamed
+     */
+    const rename = async (name: Maybe<string>): Promise<void> => {
+        if (renaming === null) {
+            return;
+        }
+
+        const passkey = renaming;
+
+        setRenaming(null);
+
+        if (name === passkey.name) {
+            return;
+        }
+
+        try {
+            await identityService.renamePasskey(passkey.id, name);
+            setRevision((current) => current + 1);
+        } catch (failure: unknown) {
+            showToast(messageOf(failure));
+        }
+    };
+
+    /**
+     * @function saveName
+     * @description Renames the passkey with the name the form sent
+     */
+    const saveName = (name: Maybe<string>): void => {
+        void rename(name);
     };
 
     /**
@@ -188,6 +280,16 @@ function AccountPage(): JSX.Element {
         void signOut();
     };
 
+    /**
+     * @constant renameFooter
+     * @description The button saving the passkey's name, pinned under the form
+     */
+    const renameFooter = (
+        <button type='submit' form={RENAME_FORM_ID} className='button-primary'>
+            {t('account.save')}
+        </button>
+    );
+
     return (
         <FrameComponent>
             <div className='animate-rise'>
@@ -201,7 +303,7 @@ function AccountPage(): JSX.Element {
                         <div className='flex min-h-[52px] items-center justify-center'><SpinnerComponent /></div>
                     ) : (
                         passkeys.map((passkey) => (
-                            <PasskeyRowComponent key={passkey.id} passkey={passkey} canRemove={passkeys.length > 1} onRemove={() => setRemoving(passkey)} />
+                            <PasskeyRowComponent key={passkey.id} passkey={passkey} canRemove={passkeys.length > 1} onRename={() => setRenaming(passkey)} onRemove={() => setRemoving(passkey)} />
                         ))
                     )}
                     <ListRowComponent icon={<IconTileComponent icon={Plus} color={ACCENT} size={30} />} title={<span className='text-accent'>{t('account.addPasskey')}</span>} onClick={() => void add()} disabled={isAdding}>
@@ -228,6 +330,9 @@ function AccountPage(): JSX.Element {
 
                 <p className='mt-10 text-center text-[12px] text-ink-quaternary'>Obole Web {__APP_VERSION__}</p>
 
+                <SheetComponent open={renaming !== null} title={t('account.renameTitle')} onClose={() => setRenaming(null)} footer={renameFooter}>
+                    {renaming !== null && <PasskeyNameFormComponent passkey={renaming} onSave={saveName} />}
+                </SheetComponent>
                 <AlertComponent open={removing !== null} title={t('account.confirmRemove')} message={t('account.removeMessage')} action={t('account.removeAction')} onConfirm={confirmRemove} onCancel={() => setRemoving(null)} />
                 <AlertComponent open={isConfirmingSignOut} title={t('account.confirmSignOut')} message={t('account.signOutMessage')} action={t('account.signOut')} onConfirm={confirmSignOut} onCancel={() => setIsConfirmingSignOut(false)} />
             </div>

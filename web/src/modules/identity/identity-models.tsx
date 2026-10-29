@@ -28,6 +28,7 @@ export const AccountSchema = z.object({
 export const PasskeySchema = z.object({
     id: z.string(),
     aaguid: z.string(),
+    name: z.string().nullable(),
     backedUp: z.boolean(),
     createdAt: z.coerce.date(),
     lastUsedAt: z.coerce.date().nullable()

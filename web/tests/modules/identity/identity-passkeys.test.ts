@@ -1,5 +1,6 @@
+import type { Maybe } from 'models';
 import type { Passkey } from 'modules/identity/identity-models';
-import { passkeyName } from 'modules/identity/identity-passkeys';
+import { authenticatorName, passkeyName } from 'modules/identity/identity-passkeys';
 import { chooseLanguage } from 'modules/language/language-service';
 import { describe, expect, it } from 'vitest';
 
@@ -7,8 +8,8 @@ import { describe, expect, it } from 'vitest';
  * @function passkey
  * @description A passkey from a given authenticator.
  */
-function passkey(aaguid: string, backedUp = true): Passkey {
-    return { id: 'id', aaguid, backedUp, createdAt: new Date(), lastUsedAt: null };
+function passkey(aaguid: string, backedUp = true, name: Maybe<string> = null): Passkey {
+    return { id: 'id', aaguid, name, backedUp, createdAt: new Date(), lastUsedAt: null };
 }
 
 describe('passkeyName', () => {
@@ -24,5 +25,12 @@ describe('passkeyName', () => {
     it('falls back on what the passkey is', () => {
         expect(passkeyName(passkey('00000000-0000-0000-0000-000000000000'))).toBe('Passkey');
         expect(passkeyName(passkey('00000000-0000-0000-0000-000000000000', false))).toBe('Security key');
+    });
+
+    it('prefers the name the owner gave it, keeping its authenticator’s aside', () => {
+        const named = passkey('bada5566-a7aa-401f-bd96-45619a55120d', true, 'Work laptop');
+
+        expect(passkeyName(named)).toBe('Work laptop');
+        expect(authenticatorName(named)).toBe('1Password');
     });
 });

@@ -1,3 +1,4 @@
+import type { Maybe } from 'models';
 import type { Account, Passkey } from 'modules/identity/identity-models';
 import { AccountSchema, ConnectionSchema, CreationOptionsSchema, EnrollmentSchema, IdentityTokensSchema, PasskeySchema, RequestOptionsSchema } from 'modules/identity/identity-models';
 import type { AuthenticationResponseJSON, PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON, RegistrationResponseJSON } from 'modules/identity/identity-passkeys';
@@ -127,6 +128,18 @@ async function addPasskey(passkey: RegistrationResponseJSON): Promise<Passkey> {
 }
 
 /**
+ * @function renamePasskey
+ * @description Gives one of the owner's passkeys a name, or takes it back with null
+ *
+ * @param {string} id The passkey's identifier
+ * @param {Maybe<string>} name Its new name, or null to go back to its authenticator's
+ * @returns {Promise<Passkey>} The renamed passkey
+ */
+async function renamePasskey(id: string, name: Maybe<string>): Promise<Passkey> {
+    return await fetchWithAuthentication(`/v1/identity/passkeys/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ name }) }, PasskeySchema);
+}
+
+/**
  * @function removePasskey
  * @description Forgets one of the owner's passkeys. The server keeps the last one.
  *
@@ -166,6 +179,7 @@ export default {
     getPasskeys,
     getPasskeyOptions,
     addPasskey,
+    renamePasskey,
     removePasskey,
     logoutUser
 };

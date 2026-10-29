@@ -122,15 +122,15 @@ const AUTHENTICATORS: Readonly<Record<string, MessageKey | { name: string }>> = 
 };
 
 /**
- * @function passkeyName
- * @description A passkey's name in the page's language: where it lives when its authenticator says, and otherwise what
- * it is, a synced passkey or a security key.
+ * @function authenticatorName
+ * @description What a passkey is called when the owner hasn't named it, in the page's language: where it lives when its
+ * authenticator says, and otherwise what it is, a synced passkey or a security key.
  *
  * @param {Passkey} passkey The passkey.
  *
- * @returns {string} Its name.
+ * @returns {string} Its authenticator's name.
  */
-export function passkeyName(passkey: Passkey): string {
+export function authenticatorName(passkey: Passkey): string {
     const known = AUTHENTICATORS[passkey.aaguid.toLowerCase()];
 
     if (known === undefined) {
@@ -138,4 +138,16 @@ export function passkeyName(passkey: Passkey): string {
     }
 
     return typeof known === 'string' ? t(known) : known.name;
+}
+
+/**
+ * @function passkeyName
+ * @description A passkey's name: the one the owner gave it, and otherwise its authenticator's.
+ *
+ * @param {Passkey} passkey The passkey.
+ *
+ * @returns {string} Its name.
+ */
+export function passkeyName(passkey: Passkey): string {
+    return passkey.name ?? authenticatorName(passkey);
 }
