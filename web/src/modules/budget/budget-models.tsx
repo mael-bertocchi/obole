@@ -36,6 +36,14 @@ export const OperationSchema = z.object({
 });
 
 /**
+ * @constant TrashedOperationSchema
+ * @description Zod schema for an operation in the trash, with when it was deleted.
+ */
+export const TrashedOperationSchema = OperationSchema.extend({
+    deletedAt: z.coerce.date()
+});
+
+/**
  * @constant MonthlyBudgetSchema
  * @description Zod schema for the budget frozen against one finished month.
  */
@@ -84,6 +92,12 @@ export type Category = z.infer<typeof CategorySchema>;
  * @description An operation: an amount spent, in its currency and in euros
  */
 export type Operation = z.infer<typeof OperationSchema>;
+
+/**
+ * @type TrashedOperation
+ * @description An operation in the trash, with when it was deleted
+ */
+export type TrashedOperation = z.infer<typeof TrashedOperationSchema>;
 
 /**
  * @type MonthlyBudget

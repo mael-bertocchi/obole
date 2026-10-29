@@ -1,5 +1,5 @@
-import type { Category, MonthlyBudget, Operation, RateSnapshot, StoredState } from 'modules/budget/budget-models';
-import { RateSnapshotSchema, StoredStateSchema } from 'modules/budget/budget-models';
+import type { Category, MonthlyBudget, Operation, RateSnapshot, StoredState, TrashedOperation } from 'modules/budget/budget-models';
+import { RateSnapshotSchema, StoredStateSchema, TrashedOperationSchema } from 'modules/budget/budget-models';
 import { fetchWithAuthentication } from 'utils/request';
 import { z } from 'zod';
 
@@ -78,6 +78,27 @@ async function updateOperation(operation: Operation): Promise<void> {
  */
 async function deleteOperation(id: string): Promise<void> {
     await fetchWithAuthentication(path('operations', id), { method: 'DELETE' }, z.unknown());
+}
+
+/**
+ * @function listTrash
+ * @description Reads the operations in the trash, the most recently deleted first
+ *
+ * @returns {Promise<TrashedOperation[]>} The deleted operations
+ */
+async function listTrash(): Promise<TrashedOperation[]> {
+    return await fetchWithAuthentication('/v1/budget/operations/trash', { method: 'GET' }, z.array(TrashedOperationSchema));
+}
+
+/**
+ * @function restoreOperation
+ * @description Takes an operation out of the trash, back into the budget
+ *
+ * @param {string} id The operation's id
+ * @returns {Promise<void>} Resolves once it is restored
+ */
+async function restoreOperation(id: string): Promise<void> {
+    await fetchWithAuthentication(`${path('operations', id)}/restore`, { method: 'POST', body: '{}' }, z.unknown());
 }
 
 /**
@@ -165,6 +186,8 @@ export default {
     createOperation,
     updateOperation,
     deleteOperation,
+    listTrash,
+    restoreOperation,
     storeCategory,
     deleteCategory,
     storeSettings,

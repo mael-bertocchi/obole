@@ -3,7 +3,7 @@ import IconTileComponent from 'components/icon-tile/icon-tile';
 import ListGroupComponent from 'components/list-group/list-group';
 import ListRowComponent from 'components/list-row/list-row';
 import SyncBadgeComponent from 'components/sync-badge/sync-badge';
-import { ChevronRight, Euro, LayoutGrid, List, RefreshCw, Target, Trash2 } from 'lucide-react';
+import { ArchiveRestore, ChevronRight, Euro, LayoutGrid, List, RefreshCw, Target, Trash2 } from 'lucide-react';
 import { categoriesOf, DEFAULT_CATEGORIES } from 'modules/budget/budget-categories';
 import { BANK_MARKUP, bankRate, CURRENCIES, currencyName, EURO } from 'modules/budget/budget-currencies';
 import { euro, percent, rate } from 'modules/budget/budget-formatting';
@@ -12,6 +12,7 @@ import { useBudgetContext } from 'modules/budget/budget-hooks';
 import { defaultCurrency, rememberCurrency } from 'modules/budget/budget-preferences';
 import { t } from 'modules/language/language-service';
 import BudgetLimitsComponent from 'pages/budget/budget-limits/budget-limits';
+import BudgetTrashComponent from 'pages/budget/budget-trash/budget-trash';
 import { useState, type ChangeEvent, type JSX } from 'react';
 
 /**
@@ -39,6 +40,7 @@ function BudgetSettingsComponent(): JSX.Element {
     const [showLimits, setShowLimits] = useState(false);
     const [currency, setCurrency] = useState(defaultCurrency);
     const [isConfirmingReset, setIsConfirmingReset] = useState(false);
+    const [showTrash, setShowTrash] = useState(false);
     const latest = rates.latest;
 
     /**
@@ -123,10 +125,14 @@ function BudgetSettingsComponent(): JSX.Element {
                 <ListRowComponent icon={<IconTileComponent icon={LayoutGrid} color={ACCENT} size={30} />} title={t('settings.categories')}>
                     <span className='text-[15px] text-ink-secondary tabular-nums'>{categoriesOf(document.categories).length}</span>
                 </ListRowComponent>
+                <ListRowComponent icon={<IconTileComponent icon={ArchiveRestore} color={ACCENT} size={30} />} title={t('trash.title')} onClick={() => setShowTrash(true)}>
+                    <ChevronRight size={17} className='text-ink-quaternary' />
+                </ListRowComponent>
                 <ListRowComponent icon={<IconTileComponent icon={Trash2} color={NEGATIVE} size={30} />} title={t('settings.reset')} destructive onClick={() => setIsConfirmingReset(true)} />
             </ListGroupComponent>
 
             <BudgetLimitsComponent open={showLimits} onClose={() => setShowLimits(false)} />
+            <BudgetTrashComponent open={showTrash} onClose={() => setShowTrash(false)} />
             <AlertComponent open={isConfirmingReset} title={t('settings.confirmReset')} message={t('settings.resetMessage')} action={t('settings.resetAction')} onConfirm={reset} onCancel={() => setIsConfirmingReset(false)} />
         </div>
     );
