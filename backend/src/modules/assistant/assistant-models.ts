@@ -1,4 +1,5 @@
 import type { RequestGenericInterface } from 'fastify';
+import type { Maybe } from 'src/shared/models';
 import { IdSchema } from 'src/shared/schemas';
 import { z } from 'zod';
 
@@ -13,6 +14,18 @@ export const ASSISTANT_NOT_CONFIGURED = 'assistant-not-configured';
  * @description Why the assistant can't answer when Gemini refuses the key, for the portal to word it.
  */
 export const ASSISTANT_REFUSED = 'assistant-refused';
+
+/**
+ * @constant ASSISTANT_UNKNOWN_MODEL
+ * @description Why the assistant can't answer when Gemini doesn't know the model set, for the portal to word it.
+ */
+export const ASSISTANT_UNKNOWN_MODEL = 'assistant-unknown-model';
+
+/**
+ * @constant ASSISTANT_UNREACHABLE
+ * @description Why the assistant can't answer when Gemini can't be reached, for the portal to word it.
+ */
+export const ASSISTANT_UNREACHABLE = 'assistant-unreachable';
 
 /**
  * @constant MESSAGE_MAX
@@ -103,6 +116,15 @@ export const ProposalSchema = z.discriminatedUnion('kind', [
  */
 export interface ConversationRequest extends RequestGenericInterface {
     Body: Conversation; /*!< The conversation */
+}
+
+/**
+ * @interface AssistantAvailability
+ * @description Whether the assistant can answer, and why not when it can't.
+ */
+export interface AssistantAvailability {
+    isAvailable: boolean; /*!< Whether Gemini takes the key and knows the model */
+    reason: Maybe<string>; /*!< Why not, one of the assistant's reasons, null when it is available */
 }
 
 /**

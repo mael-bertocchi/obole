@@ -11,9 +11,14 @@ const ASSISTANT_LIMIT = { rateLimit: { max: 20, timeWindow: '1 minute' } };
 
 /**
  * @function assistantRoutes
- * @description Defines the assistant's route: one message of a conversation, answered with the changes it suggests.
+ * @description Defines the assistant's routes: whether it can answer, and one message of a conversation, answered with
+ * the changes it suggests.
  */
 export default function (fastify: FastifyInstance): void {
+    fastify.get('/status', {
+        preHandler: [fastify.identity.authenticate]
+    }, assistantController.status);
+
     fastify.post<ConversationRequest>('/messages', {
         preHandler: [fastify.identity.authenticate],
         config: ASSISTANT_LIMIT,

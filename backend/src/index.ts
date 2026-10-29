@@ -14,6 +14,7 @@ import healthRoutes from 'src/modules/health/health-routes';
 import identityRoutes from 'src/modules/identity/identity-routes';
 import catalogRoutes from 'src/modules/watchlist/catalog/catalog-routes';
 import entriesRoutes from 'src/modules/watchlist/entries/entries-routes';
+import assistantPlugin from 'src/plugins/assistant';
 import databasePlugin from 'src/plugins/database';
 import environmentPlugin from 'src/plugins/environment';
 import identityPlugin from 'src/plugins/identity';
@@ -118,6 +119,7 @@ async function startServer(): Promise<void> {
     await fastify.register(securityPlugin);
     await fastify.register(databasePlugin);
     await fastify.register(identityPlugin);
+    await fastify.register(assistantPlugin);
 
     fastify.setErrorHandler(handleGlobalError);
 

@@ -51,6 +51,7 @@ Node 24 · Fastify 5 · TypeScript · Prisma 7 · PostgreSQL · Zod · SimpleWeb
 | `POST /v1/watchlist/entries` | access | Add a `{ mediaType, tmdbId }`, described by the catalog; `409` if it is already there |
 | `PATCH /v1/watchlist/entries/:id` | access | Mark it watched (`watchedAt`), rate it (`rating`, 1 to 10 half stars), comment on it; marking it unwatched forgets both |
 | `DELETE /v1/watchlist/entries/:id` | access | Take a title off the watchlist |
+| `GET /v1/assistant/status` | access | Whether the assistant can answer, `{ isAvailable, reason }`, so the portal and the app turn it off when it can't |
 | `POST /v1/assistant/messages` | access | Answer the last message of `{ messages, language, today }`, with the changes the assistant suggests; `503` when it is not configured |
 | `GET /v1/watchlist/catalog/search?query=` | access | Find films and series in the catalog |
 | `GET /v1/watchlist/catalog/titles/:mediaType/:tmdbId` | access | A title's details, and where to watch it in France |
@@ -127,7 +128,7 @@ Without it, the watchlist still lists its titles, but searching and opening one 
 
 ## Assistant
 
-The assistant talks to the [Gemini API](https://ai.google.dev/gemini-api/docs). Create a key in [Google AI Studio](https://aistudio.google.com), on a project **with billing turned on**: on the free tier Google may use prompts to improve its products and have them read by reviewers, and an app used in the European Economic Area may only use the paid tier anyway. Then set:
+The assistant talks to the [Gemini API](https://ai.google.dev/gemini-api/docs). Create a key in [Google AI Studio](https://aistudio.google.com), then set:
 
 ```bash
 ASSISTANT_GEMINI_KEY="AIza…"
@@ -135,6 +136,8 @@ ASSISTANT_GEMINI_MODEL="gemini-3.8-flash"   # optional
 ```
 
 Every message sends the whole conversation (`generateContent`), so nothing is kept on Gemini's side between turns. The model sees the categories and reads the rest through three tools (`search_operations`, `month_summary`, `search_watchlist`); its four other tools (`propose_create_operation`, `propose_update_operation`, `propose_delete_operation`, `propose_rate_title`) change nothing and only return a suggestion for the owner to confirm. Without a key, the route answers `503`.
+
+Once the server is ready, it reads the model's card from Gemini (`GET /models/{model}`, which costs no quota) to check the key and the model, and writes the outcome to its logs. `GET /v1/assistant/status` answers from that check, and the conversations correct it as they go: `reason` is `assistant-not-configured`, `assistant-refused`, `assistant-unknown-model` or `assistant-unreachable`, the last one checked again after a minute.
 
 ## Scripts
 

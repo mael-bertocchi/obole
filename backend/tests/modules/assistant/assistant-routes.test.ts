@@ -4,6 +4,7 @@ import { hasZodFastifySchemaValidationErrors, serializerCompiler, validatorCompi
 import { StatusCodes } from 'http-status-codes';
 import type { PrismaClient } from 'prisma/generated/prisma/client';
 import assistantRoutes from 'src/modules/assistant/assistant-routes';
+import { AssistantStatus } from 'src/modules/assistant/assistant-status';
 import type { Variables } from 'src/plugins/environment';
 import type { IdentityService } from 'src/plugins/identity';
 import type { Maybe } from 'src/shared/models';
@@ -96,6 +97,7 @@ async function buildApp(variables: Variables = testVariables()): Promise<TestApp
     app.decorate('variables', variables);
     app.decorate('prisma', standIn<PrismaClient>({ budgetOperation: operations, budgetCategory: categories }));
     app.decorate('identity', standIn<IdentityService>({ authenticate: () => Promise.resolve() }));
+    app.decorate('assistant', new AssistantStatus(variables, app.log));
 
     app.setErrorHandler((error: Error, _request, reply) => {
         let code = StatusCodes.INTERNAL_SERVER_ERROR;
@@ -240,6 +242,96 @@ describe('POST /v1/assistant/messages', () => {
         const response = await app.inject({ method: 'POST', url: '/v1/assistant/messages', payload: { messages: [{ role: 'assistant', text: 'Bonjour' }], language: 'fr', today: '2026-10-29' } });
 
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST);
+
+        await app.close();
+    });
+});
+
+/**
+ * @function stubModelCard
+ * @description Replaces `fetch` with a Gemini stand-in answering every request with the given status.
+ *
+ * @param {number} status The status of every answer.
+ * @param {string} body The body of every answer.
+ *
+ * @returns {string[]} Where the requests it receives went, as they come.
+ */
+function stubModelCard(status: number, body: string = '{}'): string[] {
+    const urls: string[] = [];
+
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+        urls.push(url);
+
+        return Promise.resolve(new Response(body, { status }));
+    }));
+
+    return urls;
+}
+
+/**
+ * @interface StatusBody
+ * @description What the status route answers
+ */
+interface StatusBody {
+    data: { isAvailable: boolean; reason: Maybe<string> }; /*!< Whether the assistant can answer, and why not */
+}
+
+describe('GET /v1/assistant/status', () => {
+    it('reads the model card once and says the assistant is available', async () => {
+        const urls = stubModelCard(StatusCodes.OK, '{"name":"models/gemini-test"}');
+        const { app } = await buildApp();
+        const first = await app.inject({ method: 'GET', url: '/v1/assistant/status' });
+        const second = await app.inject({ method: 'GET', url: '/v1/assistant/status' });
+
+        expect(first.json<StatusBody>().data).toEqual({ isAvailable: true, reason: null });
+        expect(second.json<StatusBody>().data).toEqual({ isAvailable: true, reason: null });
+        expect(urls).toEqual(['https://gemini.example.fr/v1beta/models/gemini-test']);
+
+        await app.close();
+    });
+
+    it('says the key is refused', async () => {
+        stubModelCard(StatusCodes.BAD_REQUEST, '{"error":{"status":"INVALID_ARGUMENT","details":[{"reason":"API_KEY_INVALID"}]}}');
+        const { app } = await buildApp();
+        const response = await app.inject({ method: 'GET', url: '/v1/assistant/status' });
+
+        expect(response.json<StatusBody>().data).toEqual({ isAvailable: false, reason: 'assistant-refused' });
+
+        await app.close();
+    });
+
+    it('says the model is unknown', async () => {
+        stubModelCard(StatusCodes.NOT_FOUND);
+        const { app } = await buildApp();
+        const response = await app.inject({ method: 'GET', url: '/v1/assistant/status' });
+
+        expect(response.json<StatusBody>().data).toEqual({ isAvailable: false, reason: 'assistant-unknown-model' });
+
+        await app.close();
+    });
+
+    it('says the assistant is not configured without asking Gemini', async () => {
+        const urls = stubModelCard(StatusCodes.OK);
+        const { app } = await buildApp(testVariables({ ASSISTANT_GEMINI_KEY: '' }));
+        const response = await app.inject({ method: 'GET', url: '/v1/assistant/status' });
+
+        expect(response.json<StatusBody>().data).toEqual({ isAvailable: false, reason: 'assistant-not-configured' });
+        expect(urls).toEqual([]);
+
+        await app.close();
+    });
+
+    it('learns from a conversation that Gemini refused the key', async () => {
+        stubModelCard(StatusCodes.FORBIDDEN);
+        const { app } = await buildApp();
+
+        await app.inject({ method: 'POST', url: '/v1/assistant/messages', payload: ask('Bonjour') });
+
+        const urls = stubModelCard(StatusCodes.OK);
+        const response = await app.inject({ method: 'GET', url: '/v1/assistant/status' });
+
+        expect(response.json<StatusBody>().data).toEqual({ isAvailable: false, reason: 'assistant-refused' });
+        expect(urls).toEqual([]);
 
         await app.close();
     });

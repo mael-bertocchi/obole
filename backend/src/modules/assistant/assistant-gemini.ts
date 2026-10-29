@@ -1,6 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { StatusCodes } from 'http-status-codes';
-import { ASSISTANT_NOT_CONFIGURED, ASSISTANT_REFUSED } from 'src/modules/assistant/assistant-models';
+import { ASSISTANT_NOT_CONFIGURED, ASSISTANT_REFUSED, ASSISTANT_UNKNOWN_MODEL, ASSISTANT_UNREACHABLE } from 'src/modules/assistant/assistant-models';
 import type { Variables } from 'src/plugins/environment';
 import { RequestError } from 'src/shared/models';
 import { z } from 'zod';
@@ -88,7 +88,7 @@ export type GeminiContent = z.infer<typeof GeminiContentSchema>;
  * @param {GeminiTurnRequest} turn What to send.
  *
  * @returns {Promise<GeminiContent>} The model's turn. Rejects with 503 when Gemini can't help, saying why in
- * `data.reason` when the key is missing or refused, since only the owner can fix that, and with 429 when its quota is
+ * `data.reason` when the key is missing or refused, the model unknown or Gemini unreachable, and with 429 when its quota is
  * spent.
  */
 export async function generate(variables: Variables, logger: FastifyBaseLogger, turn: GeminiTurnRequest): Promise<GeminiContent> {
@@ -112,13 +112,19 @@ export async function generate(variables: Variables, logger: FastifyBaseLogger, 
     } catch (error: unknown) {
         logger.error({ error }, 'Gemini unreachable');
 
-        throw new RequestError(StatusCodes.SERVICE_UNAVAILABLE, 'The assistant is unavailable');
+        throw new RequestError(StatusCodes.SERVICE_UNAVAILABLE, 'The assistant is unavailable', { reason: ASSISTANT_UNREACHABLE });
     }
 
     if (response.status === Number(StatusCodes.TOO_MANY_REQUESTS)) {
         logger.warn('Gemini quota spent');
 
         throw new RequestError(StatusCodes.TOO_MANY_REQUESTS, 'The assistant is out of quota for now');
+    }
+
+    if (response.status === Number(StatusCodes.NOT_FOUND)) {
+        logger.error({ model: variables.ASSISTANT_GEMINI_MODEL }, 'Gemini does not know the model: check ASSISTANT_GEMINI_MODEL');
+
+        throw new RequestError(StatusCodes.SERVICE_UNAVAILABLE, 'The assistant does not know the model', { reason: ASSISTANT_UNKNOWN_MODEL });
     }
 
     if (!response.ok) {
