@@ -1,6 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { StatusCodes } from 'http-status-codes';
-import { ASSISTANT_NOT_CONFIGURED, ASSISTANT_REFUSED, ASSISTANT_UNKNOWN_MODEL, ASSISTANT_UNREACHABLE } from 'src/modules/assistant/assistant-models';
+import { ASSISTANT_NOT_CONFIGURED, ASSISTANT_REFUSED, ASSISTANT_TIMEOUT, ASSISTANT_UNKNOWN_MODEL, ASSISTANT_UNREACHABLE } from 'src/modules/assistant/assistant-models';
 import type { Variables } from 'src/plugins/environment';
 import { RequestError } from 'src/shared/models';
 import { z } from 'zod';
@@ -9,7 +9,7 @@ import { z } from 'zod';
  * @constant GEMINI_TIMEOUT
  * @description How long to wait on Gemini for one turn before calling it unavailable.
  */
-const GEMINI_TIMEOUT = 45 * 1000;
+const GEMINI_TIMEOUT = 60 * 1000;
 
 /**
  * @constant GeminiPartSchema
@@ -131,6 +131,12 @@ export async function generate(variables: Variables, logger: FastifyBaseLogger, 
             signal: AbortSignal.timeout(GEMINI_TIMEOUT)
         });
     } catch (error: unknown) {
+        if (error instanceof Error && error.name === 'TimeoutError') {
+            logger.warn({ model: variables.ASSISTANT_GEMINI_MODEL, timeout: GEMINI_TIMEOUT }, 'Gemini took too long to answer');
+
+            throw new RequestError(StatusCodes.GATEWAY_TIMEOUT, 'The assistant took too long to answer', { reason: ASSISTANT_TIMEOUT });
+        }
+
         logger.error({ url: variables.ASSISTANT_GEMINI_URL, failure: failureOf(error) }, 'Gemini unreachable');
 
         throw new RequestError(StatusCodes.SERVICE_UNAVAILABLE, 'The assistant is unavailable', { reason: ASSISTANT_UNREACHABLE });

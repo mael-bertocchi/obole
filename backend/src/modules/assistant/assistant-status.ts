@@ -39,6 +39,12 @@ function unavailable(reason: string): AssistantAvailability {
 }
 
 /**
+ * @constant SET_UP_REASONS
+ * @description The reasons that say the assistant can't answer at all, as opposed to one answer that went wrong.
+ */
+const SET_UP_REASONS = new Set([ASSISTANT_NOT_CONFIGURED, ASSISTANT_REFUSED, ASSISTANT_UNKNOWN_MODEL, ASSISTANT_UNREACHABLE]);
+
+/**
  * @function reasonOf
  * @description The assistant's reason a refusal carries in its data, if any.
  *
@@ -125,14 +131,15 @@ export class AssistantStatus {
 
     /**
      * @method noteFailure
-     * @description Records why a conversation failed, when the reason is the assistant's set-up.
+     * @description Records why a conversation failed, when the reason is the assistant's set-up rather than one answer
+     * that took too long.
      *
      * @param {unknown} error The failure.
      */
     noteFailure(error: unknown): void {
         const reason = reasonOf(error);
 
-        if (reason !== null) {
+        if (reason !== null && SET_UP_REASONS.has(reason)) {
             this.keep(unavailable(reason), Date.now());
         }
     }

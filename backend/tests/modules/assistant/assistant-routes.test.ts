@@ -335,4 +335,23 @@ describe('GET /v1/assistant/status', () => {
 
         await app.close();
     });
+
+    it('keeps the assistant on when one answer took too long', async () => {
+        stubModelCard(StatusCodes.OK);
+        const { app } = await buildApp();
+
+        vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new DOMException('The operation was aborted due to timeout', 'TimeoutError'))));
+
+        const answer = await app.inject({ method: 'POST', url: '/v1/assistant/messages', payload: ask('Bonjour') });
+
+        expect(answer.statusCode).toBe(StatusCodes.GATEWAY_TIMEOUT);
+        expect(answer.json<{ data: { reason: string } }>().data.reason).toBe('assistant-timeout');
+
+        stubModelCard(StatusCodes.OK);
+        const response = await app.inject({ method: 'GET', url: '/v1/assistant/status' });
+
+        expect(response.json<StatusBody>().data).toEqual({ isAvailable: true, reason: null });
+
+        await app.close();
+    });
 });

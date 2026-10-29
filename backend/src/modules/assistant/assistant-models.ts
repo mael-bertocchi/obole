@@ -28,6 +28,12 @@ export const ASSISTANT_UNKNOWN_MODEL = 'assistant-unknown-model';
 export const ASSISTANT_UNREACHABLE = 'assistant-unreachable';
 
 /**
+ * @constant ASSISTANT_TIMEOUT
+ * @description Why the assistant didn't answer when Gemini took too long, which says nothing about its set-up.
+ */
+export const ASSISTANT_TIMEOUT = 'assistant-timeout';
+
+/**
  * @constant MESSAGE_MAX
  * @description How long one message of the conversation may be, in characters.
  */
