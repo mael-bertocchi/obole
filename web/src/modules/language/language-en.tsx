@@ -36,8 +36,6 @@ export const portalEn = {
     'frame.launcherEyebrow': 'Obole',
     'frame.apps': 'Apps',
     'frame.account': 'Account',
-    'frame.accountSettings': 'Account settings',
-    'frame.signOut': 'Sign out',
 
     'home.morning': 'Good morning, {name}',
     'home.afternoon': 'Good afternoon, {name}',

@@ -1,9 +1,7 @@
-import AlertComponent from 'components/alert/alert';
 import AppIconComponent from 'components/app-icon/app-icon';
 import LauncherComponent from 'components/launcher/launcher';
 import LogoComponent from 'components/logo/logo';
-import MenuComponent from 'components/menu/menu';
-import { Grip, LogOut, Settings, type LucideIcon } from 'lucide-react';
+import { Grip, type LucideIcon } from 'lucide-react';
 import type { PortalApp } from 'modules/apps/apps-models';
 import { appPath } from 'modules/apps/apps-registry';
 import { useIdentityContext } from 'modules/identity/identity-hooks';
@@ -36,61 +34,17 @@ interface FrameComponentProps {
 }
 
 /**
- * @function AccountMenuComponent
- * @description The owner's initial in a circle, opening the account settings and signing out.
+ * @function AccountButtonComponent
+ * @description The owner's initial in a circle, opening the account page, where they can also sign out.
  */
-function AccountMenuComponent(): JSX.Element {
-    const { account, signOut }: IdentityContextProps = useIdentityContext();
-    const [isConfirming, setIsConfirming] = useState(false);
+function AccountButtonComponent(): JSX.Element {
+    const { account }: IdentityContextProps = useIdentityContext();
     const initial = account?.name.trim().charAt(0).toLocaleUpperCase() ?? '';
-    const item = 'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] transition hover:bg-fill';
-
-    /**
-     * @function askToSignOut
-     * @description Closes the menu and asks whether to sign out
-     *
-     * @param {() => void} closeMenu Closes the menu
-     */
-    const askToSignOut = (closeMenu: () => void): void => {
-        closeMenu();
-        setIsConfirming(true);
-    };
-
-    /**
-     * @function confirmSignOut
-     * @description Signs out, once confirmed
-     */
-    const confirmSignOut = (): void => {
-        setIsConfirming(false);
-        void signOut();
-    };
 
     return (
-        <>
-            <MenuComponent label={t('frame.account')} trigger={initial} triggerClassName='flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-[#A1A1A8] to-[#7C7C84] text-[15px] font-semibold text-white shadow-control transition hover:brightness-105'>
-                {(close) => (
-                    <>
-                        {account !== null && (
-                            <div className='border-b border-hairline px-3 pb-3 pt-2'>
-                                <p className='text-[15px] font-semibold'>{account.name}</p>
-                                <p className='text-[13px] text-ink-secondary'>Obole</p>
-                            </div>
-                        )}
-                        <div className='pt-1.5'>
-                            <Link to='/account' onClick={close} className={item} role='menuitem'>
-                                <Settings size={18} className='text-ink-secondary' />
-                                {t('frame.accountSettings')}
-                            </Link>
-                            <button type='button' role='menuitem' onClick={() => askToSignOut(close)} className={`${item} text-negative-text`}>
-                                <LogOut size={18} />
-                                {t('frame.signOut')}
-                            </button>
-                        </div>
-                    </>
-                )}
-            </MenuComponent>
-            <AlertComponent open={isConfirming} title={t('account.confirmSignOut')} message={t('account.signOutMessage')} action={t('account.signOut')} onConfirm={confirmSignOut} onCancel={() => setIsConfirming(false)} />
-        </>
+        <Link to='/account' aria-label={t('frame.account')} className='flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-[#A1A1A8] to-[#7C7C84] text-[15px] font-semibold text-white shadow-control transition hover:brightness-105'>
+            {initial}
+        </Link>
     );
 }
 
@@ -103,7 +57,7 @@ const LAUNCHER_ID = 'portal-launcher';
 /**
  * @function FrameComponent
  * @description The portal's frame around every page: a bar the colour of the page with the app's name on the left, its
- * tabs as a segmented control in the middle, and its action, the app switcher and the account menu on the right. It only
+ * tabs as a segmented control in the middle, and its action, the app switcher and the account button on the right. It only
  * draws its bottom rule once the page scrolls under it, like an iOS navigation bar. On a phone the tabs move to a tab bar
  * along the bottom edge. The app switcher's button fades the page out and the launcher in, in its place, with the tabs
  * and the action, which belong to the page; Escape, the button again, or picking a destination brings the page back.
@@ -198,7 +152,7 @@ function FrameComponent(props: FrameComponentProps): JSX.Element {
                         <button ref={launcherButton} type='button' aria-label={t('frame.apps')} aria-expanded={isLaunching} aria-controls={LAUNCHER_ID} onClick={() => setIsLaunching(!isLaunching)} className='flex h-9 w-9 items-center justify-center rounded-full text-ink-secondary transition hover:bg-fill-strong/70 hover:text-ink aria-expanded:bg-fill-strong/70 aria-expanded:text-ink'>
                             <Grip size={18} strokeWidth={2.2} />
                         </button>
-                        <AccountMenuComponent />
+                        <AccountButtonComponent />
                     </div>
                 </div>
             </header>

@@ -37,8 +37,6 @@ const portalFr: PortalMessages = {
     'frame.launcherEyebrow': 'Obole',
     'frame.apps': 'Applications',
     'frame.account': 'Compte',
-    'frame.accountSettings': 'Réglages du compte',
-    'frame.signOut': 'Se déconnecter',
 
     'home.morning': 'Bonjour, {name}',
     'home.afternoon': 'Bonjour, {name}',
