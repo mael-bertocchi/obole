@@ -6,7 +6,8 @@ The **Fastify + TypeScript** server behind the Obole portal: it opens the single
 
 - **REST API** • versioned under `/v1`, split into focused modules: the portal's own (identity, health) and one folder per app under `modules/<app>/`, served under `/v1/<app>`. In the database too, every model and table starts with its app (`BudgetOperation` in `budget_operations`; `Identity…` for the portal's own), so apps never fight over a name.
 - **Passkey-only identity** • the single account opens with a passkey (WebAuthn), nothing else: no password, no code, no user table, no registration. The first passkey is created with an enrollment token you set only for that; the iOS app signs in through the portal with a one-time code bound to a PKCE challenge. JWT access + refresh sessions.
-- **Document sync** • clients pull and replace the whole budget document (`GET`/`PUT /v1/budget/state`), stored relationally and written in one transaction. Each write bumps a revision, and a write made from an older revision is refused, so the app and the web interface never erase each other's changes.
+- **Entry-by-entry writes** • clients read the whole budget document at once (`GET /v1/budget/state`) and write it one entry at a time: an operation, a category, the settings, a frozen month. No route can replace or wipe the whole budget. Each write bumps a revision, so a client can tell whether anything changed since it last read.
+- **A trash for operations** • a deleted operation is kept with the moment it was deleted, out of the budget, and can be restored.
 - **Watchlist** • films and series to watch, then watched with a rating in half stars and a comment (`/v1/watchlist/entries`). What a title is comes from TMDB, which the server asks itself so its token never leaves it (`/v1/watchlist/catalog`): search, details with where to watch it in France (JustWatch data), sagas and genres, kept in memory for a while. A title and its saga's name are stored in English and in French, so the list reads right in either language.
 - **Hardened** • Helmet, CORS open to the portal's origin only, rate limiting, Zod request validation, and a non-root Docker image.
 
@@ -32,8 +33,17 @@ Node 24 · Fastify 5 · TypeScript · Prisma 7 · PostgreSQL · Zod · SimpleWeb
 | `POST /v1/identity/refresh` | public | Rotate a refresh token into a new pair |
 | `POST /v1/identity/logout` | access | Revoke the caller's refresh session |
 | `GET /v1/identity/me` | access | Return the signed-in account and the owner's name |
-| `GET /v1/budget/state` | access | Read the whole budget document and its `revision` |
-| `PUT /v1/budget/state` | access | Replace the whole budget document; `409` if the `revision` it names is out of date |
+| `GET /v1/budget/state` | access | Read the whole budget document (trash left out) and its `revision` |
+| `POST /v1/budget/operations` | access | Log an operation under the id the client minted; `409` if the id is taken, even in the trash |
+| `PATCH /v1/budget/operations/:operationId` | access | Change some fields of an operation; `404` if it is unknown or in the trash |
+| `DELETE /v1/budget/operations/:operationId` | access | Move an operation to the trash; already there is a success |
+| `GET /v1/budget/operations/trash` | access | List the operations in the trash, the most recently deleted first |
+| `POST /v1/budget/operations/:operationId/restore` | access | Take an operation out of the trash |
+| `PUT /v1/budget/categories/:categoryId` | access | Create or replace a category (look, limit, position) |
+| `DELETE /v1/budget/categories/:categoryId` | access | Remove a category |
+| `PUT /v1/budget/settings` | access | Store the monthly budget |
+| `PUT /v1/budget/history/:month` | access | Freeze the budget of a finished month (`YYYY-MM`) |
+| `DELETE /v1/budget/history/:month` | access | Forget the budget frozen against a month |
 | `GET /v1/budget/rates` | access | The latest euro reference rates |
 | `GET /v1/budget/rates/:date` | access | The reference rates of one past day |
 | `GET /v1/watchlist/entries` | access | Every title on the watchlist |

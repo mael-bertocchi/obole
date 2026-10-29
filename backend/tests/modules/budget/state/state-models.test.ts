@@ -1,4 +1,4 @@
-import { CategorySchema, OperationSchema, StatePushSchema, StateSchema } from 'src/modules/budget/state/state-models';
+import { CategorySchema, OperationSchema, StateSchema } from 'src/modules/budget/state/state-models';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -97,24 +97,5 @@ describe('StateSchema', () => {
         };
 
         expect(StateSchema.safeParse(state).success).toBe(false);
-    });
-});
-
-describe('StatePushSchema', () => {
-    const state = {
-        categories: [validCategory],
-        operations: [validOperation],
-        budget: { monthlyLimit: 3000 },
-        budgetHistory: {}
-    };
-
-    it('accepts a push with or without the revision it was edited from', () => {
-        expect(StatePushSchema.safeParse({ ...state, revision: 12 }).success).toBe(true);
-        expect(StatePushSchema.safeParse(state).success).toBe(true);
-    });
-
-    it('rejects a negative or fractional revision', () => {
-        expect(StatePushSchema.safeParse({ ...state, revision: -1 }).success).toBe(false);
-        expect(StatePushSchema.safeParse({ ...state, revision: 1.5 }).success).toBe(false);
     });
 });

@@ -1,10 +1,9 @@
-import type { RequestGenericInterface } from 'fastify';
 import { ColorSchema, IdSchema } from 'src/shared/schemas';
 import { z } from 'zod';
 
 /**
  * @constant MAX_ITEMS
- * @description Upper bound on the number of items of each kind accepted in a single state push.
+ * @description Upper bound on the number of items of each kind a budget document holds.
  */
 const MAX_ITEMS = 5000;
 
@@ -64,7 +63,7 @@ export const StoredCategoryLimitsSchema = z.record(z.string(), z.number());
 
 /**
  * @constant StateSchema
- * @description Zod schema for the whole budget document exchanged by the pull/push endpoints.
+ * @description Zod schema for the whole budget document, as the read endpoint sends it.
  */
 export const StateSchema = z.object({
     categories: z.array(CategorySchema).max(MAX_ITEMS),
@@ -80,33 +79,8 @@ export const StateSchema = z.object({
 export type StateBody = z.infer<typeof StateSchema>;
 
 /**
- * @constant StatePushSchema
- * @description Zod schema for a push: the whole document, plus the revision it was edited from. A push naming a
- * revision is only stored if the server still holds that revision; one that names none overwrites whatever is
- * there, which is how clients predating revisions keep working.
- */
-export const StatePushSchema = StateSchema.extend({
-    revision: z.number().int().min(0).optional()
-});
-
-/**
- * @type StatePushBody
- * @description Inferred body type for the state-push endpoint.
- */
-export type StatePushBody = z.infer<typeof StatePushSchema>;
-
-/**
  * @type StoredStateBody
- * @description The budget document as stored, with the revision a later push has to name to replace it.
+ * @description The budget document as stored, with its revision: a counter every write moves on, so a client can tell
+ * whether anything changed since it last read.
  */
 export type StoredStateBody = StateBody & { revision: number };
-
-/**
- * @interface StatePushRequest
- * @description Fastify request generic for the state-push endpoint.
- *
- * @extends RequestGenericInterface
- */
-export interface StatePushRequest extends RequestGenericInterface {
-    Body: StatePushBody; /*!< Validated full budget document and the revision it was edited from */
-}
