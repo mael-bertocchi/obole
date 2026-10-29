@@ -20,9 +20,9 @@ describe('assistantService', () => {
         expect(body).toHaveProperty('today', expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/));
     });
 
-    it('names what to fix when the server says the assistant is not set up', async () => {
+    it('says the assistant is unavailable when the server has no key', async () => {
         vi.mocked(fetchWithAuthentication).mockRejectedValueOnce(new RequestError(503, 'Refused', 'assistant-not-configured'));
 
-        await expect(assistantService.sendConversation([{ id: '1', role: 'user', text: 'Bonjour', proposals: [] }])).rejects.toThrow('ASSISTANT_GEMINI_KEY');
+        await expect(assistantService.sendConversation([{ id: '1', role: 'user', text: 'Bonjour', proposals: [] }])).rejects.toThrow('no Gemini API key is set on the server');
     });
 });
