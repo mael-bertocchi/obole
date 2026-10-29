@@ -21,7 +21,7 @@ import { testVariables } from '../../support/variables';
 interface GeminiCall {
     url: string; /*!< Where it went */
     key: Maybe<string>; /*!< The key it carried */
-    body: { contents: { role: string; parts: Record<string, unknown>[] }[]; tools: { functionDeclarations: { name: string }[] }[] }; /*!< What it sent */
+    body: { contents: { role: string; parts: Record<string, unknown>[] }[]; tools: { functionDeclarations: { name: string }[] }[]; generationConfig: Record<string, unknown> }; /*!< What it sent */
 }
 
 /**
@@ -136,6 +136,7 @@ interface ReplyBody {
 
 afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
 });
 
 describe('POST /v1/assistant/messages', () => {
@@ -150,6 +151,7 @@ describe('POST /v1/assistant/messages', () => {
         expect(response.statusCode).toBe(StatusCodes.OK);
         expect(response.json<ReplyBody>().data).toEqual({ text: 'Tu as dépensé 42,50 € chez Monoprix.', proposals: [] });
         expect(calls[0]).toMatchObject({ url: 'https://gemini.example.fr/v1beta/models/gemini-test:generateContent', key: 'a-test-gemini-key' });
+        expect(calls[0]?.body.generationConfig).toEqual({ thinkingConfig: { thinkingLevel: 'low' } });
         expect(operations.findMany.mock.calls[0]?.[0]).toMatchObject({ where: { deletedAt: null } });
 
         const second = calls[1]?.body.contents ?? [];
@@ -211,6 +213,30 @@ describe('POST /v1/assistant/messages', () => {
         expect(response.statusCode).toBe(StatusCodes.OK);
         expect(calls).toHaveLength(7);
         expect(calls[6]?.body.tools[0]?.functionDeclarations).toEqual([]);
+
+        await app.close();
+    });
+
+    it('answers 504 itself once the conversation runs past its deadline', async () => {
+        const clock = { now: 0 };
+        const call = [{ functionCall: { name: 'search_operations', args: {} } }];
+        const calls = stubGemini([call, call, call, call]);
+        const fetchStub = vi.mocked(fetch);
+        const answer = fetchStub.getMockImplementation();
+
+        vi.spyOn(Date, 'now').mockImplementation(() => clock.now);
+        fetchStub.mockImplementation(async (...args) => {
+            clock.now += 30 * 1000;
+
+            return await (answer?.(...args) ?? Promise.reject(new Error('No stand-in')));
+        });
+
+        const { app } = await buildApp();
+        const response = await app.inject({ method: 'POST', url: '/v1/assistant/messages', payload: ask('Analyse tout') });
+
+        expect(response.statusCode).toBe(StatusCodes.GATEWAY_TIMEOUT);
+        expect(response.json<{ data: { reason: string } }>().data.reason).toBe('assistant-timeout');
+        expect(calls).toHaveLength(3);
 
         await app.close();
     });

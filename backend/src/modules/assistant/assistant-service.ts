@@ -16,6 +16,13 @@ import { RequestError } from 'src/shared/models';
 const MAX_ROUNDS = 6;
 
 /**
+ * @constant CONVERSATION_DEADLINE
+ * @description How long a conversation may take, every round included. Cloudflare, in front of the server, gives up
+ * after 100 seconds with a page the apps can't read, so the server answers well before with its own 504.
+ */
+const CONVERSATION_DEADLINE = 80 * 1000;
+
+/**
  * @function instructionFor
  * @description The system instruction: who the assistant is, what it may do, and what it knows of the budget.
  *
@@ -89,9 +96,10 @@ export async function converse(prisma: PrismaClient, variables: Variables, logge
     const functions = ASSISTANT_TOOLS.map((tool) => tool.declaration);
     const contents: GeminiContent[] = conversation.messages.map((message) => ({ role: message.role === 'user' ? 'user' : 'model', parts: [{ text: message.text }] }));
     const proposals: Proposal[] = [];
+    const deadline = Date.now() + CONVERSATION_DEADLINE;
 
     for (let round = 0; round <= MAX_ROUNDS; round += 1) {
-        const turn = await generate(variables, logger, { instruction, contents, functions: round < MAX_ROUNDS ? functions : [] });
+        const turn = await generate(variables, logger, { instruction, contents, functions: round < MAX_ROUNDS ? functions : [], deadline });
         const calls = turn.parts.flatMap((part) => (part.functionCall === undefined ? [] : [part.functionCall]));
 
         if (calls.length === 0) {

@@ -12,6 +12,28 @@ import { z } from 'zod';
 const GEMINI_TIMEOUT = 60 * 1000;
 
 /**
+ * @constant THINKING_LEVEL
+ * @description How hard the model thinks before each turn. Low keeps a turn to a few seconds, which a conversation of
+ * several tool rounds needs to stay under the proxy's limit in front of the server.
+ */
+const THINKING_LEVEL = 'low';
+
+/**
+ * @function timedOut
+ * @description The refusal sent when the assistant ran out of time, logged once.
+ *
+ * @param {Variables} variables The environment, holding the model.
+ * @param {FastifyBaseLogger} logger The request logger.
+ *
+ * @returns {RequestError} The refusal, a 504.
+ */
+function timedOut(variables: Variables, logger: FastifyBaseLogger): RequestError {
+    logger.warn({ model: variables.ASSISTANT_GEMINI_MODEL }, 'Gemini took too long to answer');
+
+    return new RequestError(StatusCodes.GATEWAY_TIMEOUT, 'The assistant took too long to answer', { reason: ASSISTANT_TIMEOUT });
+}
+
+/**
  * @constant GeminiPartSchema
  * @description Zod schema for one part of a turn: text, a call to a tool, or a tool's result. Unknown fields (the
  * model's thought signature among them) are kept, since a part goes back to Gemini exactly as it came.
@@ -64,6 +86,7 @@ export interface GeminiTurnRequest {
     instruction: string; /*!< The system instruction */
     contents: GeminiContent[]; /*!< The conversation so far */
     functions: GeminiFunction[]; /*!< The tools it may call */
+    deadline: number; /*!< When the whole conversation must have its answer, in milliseconds */
 }
 
 /**
@@ -102,19 +125,25 @@ export function failureOf(error: unknown): string {
 /**
  * @function generate
  * @description Asks Gemini for its next turn. Nothing is kept on Gemini's side between turns: the whole conversation is
- * sent every time.
+ * sent every time. A turn waits at most a minute, and never past the conversation's deadline.
  *
  * @param {Variables} variables The environment, holding Gemini's address, model and key.
  * @param {FastifyBaseLogger} logger The request logger.
  * @param {GeminiTurnRequest} turn What to send.
  *
  * @returns {Promise<GeminiContent>} The model's turn. Rejects with 503 when Gemini can't help, saying why in
- * `data.reason` when the key is missing or refused, the model unknown or Gemini unreachable, and with 429 when its quota is
- * spent.
+ * `data.reason` when the key is missing or refused, the model unknown or Gemini unreachable, with 504 when the deadline
+ * passes, and with 429 when its quota is spent.
  */
 export async function generate(variables: Variables, logger: FastifyBaseLogger, turn: GeminiTurnRequest): Promise<GeminiContent> {
     if (variables.ASSISTANT_GEMINI_KEY === '') {
         throw new RequestError(StatusCodes.SERVICE_UNAVAILABLE, 'The assistant is not configured', { reason: ASSISTANT_NOT_CONFIGURED });
+    }
+
+    const timeout = Math.min(GEMINI_TIMEOUT, turn.deadline - Date.now());
+
+    if (timeout <= 0) {
+        throw timedOut(variables, logger);
     }
 
     let response: Response;
@@ -126,15 +155,14 @@ export async function generate(variables: Variables, logger: FastifyBaseLogger, 
             body: JSON.stringify({
                 systemInstruction: { parts: [{ text: turn.instruction }] },
                 contents: turn.contents,
-                tools: [{ functionDeclarations: turn.functions }]
+                tools: [{ functionDeclarations: turn.functions }],
+                generationConfig: { thinkingConfig: { thinkingLevel: THINKING_LEVEL } }
             }),
-            signal: AbortSignal.timeout(GEMINI_TIMEOUT)
+            signal: AbortSignal.timeout(timeout)
         });
     } catch (error: unknown) {
         if (error instanceof Error && error.name === 'TimeoutError') {
-            logger.warn({ model: variables.ASSISTANT_GEMINI_MODEL, timeout: GEMINI_TIMEOUT }, 'Gemini took too long to answer');
-
-            throw new RequestError(StatusCodes.GATEWAY_TIMEOUT, 'The assistant took too long to answer', { reason: ASSISTANT_TIMEOUT });
+            throw timedOut(variables, logger);
         }
 
         logger.error({ url: variables.ASSISTANT_GEMINI_URL, failure: failureOf(error) }, 'Gemini unreachable');
