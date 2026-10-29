@@ -16,7 +16,7 @@ import { chooseLanguage, currentLanguage, isLanguageChoice, LANGUAGES, languageC
 import { useToastContext } from 'modules/toast/toast-hooks';
 import type { ToastContextProps } from 'modules/toast/toast-models';
 import { useEffect, useState, type ChangeEvent, type FormEvent, type JSX } from 'react';
-import { messageOf } from 'utils/tools';
+import { messageOf } from 'utils/errors';
 
 /**
  * @constant ACCENT

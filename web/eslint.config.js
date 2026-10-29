@@ -22,6 +22,8 @@ export default defineConfig([
     rules: {
       // House rules (CLAUDE.md)
       curly: ['error', 'all'],
+      'no-console': 'error',
+      'no-debugger': 'error',
       '@typescript-eslint/explicit-function-return-type': [
         'error',
         { allowExpressions: true, allowTypedFunctionExpressions: true, allowHigherOrderFunctions: true },

@@ -1,6 +1,7 @@
 import type { BudgetDocument, BudgetServer, MonthlyBudget, Operation, StoredState } from 'modules/budget/budget-models';
 import { upsertOperation } from 'modules/budget/budget-operations';
 import { BudgetStore } from 'modules/budget/budget-store';
+import { UserError } from 'utils/errors';
 import { RequestError } from 'utils/request';
 import type { Mock } from 'vitest';
 import { describe, expect, it, vi } from 'vitest';
@@ -122,7 +123,7 @@ describe('BudgetStore', () => {
         store.onRejected(rejected);
         await store.refresh();
         store.apply(() => {
-            throw new Error('This operation was deleted on another device.');
+            throw new UserError('This operation was deleted on another device.');
         });
         await settle();
 

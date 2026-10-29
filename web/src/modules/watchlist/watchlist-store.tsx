@@ -2,7 +2,7 @@ import type { Maybe } from 'models';
 import type { Language } from 'modules/language/language-models';
 import { currentLanguage } from 'modules/language/language-service';
 import type { Entry, EntryChanges, TitleReference, WatchlistServer, WatchlistSnapshot } from 'modules/watchlist/watchlist-models';
-import { messageOf } from 'utils/tools';
+import { messageOf } from 'utils/errors';
 
 /**
  * @class WatchlistStore

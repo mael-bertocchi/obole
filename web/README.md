@@ -68,7 +68,7 @@ src/
 │  └─ assistant/     The conversation, its suggestion cards and home tile
 ├─ styles/        Tailwind entry
 ├─ types/         Vite's environment types
-└─ utils/         Requests (with the session's renewal), tokens, small tools
+└─ utils/         Requests (with the session's renewal), tokens, the errors shown to the person
 ```
 
 Imports use bare aliases (`components/…`, `modules/…`, `pages/…`, `utils/…`, `styles/…`, `models`), each component is a default export taking `props` typed by its `…ComponentProps` interface, and services are plain functions gathered in a default-exported object.

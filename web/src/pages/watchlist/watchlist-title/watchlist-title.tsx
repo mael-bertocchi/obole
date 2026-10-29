@@ -13,7 +13,7 @@ import { useWatchlist, useWatchlistContext } from 'modules/watchlist/watchlist-h
 import type { CatalogTitle, Collection, Entry, Offers, Provider, TitleDetails, TitleReference } from 'modules/watchlist/watchlist-models';
 import watchlistService from 'modules/watchlist/watchlist-service';
 import { useEffect, useState, type FormEvent, type JSX } from 'react';
-import { messageOf } from 'utils/tools';
+import { messageOf } from 'utils/errors';
 
 /**
  * @constant OFFER_KINDS

@@ -5,7 +5,7 @@ import type { BudgetWrite } from 'modules/budget/budget-sync';
 import { diffDocuments, sendWrite } from 'modules/budget/budget-sync';
 import { t } from 'modules/language/language-service';
 import { RequestError } from 'utils/request';
-import { messageOf } from 'utils/tools';
+import { messageOf } from 'utils/errors';
 
 /**
  * @type SyncStatus

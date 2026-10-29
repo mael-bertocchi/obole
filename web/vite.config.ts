@@ -8,6 +8,13 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    build: {
+      rolldownOptions: {
+        output: {
+          minify: { compress: { dropConsole: true, dropDebugger: true } },
+        },
+      },
+    },
     define: {
       __APP_VERSION__: JSON.stringify(packageJson.version),
     },

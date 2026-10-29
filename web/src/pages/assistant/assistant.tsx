@@ -24,7 +24,7 @@ import { useWatchlistContext } from 'modules/watchlist/watchlist-hooks';
 import { WatchlistProvider } from 'modules/watchlist/watchlist-provider';
 import { ratingText } from 'modules/watchlist/watchlist-formatting';
 import { useEffect, useRef, useState, type FormEvent, type JSX, type KeyboardEvent } from 'react';
-import { messageOf } from 'utils/tools';
+import { messageOf } from 'utils/errors';
 
 /**
  * @constant PROPOSAL_TITLES

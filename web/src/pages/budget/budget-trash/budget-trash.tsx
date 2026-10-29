@@ -12,7 +12,7 @@ import { t } from 'modules/language/language-service';
 import { useToastContext } from 'modules/toast/toast-hooks';
 import type { ToastContextProps } from 'modules/toast/toast-models';
 import { useEffect, useState, type JSX } from 'react';
-import { messageOf } from 'utils/tools';
+import { messageOf } from 'utils/errors';
 
 /**
  * @interface BudgetTrashComponentProps

@@ -15,6 +15,7 @@ import { amountInputOf, deleteOperation, groupAmountInput, Limits, parseAmountIn
 import { defaultCurrency, rememberCurrency } from 'modules/budget/budget-preferences';
 import { t } from 'modules/language/language-service';
 import { useEffect, useState, type FormEvent, type JSX, type ReactNode } from 'react';
+import { UserError } from 'utils/errors';
 
 /**
  * @constant FORM_ID
@@ -184,7 +185,7 @@ function OperationFormComponent(props: OperationFormComponentProps): JSX.Element
 
         store.apply((current) => {
             if (existing !== null && !current.operations.some((candidate) => candidate.id === existing.id)) {
-                throw new Error(t('operation.deletedElsewhere'));
+                throw new UserError(t('operation.deletedElsewhere'));
             }
 
             return upsertOperation(current, operation);

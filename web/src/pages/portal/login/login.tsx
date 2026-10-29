@@ -9,7 +9,7 @@ import identityService from 'modules/identity/identity-service';
 import { t } from 'modules/language/language-service';
 import { useEffect, useState, type FormEvent, type JSX } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { messageOf } from 'utils/tools';
+import { messageOf } from 'utils/errors';
 
 /**
  * @type SignInMode

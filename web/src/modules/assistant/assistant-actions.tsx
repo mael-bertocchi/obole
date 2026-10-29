@@ -5,6 +5,7 @@ import type { BudgetServices, Operation } from 'modules/budget/budget-models';
 import { deleteOperation, toOperation, upsertOperation } from 'modules/budget/budget-operations';
 import { t } from 'modules/language/language-service';
 import type { WatchlistStore } from 'modules/watchlist/watchlist-store';
+import { UserError } from 'utils/errors';
 
 /**
  * @interface ProposalServices
@@ -29,7 +30,7 @@ function dayOf(day: string): Date {
     const now = new Date();
 
     if (parsed === null || isFutureDay(parsed, now)) {
-        throw new Error(t('assistant.invalidDate'));
+        throw new UserError(t('assistant.invalidDate'));
     }
 
     return withTimeOf(parsed, now);
@@ -54,7 +55,7 @@ async function rateOn(budget: BudgetServices, code: string, day: string): Promis
     const rate = budget.rates.rate(code, day);
 
     if (rate === null) {
-        throw new Error(budget.rates.failure(day) ?? t('assistant.rateMissing', { code }));
+        throw new UserError(budget.rates.failure(day) ?? t('assistant.rateMissing', { code }));
     }
 
     return rate;
@@ -131,7 +132,7 @@ export async function applyProposal(services: ProposalServices, proposal: Propos
             const existing = store.getSnapshot().document?.operations.find((candidate) => candidate.id === proposal.operation.id);
 
             if (existing === undefined) {
-                throw new Error(t('operation.deletedElsewhere'));
+                throw new UserError(t('operation.deletedElsewhere'));
             }
 
             const changed = await operationFrom(services.budget, { ...draftOf(existing), ...proposal.changes }, existing.id, existing.isRecurring);
@@ -139,7 +140,7 @@ export async function applyProposal(services: ProposalServices, proposal: Propos
 
             store.apply((document) => {
                 if (!document.operations.some((candidate) => candidate.id === operation.id)) {
-                    throw new Error(t('operation.deletedElsewhere'));
+                    throw new UserError(t('operation.deletedElsewhere'));
                 }
 
                 return upsertOperation(document, operation);

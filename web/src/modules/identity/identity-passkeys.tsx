@@ -3,6 +3,7 @@ import { browserSupportsWebAuthn, sendSignal, startAuthentication, startRegistra
 import type { Passkey } from 'modules/identity/identity-models';
 import type { MessageKey } from 'modules/language/language-en';
 import { t } from 'modules/language/language-service';
+import { UserError } from 'utils/errors';
 
 export type { AuthenticationResponseJSON, PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON, RegistrationResponseJSON };
 
@@ -10,9 +11,9 @@ export type { AuthenticationResponseJSON, PublicKeyCredentialCreationOptionsJSON
  * @class PasskeyError
  * @description The browser or the passkey turned the request down. Its message is written for the person using the page.
  *
- * @extends Error
+ * @extends UserError
  */
-export class PasskeyError extends Error {
+export class PasskeyError extends UserError {
     public isCancelled: boolean; /*!< Whether the person dismissed the sheet, which needs no message */
 
     /**

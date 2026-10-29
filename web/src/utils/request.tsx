@@ -1,6 +1,7 @@
 import type { Maybe } from 'models';
 import { IdentityTokensSchema } from 'modules/identity/identity-models';
 import { t } from 'modules/language/language-service';
+import { UserError } from 'utils/errors';
 import { clearTokens, getTokens, setTokens } from 'utils/token';
 import type { z } from 'zod';
 
@@ -47,9 +48,9 @@ let renewalInFlight: Maybe<Promise<boolean>> = null;
  * @description An error answered by the server, or raised while trying to reach it. Its message is written for the
  * person using the page.
  *
- * @extends Error
+ * @extends UserError
  */
-export class RequestError extends Error {
+export class RequestError extends UserError {
     public readonly status: number; /*!< The HTTP status, or 0 when the server could not be reached */
     public readonly reason: Maybe<string>; /*!< Why, when the server says so in `data.reason`, for an app to word it */
 

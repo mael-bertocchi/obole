@@ -2,7 +2,7 @@ import type { Maybe } from 'models';
 import { bankRate, EURO } from 'modules/budget/budget-currencies';
 import { dayKey } from 'modules/budget/budget-dates';
 import type { BudgetServer, RateSnapshot } from 'modules/budget/budget-models';
-import { messageOf } from 'utils/tools';
+import { messageOf } from 'utils/errors';
 
 /**
  * @class ExchangeRates

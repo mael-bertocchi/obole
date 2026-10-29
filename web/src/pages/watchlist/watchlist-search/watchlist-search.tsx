@@ -11,7 +11,7 @@ import { useWatchlist, useWatchlistContext } from 'modules/watchlist/watchlist-h
 import type { CatalogTitle, Entry, TitleReference } from 'modules/watchlist/watchlist-models';
 import watchlistService from 'modules/watchlist/watchlist-service';
 import { useEffect, useState, type JSX } from 'react';
-import { messageOf } from 'utils/tools';
+import { messageOf } from 'utils/errors';
 
 /**
  * @constant SEARCH_DELAY

@@ -7,7 +7,7 @@ import identityService from 'modules/identity/identity-service';
 import { t } from 'modules/language/language-service';
 import { useState, type JSX } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { messageOf } from 'utils/tools';
+import { messageOf } from 'utils/errors';
 
 /**
  * @constant CALLBACK
