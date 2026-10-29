@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import identityController from 'src/modules/identity/identity-controller';
-import type { ConnectRequest, ConnectTokenRequest, EnrollmentOptionsRequest, EnrollmentRequest, LoginRequest, LogoutRequest, PasskeyDeleteRequest, PasskeyRequest, RefreshRequest } from 'src/modules/identity/identity-models';
-import { ConnectSchema, ConnectTokenSchema, EnrollmentOptionsSchema, EnrollmentSchema, LoginSchema, LogoutSchema, PasskeyParamsSchema, PasskeySchema, RefreshSchema } from 'src/modules/identity/identity-models';
+import type { ConnectRequest, ConnectTokenRequest, EnrollmentOptionsRequest, EnrollmentRequest, LoginRequest, LogoutRequest, PasskeyDeleteRequest, PasskeyRequest, PasskeyUpdateRequest, RefreshRequest } from 'src/modules/identity/identity-models';
+import { ConnectSchema, ConnectTokenSchema, EnrollmentOptionsSchema, EnrollmentSchema, LoginSchema, LogoutSchema, PasskeyParamsSchema, PasskeySchema, PasskeyUpdateSchema, RefreshSchema } from 'src/modules/identity/identity-models';
 
 /**
  * @constant SIGN_IN_LIMIT
@@ -70,6 +70,14 @@ export default function (fastify: FastifyInstance): void {
             body: PasskeySchema
         }
     }, identityController.newPasskey);
+
+    fastify.patch<PasskeyUpdateRequest>('/passkeys/:id', {
+        preHandler: [fastify.identity.authenticate],
+        schema: {
+            params: PasskeyParamsSchema,
+            body: PasskeyUpdateSchema
+        }
+    }, identityController.updatePasskey);
 
     fastify.delete<PasskeyDeleteRequest>('/passkeys/:id', {
         preHandler: [fastify.identity.authenticate],

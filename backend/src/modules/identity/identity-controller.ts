@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { StatusCodes } from 'http-status-codes';
-import type { ConnectRequest, ConnectTokenRequest, EnrollmentOptionsRequest, EnrollmentRequest, LoginRequest, LogoutRequest, PasskeyDeleteRequest, PasskeyRequest, RefreshRequest } from 'src/modules/identity/identity-models';
-import { addPasskey, closeConnection, listPasskeys, openConnection, passkeyOptions, removePasskey, signInOptions, verifySignIn } from 'src/modules/identity/identity-service';
+import type { ConnectRequest, ConnectTokenRequest, EnrollmentOptionsRequest, EnrollmentRequest, LoginRequest, LogoutRequest, PasskeyDeleteRequest, PasskeyRequest, PasskeyUpdateRequest, RefreshRequest } from 'src/modules/identity/identity-models';
+import { addPasskey, closeConnection, listPasskeys, openConnection, passkeyOptions, removePasskey, renamePasskey, signInOptions, verifySignIn } from 'src/modules/identity/identity-service';
 import { OWNER_ID } from 'src/plugins/identity';
 import { RequestError } from 'src/shared/models';
 
@@ -155,6 +155,18 @@ async function newPasskey(request: FastifyRequest<PasskeyRequest>, reply: Fastif
 }
 
 /**
+ * @function updatePasskey
+ * @description Renames one of the owner's passkeys.
+ *
+ * @returns {Promise<void>} Resolves when the renamed passkey is sent.
+ */
+async function updatePasskey(request: FastifyRequest<PasskeyUpdateRequest>, reply: FastifyReply): Promise<void> {
+    const passkey = await renamePasskey(request.server.prisma, request.params.id, request.body.name);
+
+    reply.status(StatusCodes.OK).send({ data: passkey });
+}
+
+/**
  * @function deletePasskey
  * @description Forgets one of the owner's passkeys, unless it is the last one.
  *
@@ -211,6 +223,7 @@ export default {
     passkeys,
     newPasskeyOptions,
     newPasskey,
+    updatePasskey,
     deletePasskey,
     refresh,
     logout,

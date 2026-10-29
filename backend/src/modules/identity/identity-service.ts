@@ -7,6 +7,7 @@ import type { IdentityPasskey, PrismaClient } from 'prisma/generated/prisma/clie
 import type { AuthenticationResponseBody, PasskeySummary, RegistrationResponseBody } from 'src/modules/identity/identity-models';
 import type { ChallengePurpose, IdentityService } from 'src/plugins/identity';
 import { OWNER_ID } from 'src/plugins/identity';
+import type { Maybe } from 'src/shared/models';
 import { RequestError } from 'src/shared/models';
 
 /**
@@ -35,6 +36,7 @@ function summarize(passkey: IdentityPasskey): PasskeySummary {
     return {
         id: passkey.id,
         aaguid: passkey.aaguid,
+        name: passkey.name,
         backedUp: passkey.backedUp,
         createdAt: passkey.createdAt,
         lastUsedAt: passkey.lastUsedAt
@@ -220,6 +222,25 @@ export async function listPasskeys(prisma: PrismaClient): Promise<PasskeySummary
     const passkeys = await prisma.identityPasskey.findMany({ orderBy: { createdAt: 'asc' } });
 
     return passkeys.map(summarize);
+}
+
+/**
+ * @function renamePasskey
+ * @description Gives one of the owner's passkeys a name of their own, or takes it back so the portal names it after its
+ * authenticator again.
+ *
+ * @param {PrismaClient} prisma The database client.
+ * @param {string} id The passkey's id.
+ * @param {Maybe<string>} name Its new name, or null for none.
+ *
+ * @returns {Promise<PasskeySummary>} The renamed passkey. Rejects with 404 when there is no such passkey.
+ */
+export async function renamePasskey(prisma: PrismaClient, id: string, name: Maybe<string>): Promise<PasskeySummary> {
+    if (await prisma.identityPasskey.findUnique({ where: { id } }) === null) {
+        throw new RequestError(StatusCodes.NOT_FOUND, 'Unknown passkey');
+    }
+
+    return summarize(await prisma.identityPasskey.update({ where: { id }, data: { name } }));
 }
 
 /**

@@ -24,6 +24,7 @@ model IdentityPasskey {
   counter    Int       @default(0)
   transports String[]  @default([])
   aaguid     String
+  name       String?
   backedUp   Boolean   @default(false) @map("backed_up")
   createdAt  DateTime  @default(now()) @map("created_at")
   lastUsedAt DateTime? @map("last_used_at")

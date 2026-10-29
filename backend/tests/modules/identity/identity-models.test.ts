@@ -1,4 +1,4 @@
-import { ConnectSchema, ConnectTokenSchema, EnrollmentSchema, LoginSchema, LogoutSchema, RefreshSchema } from 'src/modules/identity/identity-models';
+import { ConnectSchema, ConnectTokenSchema, EnrollmentSchema, LoginSchema, LogoutSchema, PasskeyUpdateSchema, RefreshSchema } from 'src/modules/identity/identity-models';
 import { pkceChallenge } from 'src/modules/identity/identity-service';
 import { describe, expect, it } from 'vitest';
 
@@ -53,6 +53,19 @@ describe('EnrollmentSchema', () => {
 
         expect(EnrollmentSchema.safeParse({ token: 'token', response: passkey }).success).toBe(true);
         expect(EnrollmentSchema.safeParse({ response: passkey }).success).toBe(false);
+    });
+});
+
+describe('PasskeyUpdateSchema', () => {
+    it('trims the name, and reads nothing but spaces as no name', () => {
+        expect(PasskeyUpdateSchema.parse({ name: '  iPhone  ' })).toEqual({ name: 'iPhone' });
+        expect(PasskeyUpdateSchema.parse({ name: '   ' })).toEqual({ name: null });
+        expect(PasskeyUpdateSchema.parse({ name: null })).toEqual({ name: null });
+    });
+
+    it('rejects a name longer than 64 characters, or none given', () => {
+        expect(PasskeyUpdateSchema.safeParse({ name: 'x'.repeat(65) }).success).toBe(false);
+        expect(PasskeyUpdateSchema.safeParse({}).success).toBe(false);
     });
 });
 

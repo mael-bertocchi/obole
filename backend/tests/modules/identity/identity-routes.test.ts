@@ -41,6 +41,7 @@ interface StoredPasskey {
     counter: number; /*!< How many times it signed */
     transports: string[]; /*!< How it can be reached */
     aaguid: string; /*!< Which authenticator holds it */
+    name?: Maybe<string>; /*!< The name the owner gave it, if any */
     backedUp: boolean; /*!< Whether it syncs */
     createdAt: Date; /*!< When it was created */
     lastUsedAt: Maybe<Date>; /*!< When it last signed in, if ever */
@@ -382,6 +383,28 @@ describe('passkeys', () => {
         expect((await remove(first.credentialId)).statusCode).toBe(StatusCodes.OK);
         expect([...passkeys.keys()]).toEqual([second.credentialId]);
         expect((await remove(first.credentialId)).statusCode).toBe(StatusCodes.NOT_FOUND);
+    });
+
+    it('renames a passkey, and takes the name back when it is cleared', async () => {
+        const { app, passkeys } = await buildApp();
+        const authenticator = new SoftwareAuthenticator({ origin: ORIGIN });
+        const { accessToken } = await enroll(app, authenticator);
+        /**
+         * @function rename
+         * @description Asks the server to rename a passkey
+         */
+        const rename = async (id: string, body: object): Promise<LightMyRequestResponse> => await app.inject({ method: 'PATCH', url: `/v1/identity/passkeys/${id}`, headers: { authorization: `Bearer ${accessToken}` }, payload: body });
+
+        const renamed = await rename(authenticator.credentialId, { name: '  MacBook Pro  ' });
+
+        expect(renamed.statusCode).toBe(StatusCodes.OK);
+        expect(renamed.json<{ data: { id: string; name: Maybe<string> } }>().data).toEqual(expect.objectContaining({ id: authenticator.credentialId, name: 'MacBook Pro' }));
+        expect(passkeys.get(authenticator.credentialId)?.name).toBe('MacBook Pro');
+
+        expect((await rename(authenticator.credentialId, { name: '   ' })).json<{ data: { name: Maybe<string> } }>().data.name).toBeNull();
+        expect((await rename(authenticator.credentialId, { name: 'x'.repeat(65) })).statusCode).toBe(StatusCodes.BAD_REQUEST);
+        expect((await rename('dW5rbm93bg', { name: 'Nope' })).statusCode).toBe(StatusCodes.NOT_FOUND);
+        expect((await app.inject({ method: 'PATCH', url: `/v1/identity/passkeys/${authenticator.credentialId}`, payload: { name: 'Nope' } })).statusCode).toBe(StatusCodes.UNAUTHORIZED);
     });
 
     it('stays closed without a session', async () => {

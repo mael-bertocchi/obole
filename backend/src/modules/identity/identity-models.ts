@@ -174,6 +174,21 @@ export const PasskeyParamsSchema = z.object({
 export type PasskeyParams = z.infer<typeof PasskeyParamsSchema>;
 
 /**
+ * @constant PasskeyUpdateSchema
+ * @description Zod schema for the rename-passkey request body: the name the owner gave it, or null (or nothing but
+ * spaces) to go back to the name its authenticator gives it.
+ */
+export const PasskeyUpdateSchema = z.object({
+    name: z.string().trim().max(64).transform((name) => (name === '' ? null : name)).nullable()
+});
+
+/**
+ * @type PasskeyUpdateBody
+ * @description Inferred body type for the rename-passkey endpoint.
+ */
+export type PasskeyUpdateBody = z.infer<typeof PasskeyUpdateSchema>;
+
+/**
  * @constant RefreshSchema
  * @description Zod schema for the refresh request body.
  */
@@ -208,6 +223,7 @@ export type LogoutBody = z.infer<typeof LogoutSchema>;
 export interface PasskeySummary {
     id: string; /*!< The credential's id */
     aaguid: string; /*!< Which authenticator holds it (a password manager, a security key…), zeros when it doesn't say; the portal names it */
+    name: Maybe<string>; /*!< The name the owner gave it, if any, shown instead of the authenticator's */
     backedUp: boolean; /*!< Whether it syncs between devices, as a password manager's passkey does */
     createdAt: Date; /*!< When it was created */
     lastUsedAt: Maybe<Date>; /*!< When it last signed in, if ever */
@@ -281,6 +297,17 @@ export interface PasskeyRequest extends RequestGenericInterface {
  */
 export interface PasskeyDeleteRequest extends RequestGenericInterface {
     Params: PasskeyParams; /*!< Validated path */
+}
+
+/**
+ * @interface PasskeyUpdateRequest
+ * @description Fastify request generic for the rename-passkey endpoint.
+ *
+ * @extends RequestGenericInterface
+ */
+export interface PasskeyUpdateRequest extends RequestGenericInterface {
+    Params: PasskeyParams; /*!< Validated path */
+    Body: PasskeyUpdateBody; /*!< Validated rename-passkey body */
 }
 
 /**
