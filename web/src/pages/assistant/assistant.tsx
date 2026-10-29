@@ -1,5 +1,6 @@
 import FrameActionComponent from 'components/frame-action/frame-action';
 import FrameComponent from 'components/frame/frame';
+import MarkdownComponent from 'components/markdown/markdown';
 import RatingComponent from 'components/rating/rating';
 import SpinnerComponent from 'components/spinner/spinner';
 import { ArrowUp, Check, Copy, RotateCcw, SquarePen } from 'lucide-react';
@@ -277,8 +278,8 @@ interface MessageComponentProps {
 
 /**
  * @function MessageComponent
- * @description One message: the owner's on the right, the assistant's on the left with its suggestions and its small
- * buttons under it
+ * @description One message: the owner's on the right, as typed, the assistant's on the left in Markdown, with its
+ * suggestions and its small buttons under it
  *
  * @param {MessageComponentProps} props The properties of the component
  */
@@ -302,8 +303,11 @@ function MessageComponent(props: MessageComponentProps): JSX.Element {
 
     return (
         <div className={`group flex flex-col gap-2 ${isOwner ? 'items-end' : 'items-start'}`}>
-            {props.message.text !== '' && (
-                <p className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-[15px] leading-snug ${isOwner ? 'bg-accent text-white' : 'bg-fill text-ink'}`}>{props.message.text}</p>
+            {isOwner && props.message.text !== '' && <p className='max-w-[85%] whitespace-pre-wrap rounded-2xl bg-accent px-4 py-2.5 text-[15px] leading-snug text-white'>{props.message.text}</p>}
+            {!isOwner && props.message.text !== '' && (
+                <div className='max-w-[85%] break-words rounded-2xl bg-fill px-4 py-2.5 text-[15px] leading-snug text-ink'>
+                    <MarkdownComponent text={props.message.text} />
+                </div>
             )}
             {props.message.proposals.map((entry, index) => (
                 <div key={index} className='w-full max-w-md'>
