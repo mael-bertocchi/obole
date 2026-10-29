@@ -20,7 +20,10 @@ export const variables = Type.Object({
     JWT_ACCESS_EXPIRY: Type.String({ minLength: 1 }),
     JWT_REFRESH_EXPIRY: Type.String({ minLength: 1 }),
     WATCHLIST_TMDB_TOKEN: Type.String({ default: '' }),
-    WATCHLIST_TMDB_URL: Type.String({ pattern: '^https?://[^ ]+[^/]$', default: 'https://api.themoviedb.org/3' })
+    WATCHLIST_TMDB_URL: Type.String({ pattern: '^https?://[^ ]+[^/]$', default: 'https://api.themoviedb.org/3' }),
+    ASSISTANT_GEMINI_KEY: Type.String({ default: '' }),
+    ASSISTANT_GEMINI_MODEL: Type.String({ pattern: '^[a-z0-9.-]+$', default: 'gemini-3.8-flash' }),
+    ASSISTANT_GEMINI_URL: Type.String({ pattern: '^https?://[^ ]+[^/]$', default: 'https://generativelanguage.googleapis.com/v1beta' })
 });
 
 /**

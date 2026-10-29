@@ -22,6 +22,9 @@ export function testVariables(overrides: Partial<Variables> = {}): Variables {
         JWT_REFRESH_EXPIRY: '30d',
         WATCHLIST_TMDB_TOKEN: 'a-test-tmdb-token',
         WATCHLIST_TMDB_URL: 'https://tmdb.example.fr/3',
+        ASSISTANT_GEMINI_KEY: 'a-test-gemini-key',
+        ASSISTANT_GEMINI_MODEL: 'gemini-test',
+        ASSISTANT_GEMINI_URL: 'https://gemini.example.fr/v1beta',
         ...overrides
     };
 }

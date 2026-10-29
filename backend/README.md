@@ -9,6 +9,7 @@ The **Fastify + TypeScript** server behind the Obole portal: it opens the single
 - **Entry-by-entry writes** • clients read the whole budget document at once (`GET /v1/budget/state`) and write it one entry at a time: an operation, a category, the settings, a frozen month. No route can replace or wipe the whole budget. Each write bumps a revision, so a client can tell whether anything changed since it last read.
 - **A trash for operations** • a deleted operation is kept with the moment it was deleted, out of the budget, and can be restored.
 - **Watchlist** • films and series to watch, then watched with a rating in half stars and a comment (`/v1/watchlist/entries`). What a title is comes from TMDB, which the server asks itself so its token never leaves it (`/v1/watchlist/catalog`): search, details with where to watch it in France (JustWatch data), sagas and genres, kept in memory for a while. A title and its saga's name are stored in English and in French, so the list reads right in either language.
+- **Assistant** • a conversation with Gemini about the budget and the watchlist (`POST /v1/assistant/messages`). The model reads through tools the server runs itself, and can only *suggest* changes: each suggestion comes back to the portal, which carries it out through the ordinary routes once the owner confirms it.
 - **Hardened** • Helmet, CORS open to the portal's origin only, rate limiting, Zod request validation, and a non-root Docker image.
 
 ## Stack
@@ -50,6 +51,7 @@ Node 24 · Fastify 5 · TypeScript · Prisma 7 · PostgreSQL · Zod · SimpleWeb
 | `POST /v1/watchlist/entries` | access | Add a `{ mediaType, tmdbId }`, described by the catalog; `409` if it is already there |
 | `PATCH /v1/watchlist/entries/:id` | access | Mark it watched (`watchedAt`), rate it (`rating`, 1 to 10 half stars), comment on it; marking it unwatched forgets both |
 | `DELETE /v1/watchlist/entries/:id` | access | Take a title off the watchlist |
+| `POST /v1/assistant/messages` | access | Answer the last message of `{ messages, language, today }`, with the changes the assistant suggests; `503` when it is not configured |
 | `GET /v1/watchlist/catalog/search?query=` | access | Find films and series in the catalog |
 | `GET /v1/watchlist/catalog/titles/:mediaType/:tmdbId` | access | A title's details, and where to watch it in France |
 | `GET /v1/watchlist/catalog/collections/:id` | access | A saga's films, in the order they came out |
@@ -122,6 +124,17 @@ WATCHLIST_TMDB_TOKEN="eyJ…"
 ```
 
 Without it, the watchlist still lists its titles, but searching and opening one answer `503`. Where to watch a title comes from JustWatch through TMDB, for France only. As both ask, the portal credits TMDB at the bottom of the watchlist and JustWatch under the offers.
+
+## Assistant
+
+The assistant talks to the [Gemini API](https://ai.google.dev/gemini-api/docs). Create a key in [Google AI Studio](https://aistudio.google.com), on a project **with billing turned on**: on the free tier Google may use prompts to improve its products and have them read by reviewers, and an app used in the European Economic Area may only use the paid tier anyway. Then set:
+
+```bash
+ASSISTANT_GEMINI_KEY="AIza…"
+ASSISTANT_GEMINI_MODEL="gemini-3.8-flash"   # optional
+```
+
+Every message sends the whole conversation (`generateContent`), so nothing is kept on Gemini's side between turns. The model sees the categories and reads the rest through three tools (`search_operations`, `month_summary`, `search_watchlist`); its four other tools (`propose_create_operation`, `propose_update_operation`, `propose_delete_operation`, `propose_rate_title`) change nothing and only return a suggestion for the owner to confirm. Without a key, the route answers `503`.
 
 ## Scripts
 

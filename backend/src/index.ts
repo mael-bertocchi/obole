@@ -3,6 +3,7 @@ import Fastify from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { hasZodFastifySchemaValidationErrors, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { StatusCodes } from 'http-status-codes';
+import assistantRoutes from 'src/modules/assistant/assistant-routes';
 import categoriesRoutes from 'src/modules/budget/categories/categories-routes';
 import historyRoutes from 'src/modules/budget/history/history-routes';
 import operationsRoutes from 'src/modules/budget/operations/operations-routes';
@@ -128,6 +129,7 @@ async function startServer(): Promise<void> {
     await fastify.register(categoriesRoutes, { prefix: '/v1/budget/categories' });
     await fastify.register(settingsRoutes, { prefix: '/v1/budget/settings' });
     await fastify.register(historyRoutes, { prefix: '/v1/budget/history' });
+    await fastify.register(assistantRoutes, { prefix: '/v1/assistant' });
     await fastify.register(catalogRoutes, { prefix: '/v1/watchlist/catalog' });
     await fastify.register(entriesRoutes, { prefix: '/v1/watchlist/entries' });
 
