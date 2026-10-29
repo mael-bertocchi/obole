@@ -217,7 +217,7 @@ describe('POST /v1/assistant/messages', () => {
         await app.close();
     });
 
-    it('answers 504 itself once the conversation runs past its deadline', async () => {
+    it('refuses itself once the conversation runs past its deadline', async () => {
         const clock = { now: 0 };
         const call = [{ functionCall: { name: 'search_operations', args: {} } }];
         const calls = stubGemini([call, call, call, call]);
@@ -234,7 +234,7 @@ describe('POST /v1/assistant/messages', () => {
         const { app } = await buildApp();
         const response = await app.inject({ method: 'POST', url: '/v1/assistant/messages', payload: ask('Analyse tout') });
 
-        expect(response.statusCode).toBe(StatusCodes.GATEWAY_TIMEOUT);
+        expect(response.statusCode).toBe(StatusCodes.SERVICE_UNAVAILABLE);
         expect(response.json<{ data: { reason: string } }>().data.reason).toBe('assistant-timeout');
         expect(calls).toHaveLength(3);
 
@@ -370,7 +370,7 @@ describe('GET /v1/assistant/status', () => {
 
         const answer = await app.inject({ method: 'POST', url: '/v1/assistant/messages', payload: ask('Bonjour') });
 
-        expect(answer.statusCode).toBe(StatusCodes.GATEWAY_TIMEOUT);
+        expect(answer.statusCode).toBe(StatusCodes.SERVICE_UNAVAILABLE);
         expect(answer.json<{ data: { reason: string } }>().data.reason).toBe('assistant-timeout');
 
         stubModelCard(StatusCodes.OK);

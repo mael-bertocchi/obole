@@ -20,17 +20,18 @@ const THINKING_LEVEL = 'low';
 
 /**
  * @function timedOut
- * @description The refusal sent when the assistant ran out of time, logged once.
+ * @description The refusal sent when the assistant ran out of time, logged once. It is a 503 rather than a 504:
+ * Cloudflare, in front of the server, swaps an origin's 504 for its own page, which the apps can't read.
  *
  * @param {Variables} variables The environment, holding the model.
  * @param {FastifyBaseLogger} logger The request logger.
  *
- * @returns {RequestError} The refusal, a 504.
+ * @returns {RequestError} The refusal, a 503.
  */
 function timedOut(variables: Variables, logger: FastifyBaseLogger): RequestError {
     logger.warn({ model: variables.ASSISTANT_GEMINI_MODEL }, 'Gemini took too long to answer');
 
-    return new RequestError(StatusCodes.GATEWAY_TIMEOUT, 'The assistant took too long to answer', { reason: ASSISTANT_TIMEOUT });
+    return new RequestError(StatusCodes.SERVICE_UNAVAILABLE, 'The assistant took too long to answer', { reason: ASSISTANT_TIMEOUT });
 }
 
 /**
@@ -132,8 +133,8 @@ export function failureOf(error: unknown): string {
  * @param {GeminiTurnRequest} turn What to send.
  *
  * @returns {Promise<GeminiContent>} The model's turn. Rejects with 503 when Gemini can't help, saying why in
- * `data.reason` when the key is missing or refused, the model unknown or Gemini unreachable, with 504 when the deadline
- * passes, and with 429 when its quota is spent.
+ * `data.reason` when the key is missing or refused, the model unknown, Gemini unreachable or the deadline
+ * passed, and with 429 when its quota is spent.
  */
 export async function generate(variables: Variables, logger: FastifyBaseLogger, turn: GeminiTurnRequest): Promise<GeminiContent> {
     if (variables.ASSISTANT_GEMINI_KEY === '') {
@@ -146,6 +147,7 @@ export async function generate(variables: Variables, logger: FastifyBaseLogger, 
         throw timedOut(variables, logger);
     }
 
+    const startedAt = Date.now();
     let response: Response;
 
     try {
@@ -205,6 +207,8 @@ export async function generate(variables: Variables, logger: FastifyBaseLogger, 
     }
 
     const [candidate] = parsed.data.candidates;
+
+    logger.info({ model: variables.ASSISTANT_GEMINI_MODEL, duration: Date.now() - startedAt }, 'Gemini answered');
 
     return { role: 'model', parts: candidate?.content?.parts ?? [] };
 }

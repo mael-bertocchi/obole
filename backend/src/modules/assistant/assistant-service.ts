@@ -18,7 +18,7 @@ const MAX_ROUNDS = 6;
 /**
  * @constant CONVERSATION_DEADLINE
  * @description How long a conversation may take, every round included. Cloudflare, in front of the server, gives up
- * after 100 seconds with a page the apps can't read, so the server answers well before with its own 504.
+ * after 100 seconds with a page the apps can't read, so the server answers well before with its own refusal.
  */
 const CONVERSATION_DEADLINE = 80 * 1000;
 
