@@ -1,5 +1,5 @@
 import type { Maybe } from 'models';
-import { useEffect, useRef, useState, type JSX, type RefObject } from 'react';
+import { useEffect, useRef, useState, type JSX, type PointerEvent, type RefObject } from 'react';
 
 /**
  * @constant HEIGHT
@@ -179,7 +179,7 @@ function LegendItemComponent(props: LegendItemComponentProps): JSX.Element {
 /**
  * @function MonthBarsComponent
  * @description What each month spent as a bar, the month under way drawn lighter, its budget marked across it, and the
- * average of the finished months as a dashed line. Hovering a month reads its figures.
+ * average of the finished months as a dashed line. Hovering or touching a month reads its figures.
  *
  * @param {MonthBarsComponentProps} props The properties of the component
  */
@@ -214,9 +214,14 @@ function MonthBarsComponent(props: MonthBarsComponentProps): JSX.Element {
 
     /**
      * @function leave
-     * @description Forgets the hovered month once the pointer leaves the plot.
+     * @description Forgets the hovered month once the mouse leaves the plot. A finger lifting leaves it too, so a touched
+     * month stays read until another is touched.
      */
-    const leave = (): void => {
+    const leave = (event: PointerEvent<HTMLDivElement>): void => {
+        if (event.pointerType !== 'mouse') {
+            return;
+        }
+
         setHovered(null);
     };
 
@@ -231,7 +236,7 @@ function MonthBarsComponent(props: MonthBarsComponentProps): JSX.Element {
                 {hasMarkers && <LegendItemComponent label={props.labels.budget} swatch={<line x1='1' y1='6' x2='13' y2='6' stroke={MARKER} strokeWidth='2' strokeLinecap='round' />} />}
                 {props.average !== null && <LegendItemComponent label={props.labels.average} swatch={<line x1='1' y1='6' x2='13' y2='6' stroke={MUTED} strokeWidth='2' strokeDasharray='3 3' />} />}
             </div>
-            <div ref={reference} className='relative w-full' style={{ height: HEIGHT }} onMouseLeave={leave}>
+            <div ref={reference} className='relative w-full' style={{ height: HEIGHT }} onPointerLeave={leave}>
                 {width > 0 && (
                     <svg width={width} height={HEIGHT} role='img' aria-label={props.bars.map((bar) => `${bar.title} ${props.formatAmount(bar.value)}`).join(', ')}>
                         {grid.map((amount) => (
@@ -241,7 +246,7 @@ function MonthBarsComponent(props: MonthBarsComponentProps): JSX.Element {
                             </g>
                         ))}
                         {props.bars.map((bar, index) => (
-                            <g key={bar.key} onMouseEnter={() => setHovered(index)}>
+                            <g key={bar.key} onPointerEnter={() => setHovered(index)} onClick={() => setHovered(index)}>
                                 <rect x={centre(index) - slot / 2} y={PADDING.top} width={slot} height={plotHeight + PADDING.bottom} fill={hovered === index ? '#F2F2F4' : 'transparent'} rx='8' />
                                 <path d={barPath(centre(index) - barWidth / 2, y(bar.value), barWidth, bottom)} fill={ACCENT} fillOpacity={bar.isPartial ? 0.4 : 1} />
                                 {bar.marker !== null && <line x1={centre(index) - barWidth / 2 - 3} x2={centre(index) + barWidth / 2 + 3} y1={y(bar.marker)} y2={y(bar.marker)} stroke={MARKER} strokeWidth='2' strokeLinecap='round' />}

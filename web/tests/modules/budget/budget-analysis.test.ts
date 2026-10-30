@@ -1,4 +1,4 @@
-import { compareMonth, monthTotals, projectMonth, recurringExpenses, referenceMonths, spendingHabits } from 'modules/budget/budget-analysis';
+import { compareMonth, isNotable, monthTotals, projectMonth, recurringExpenses, referenceMonths, spendingHabits } from 'modules/budget/budget-analysis';
 import { describe, expect, it } from 'vitest';
 
 import { document, NOW, operation } from '../../support/fixtures';
@@ -58,6 +58,23 @@ describe('compareMonth', () => {
         expect(comparison.referenceCount).toBe(0);
         expect(comparison.change).toBeNull();
         expect(comparison.categories[0]?.change).toBeNull();
+    });
+});
+
+describe('isNotable', () => {
+    it('shows only the changes worth it: something spent, at least 15% and 10 euros off usual', () => {
+        const category = document([]).categories[0];
+
+        if (category === undefined) {
+            throw new Error('No category');
+        }
+
+        expect(isNotable({ category, spent: 0, usual: 80, change: -1 })).toBe(false);
+        expect(isNotable({ category, spent: 30, usual: 20, change: 0.5 })).toBe(true);
+        expect(isNotable({ category, spent: 6, usual: 4, change: 0.5 })).toBe(false);
+        expect(isNotable({ category, spent: 105, usual: 100, change: 0.05 })).toBe(false);
+        expect(isNotable({ category, spent: 12, usual: 0, change: null })).toBe(true);
+        expect(isNotable({ category, spent: 4, usual: 0, change: null })).toBe(false);
     });
 });
 

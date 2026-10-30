@@ -13,7 +13,7 @@
 
 ## The budget
 
-- **Budget** • the ring with what is left to spend, the spent, days-left and per-day figures, and every category against its limit. The current month adds where it ends at its pace (recurring operations counted once) and, per category, a badge with the change from its usual spending at the same day. Step back through past months; a past month is measured against the budget frozen when it ended.
+- **Budget** • the ring with what is left to spend, the spent, days-left and per-day figures, and every category against its limit. The current month adds where it ends at its pace (recurring operations counted once) and, per category, a badge with the change from its usual spending at the same day, once it strays by 15% and €10 or more. Step back through past months; a past month is measured against the budget frozen when it ended.
 - **History** • operations grouped by day with day totals, each at the time it happened (latest first, read in the browser's time zone), a search, and a filter chip per category.
 - **New & edit operation** • amount in any currency with the euro equivalent at the rate of the operation's own day (bank markup included), category, name, note, date and time, online, place, recurring. Delete with a confirmation.
 - **Analysis** • what each of the last twelve months spent, in all or per category, against its budget and the average; the expenses that come back every month and what they cost over a year; and the habits of the last 90 days: each weekday's average, the share paid online, the places most spent at. Worked out in the page, from the budget it holds.

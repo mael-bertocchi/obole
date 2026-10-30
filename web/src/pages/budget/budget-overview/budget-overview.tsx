@@ -5,7 +5,7 @@ import TrackBarComponent from 'components/track-bar/track-bar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Maybe, Perhaps } from 'models';
 import type { MonthProjection } from 'modules/budget/budget-analysis';
-import { compareMonth, projectMonth } from 'modules/budget/budget-analysis';
+import { compareMonth, isNotable, projectMonth } from 'modules/budget/budget-analysis';
 import { categoryName, hexColor } from 'modules/budget/budget-categories';
 import { dayKey, daysInMonth, monthKey, monthStart, parseMonthKey, shiftMonth } from 'modules/budget/budget-dates';
 import { euro, monthTitle } from 'modules/budget/budget-formatting';
@@ -127,7 +127,7 @@ function ProjectionRowComponent(props: ProjectionRowComponentProps): JSX.Element
  */
 interface CategoryRowComponentProps {
     spend: CategorySpend; /*!< The category and what was spent in it */
-    change: Perhaps<Maybe<number>>; /*!< Its change from usual by the same day, as a fraction, null when it usually spends nothing, left out when not compared */
+    change: Perhaps<Maybe<number>>; /*!< Its change from usual by the same day, as a fraction, null when it usually spends nothing, left out when not worth showing */
     onOpen: () => void; /*!< Called to open its operations */
 }
 
@@ -181,7 +181,7 @@ function BudgetOverviewComponent(): JSX.Element {
     const isCurrent = month.getTime() === monthStart(now).getTime();
     const projection = isCurrent && hasOperations ? projectMonth(document, now) : null;
     const comparison = isCurrent ? compareMonth(document, now) : null;
-    const changes = new Map((comparison !== null && comparison.referenceCount > 0 ? comparison.categories : []).map((entry) => [entry.category.id, entry.change]));
+    const changes = new Map((comparison !== null && comparison.referenceCount > 0 ? comparison.categories.filter(isNotable) : []).map((entry) => [entry.category.id, entry.change]));
 
     /**
      * @function showMonth

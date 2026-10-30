@@ -4,14 +4,13 @@ import type { MonthBar, MonthBarsLabels } from 'components/month-bars/month-bars
 import MonthBarsComponent from 'components/month-bars/month-bars';
 import { Globe, MapPin } from 'lucide-react';
 import type { Maybe } from 'models';
-import type { MonthTotal, RecurringExpense, SpendingHabits } from 'modules/budget/budget-analysis';
+import type { MonthTotal, PlaceSpend, RecurringExpense, SpendingHabits } from 'modules/budget/budget-analysis';
 import { monthTotals, recurringExpenses, spendingHabits } from 'modules/budget/budget-analysis';
 import { categoriesOf, categoryName } from 'modules/budget/budget-categories';
 import { dayShort, euro, monthShort, monthWithYear, percent, weekdayShort } from 'modules/budget/budget-formatting';
 import { useDocument } from 'modules/budget/budget-hooks';
 import type { Category } from 'modules/budget/budget-models';
 import { t } from 'modules/language/language-service';
-import TrendBadgeComponent from 'pages/budget/budget-trend/budget-trend';
 import { useState, type JSX } from 'react';
 
 /**
@@ -58,13 +57,25 @@ function average(values: readonly number[]): Maybe<number> {
 }
 
 /**
+ * @function capitalised
+ * @description A text with a capital first letter, for a phrase that starts a line on its own.
+ *
+ * @param {string} text The text.
+ *
+ * @returns {string} The text, capitalised.
+ */
+function capitalised(text: string): string {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
  * @interface FigureComponentProps
  * @description Properties of one figure under the chart
  */
 interface FigureComponentProps {
     label: string; /*!< Its label */
     value: string; /*!< Its figure */
-    detail?: JSX.Element; /*!< What follows it, such as a badge */
+    note?: string; /*!< A line under it, saying what it is measured on */
 }
 
 /**
@@ -77,10 +88,8 @@ function FigureComponent(props: FigureComponentProps): JSX.Element {
     return (
         <div className='rounded-2xl bg-fill px-3 py-3'>
             <p className='text-[12px] font-medium text-ink-secondary'>{props.label}</p>
-            <div className='mt-0.5 flex flex-wrap items-center gap-2'>
-                <p className='text-[19px] font-semibold tracking-tight tabular-nums'>{props.value}</p>
-                {props.detail}
-            </div>
+            <p className='mt-0.5 text-[19px] font-semibold tracking-tight tabular-nums'>{props.value}</p>
+            {props.note !== undefined && <p className='mt-0.5 text-[12px] text-ink-tertiary tabular-nums'>{props.note}</p>}
         </div>
     );
 }
@@ -153,7 +162,8 @@ function TrendsCardComponent(props: TrendsCardComponentProps): JSX.Element {
     const change = recent !== null && before !== null && before > 0 ? recent / before - 1 : null;
     const labels: MonthBarsLabels = { spent: t('analysis.spent'), budget: t('analysis.limit'), average: t('analysis.average'), partial: t('analysis.partial') };
     const bars: MonthBar[] = props.totals.map((total) => ({ key: total.month.toISOString(), label: monthShort(total.month), title: monthWithYear(total.month), value: spentOf(total, categoryId), marker: categoryId === null && total.limit > 0 ? total.limit : null, isPartial: total.isCurrent }));
-    const badge = before === null ? undefined : <TrendBadgeComponent change={change} />;
+    const trend = change === null ? '•' : `${change > 0 ? '+' : ''}${percent(change)}`;
+    const trendNote = recent !== null && before !== null ? t('analysis.lastThreeNote', { recent: euro(recent), before: euro(before) }) : t('analysis.notEnough');
 
     return (
         <section className='card p-6 sm:p-8'>
@@ -168,7 +178,7 @@ function TrendsCardComponent(props: TrendsCardComponentProps): JSX.Element {
             <div className='mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-3'>
                 <FigureComponent label={t('analysis.monthlyAverage')} value={mean === null ? '•' : euro(mean)} />
                 <FigureComponent label={costliest === null ? t('analysis.costliest') : t('analysis.costliestIn', { month: monthWithYear(costliest.month) })} value={costliest === null ? '•' : euro(spentOf(costliest, categoryId))} />
-                <FigureComponent label={t('analysis.lastThree')} value={recent === null ? '•' : euro(recent)} detail={badge} />
+                <FigureComponent label={t('analysis.lastThree')} value={trend} note={trendNote} />
             </div>
         </section>
     );
@@ -190,13 +200,16 @@ interface RecurringRowComponentProps {
  */
 function RecurringRowComponent(props: RecurringRowComponentProps): JSX.Element {
     const { expense } = props;
+    const lastPaid = t('analysis.lastPaid', { date: dayShort(expense.lastDate) });
+    const isNamedAfterCategory = expense.name.trim().toLowerCase() === categoryName(expense.category).toLowerCase();
+    const detail = isNamedAfterCategory ? capitalised(lastPaid) : `${categoryName(expense.category)} • ${lastPaid}`;
 
     return (
         <div className='flex items-center gap-3 py-2.5'>
             <CategoryIconComponent category={expense.category} size={34} />
             <span className='min-w-0 flex-1'>
                 <span className='block truncate text-[15px] font-medium'>{expense.name}</span>
-                <span className='block truncate text-[13px] text-ink-secondary'>{categoryName(expense.category)} • {t('analysis.lastPaid', { date: dayShort(expense.lastDate) })}</span>
+                <span className='block truncate text-[13px] text-ink-secondary'>{detail}</span>
             </span>
             <span className='text-right'>
                 <span className='block text-[15px] font-semibold tabular-nums'>{t('analysis.perMonth', { amount: euro(expense.monthly) })}</span>
@@ -224,7 +237,7 @@ function RecurringCardComponent(props: RecurringCardComponentProps): JSX.Element
     const yearly = props.expenses.reduce((total, expense) => total + expense.yearly, 0);
 
     return (
-        <section className='card p-6 sm:p-8 lg:col-span-3 lg:self-start'>
+        <section className='card p-6 sm:p-8 lg:col-span-3'>
             <div className='flex items-baseline justify-between gap-4'>
                 <h2 className='text-[20px] font-semibold tracking-tight'>{t('analysis.recurring')}</h2>
                 {props.expenses.length > 0 && <p className='shrink-0 whitespace-nowrap text-[15px] font-semibold tabular-nums'>{t('analysis.perYear', { amount: euro(yearly) })}</p>}
@@ -251,7 +264,7 @@ interface HabitsCardComponentProps {
 /**
  * @function HabitsCardComponent
  * @description How the last ninety days were spent, recurring operations left out: what each weekday costs on
- * average, the share paid online, and the places most spent at.
+ * average, and the share paid online.
  *
  * @param {HabitsCardComponentProps} props The properties of the component
  */
@@ -262,7 +275,7 @@ function HabitsCardComponent(props: HabitsCardComponentProps): JSX.Element {
     const onlineShare = total > 0 ? habits.online / total : 0;
 
     return (
-        <section className='card p-6 sm:p-8 lg:col-span-2 lg:self-start'>
+        <section className='card p-6 sm:p-8 lg:col-span-2'>
             <h2 className='text-[20px] font-semibold tracking-tight'>{t('analysis.habits')}</h2>
             <p className='mt-1 text-[13px] text-ink-secondary'>{t('analysis.habitsNote')}</p>
 
@@ -296,21 +309,40 @@ function HabitsCardComponent(props: HabitsCardComponentProps): JSX.Element {
                         <span className='flex items-center gap-1.5'><MapPin size={14} className='text-ink-tertiary' />{t('analysis.inPerson')} <span className='font-semibold tabular-nums'>{percent(1 - onlineShare)}</span></span>
                     </div>
 
-                    {habits.places.length > 0 && (
-                        <>
-                            <h3 className='mt-6 text-[13px] font-semibold text-ink-secondary'>{t('analysis.places')}</h3>
-                            <div className='mt-1 divide-y divide-hairline'>
-                                {habits.places.map((place) => (
-                                    <div key={place.name} className='flex items-center justify-between gap-3 py-2 text-[14px]'>
-                                        <span className='min-w-0 truncate'>{place.name}</span>
-                                        <span className='shrink-0 text-ink-secondary tabular-nums'>{t('analysis.visits', { count: String(place.count) })} • <span className='font-semibold text-ink'>{euro(place.spent)}</span></span>
-                                    </div>
-                                ))}
-                            </div>
-                        </>
-                    )}
                 </>
             )}
+        </section>
+    );
+}
+
+/**
+ * @interface PlacesCardComponentProps
+ * @description Properties of the places' card
+ */
+interface PlacesCardComponentProps {
+    places: PlaceSpend[]; /*!< The places, the largest first */
+}
+
+/**
+ * @function PlacesCardComponent
+ * @description The places most spent at over the last ninety days, recurring operations left out, as a row of tiles.
+ *
+ * @param {PlacesCardComponentProps} props The properties of the component
+ */
+function PlacesCardComponent(props: PlacesCardComponentProps): JSX.Element {
+    return (
+        <section className='card p-6 sm:p-8'>
+            <h2 className='text-[20px] font-semibold tracking-tight'>{t('analysis.places')}</h2>
+            <p className='mt-1 text-[13px] text-ink-secondary'>{t('analysis.habitsNote')}</p>
+            <div className='mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5'>
+                {props.places.map((place, index) => (
+                    <div key={place.name} className='flex min-w-0 flex-col rounded-2xl bg-fill px-3 py-3'>
+                        <span className='flex items-center gap-1.5 text-[12px] font-medium text-ink-secondary'><MapPin size={13} className='shrink-0 text-ink-tertiary' /><span className='tabular-nums'>{index + 1}</span></span>
+                        <span className='mt-1 truncate text-[15px] font-semibold'>{place.name}</span>
+                        <span className='mt-0.5 text-[13px] text-ink-secondary tabular-nums'>{euro(place.spent)} • {t('analysis.visits', { count: String(place.count) })}</span>
+                    </div>
+                ))}
+            </div>
         </section>
     );
 }
@@ -327,6 +359,7 @@ function BudgetAnalysisComponent(): JSX.Element {
     const totals = monthTotals(document, now);
     const spending = new Set(totals.flatMap((total) => Object.keys(total.byCategory).filter((id) => (total.byCategory[id] ?? 0) > 0)));
     const categories = categoriesOf(document.categories).filter((category) => spending.has(category.id));
+    const habits = spendingHabits(document, now);
 
     return (
         <div className='animate-rise'>
@@ -337,8 +370,9 @@ function BudgetAnalysisComponent(): JSX.Element {
                 <TrendsCardComponent totals={totals} categories={categories} />
                 <div className='grid grid-cols-1 gap-5 lg:grid-cols-5'>
                     <RecurringCardComponent expenses={recurringExpenses(document, now)} />
-                    <HabitsCardComponent habits={spendingHabits(document, now)} />
+                    <HabitsCardComponent habits={habits} />
                 </div>
+                {habits.places.length > 0 && <PlacesCardComponent places={habits.places} />}
             </div>
         </div>
     );

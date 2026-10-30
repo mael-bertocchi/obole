@@ -17,6 +17,19 @@ const REFERENCE_MONTHS = 6;
 const EARLY_DAYS = 5;
 
 /**
+ * @constant NOTABLE_CHANGE
+ * @description How far a category must stray from its usual spending, as a fraction, for the change to be worth showing.
+ */
+const NOTABLE_CHANGE = 0.15;
+
+/**
+ * @constant NOTABLE_AMOUNT
+ * @description How many euros a category must stray from its usual spending for the change to be worth showing, so a
+ * coffee more never reads as a rise.
+ */
+const NOTABLE_AMOUNT = 10;
+
+/**
  * @interface MonthProjection
  * @description Where the current month is heading: what was spent so far, and where it ends at the same pace.
  */
@@ -168,6 +181,28 @@ export function compareMonth(document: BudgetDocument, now: Date = new Date()): 
     const shown = categories.filter((comparison) => comparison.spent > 0 || comparison.usual > 0).toSorted((left, right) => (right.spent - right.usual) - (left.spent - left.usual));
 
     return { referenceCount: references.length, spent, usual, change: changeOf(spent, usual), categories: shown };
+}
+
+/**
+ * @function isNotable
+ * @description Whether a category's change from usual is worth showing: it spent something this month, since nothing
+ * spent yet only means the month is young, and it strays from usual by at least 15% and 10 euros. One that usually spends
+ * nothing counts once it spent 10 euros.
+ *
+ * @param {CategoryComparison} comparison The category, this month and usually.
+ *
+ * @returns {boolean} Whether to show its change.
+ */
+export function isNotable(comparison: CategoryComparison): boolean {
+    if (comparison.spent <= 0) {
+        return false;
+    }
+
+    if (comparison.change === null) {
+        return comparison.spent >= NOTABLE_AMOUNT;
+    }
+
+    return Math.abs(comparison.change) >= NOTABLE_CHANGE && Math.abs(comparison.spent - comparison.usual) >= NOTABLE_AMOUNT;
 }
 
 /**

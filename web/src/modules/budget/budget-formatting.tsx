@@ -36,6 +36,7 @@ interface DateWords {
     months: string[]; /*!< Month names, as a title */
     shortMonths: string[]; /*!< Abbreviated month names, inside a date */
     weekdays: string[]; /*!< Abbreviated weekday names, Sunday first like `Date.getDay` */
+    firstDay: string; /*!< How the first day of a month is written: 1st is 1er in French */
 }
 
 /**
@@ -46,12 +47,14 @@ const DATE_WORDS: Record<Language, DateWords> = {
     en: {
         months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
         shortMonths: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+        weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+        firstDay: '1'
     },
     fr: {
         months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
         shortMonths: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
-        weekdays: ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.']
+        weekdays: ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'],
+        firstDay: '1er'
     }
 };
 
@@ -196,10 +199,12 @@ export function weekdayShort(weekday: number): string {
 
 /**
  * @function dayShort
- * @description A day and abbreviated month: 27 Sep.
+ * @description A day and abbreviated month: 27 Sep, and 1er oct. in French.
  */
 export function dayShort(date: Date): string {
-    return `${date.getDate()} ${dateWords().shortMonths[date.getMonth()] ?? ''}`;
+    const day = date.getDate() === 1 ? dateWords().firstDay : String(date.getDate());
+
+    return `${day} ${dateWords().shortMonths[date.getMonth()] ?? ''}`;
 }
 
 /**

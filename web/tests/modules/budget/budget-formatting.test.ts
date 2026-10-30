@@ -94,10 +94,11 @@ describe('in French', () => {
         expect(clockTime(new Date(2026, 8, 27, 18, 30))).toBe('18:30');
         expect(monthWithYear(NOW)).toBe('Septembre 2026');
         expect(dayShort(new Date(2026, 6, 4))).toBe('4 juil.');
+        expect(dayShort(new Date(2026, 9, 1))).toBe('1er oct.');
     });
 
     it('names a date filter in French', () => {
-        expect(rangeTitle({ start: new Date(2026, 8, 1), end: new Date(2026, 8, 27) }, NOW)).toBe('1 sept. → 27 sept.');
+        expect(rangeTitle({ start: new Date(2026, 8, 1), end: new Date(2026, 8, 27) }, NOW)).toBe('1er sept. → 27 sept.');
     });
 });
 
