@@ -525,7 +525,8 @@ private struct RecurringRow: View {
                 Text(verbatim: detail)
                     .font(Theme.font(11))
                     .foregroundStyle(Theme.muted)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 2) {
@@ -550,7 +551,7 @@ private struct RecurringRow: View {
      * @description Its category and when it was last paid, the category left out when the expense is named after it
      */
     private var detail: String {
-        let day = Formatting.dayShort(expense.lastDate)
+        let day = Formatting.dayShort(expense.lastDate).replacingOccurrences(of: " ", with: "\u{00A0}")
         guard expense.name.trimmingCharacters(in: .whitespaces).lowercased() != expense.category.title.lowercased() else {
             return String(appLocalized: "Last \(day)")
         }
