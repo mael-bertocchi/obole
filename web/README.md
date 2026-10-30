@@ -29,12 +29,6 @@
 - **Watched** • mark a title watched on a day, with a rating in half stars and a comment, or rate one you have already seen in one go; list them the latest watched first or the best rated first. A title can go back to the list, or off it.
 - **Credits** • data and images come from TMDB and offers from JustWatch, credited as they ask.
 
-## The assistant
-
-- **Ask** • a conversation about the budget and the watchlist, answered by Gemini through the backend, in the page's language. The conversation lives in the page only.
-- **Suggestions, never actions** • to log, change or delete an operation, or to rate a title, the assistant shows a card; nothing happens until you confirm it. A confirmed card goes through the budget's own sync (priced at its day's rate, a deletion to the trash) or the watchlist, exactly like an edit made by hand.
-- **Off when it can't answer** • the portal asks the backend whether Gemini takes its key and knows its model; while it doesn't, the assistant is greyed out in the launcher and on the home page, its tile and its page say why, and its field can't be used.
-
 ## Stack
 
 React 19 · TypeScript · Vite · Tailwind CSS · React Router · lucide · Zod · SimpleWebAuthn, served by Caddy.
@@ -61,13 +55,11 @@ src/
 │  ├─ language/      English and French, the picker's state
 │  ├─ toast/         Short messages at the bottom of the page
 │  ├─ budget/        The budget app: manifest, service, store, rates, math, formatting, sentences…
-│  ├─ watchlist/     The watchlist app: manifest, service, store, shelves, formatting, sentences…
-│  └─ assistant/     The assistant app: manifest, service, availability, carrying out a confirmed suggestion, sentences
+│  └─ watchlist/     The watchlist app: manifest, service, store, shelves, formatting, sentences…
 ├─ pages/         One folder per page area, each page or section in its own folder:
 │  ├─ portal/        Home, account, login, connect, authorize
 │  ├─ budget/        The budget's root page, its tabs (overview, history, settings), sheets and home tile
-│  ├─ watchlist/     The watchlist's root page, its tabs (to watch, watched), search and title sheets and home tile
-│  └─ assistant/     The conversation, its suggestion cards and home tile
+│  └─ watchlist/     The watchlist's root page, its tabs (to watch, watched), search and title sheets and home tile
 ├─ styles/        Tailwind entry
 ├─ types/         Vite's environment types
 └─ utils/         Requests (with the session's renewal), tokens, the errors shown to the person

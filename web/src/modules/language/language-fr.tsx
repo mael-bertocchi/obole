@@ -1,4 +1,3 @@
-import { assistantFr } from 'modules/assistant/assistant-language-fr';
 import { budgetFr } from 'modules/budget/budget-language-fr';
 import type { Messages, PortalMessages } from 'modules/language/language-en';
 import { watchlistFr } from 'modules/watchlist/watchlist-language-fr';
@@ -100,4 +99,4 @@ const portalFr: PortalMessages = {
  * @constant fr
  * @description Every sentence the page shows, in French: the portal's, then each app's.
  */
-export const fr: Messages = { ...portalFr, ...budgetFr, ...watchlistFr, ...assistantFr };
+export const fr: Messages = { ...portalFr, ...budgetFr, ...watchlistFr };
