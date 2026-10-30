@@ -60,6 +60,18 @@ export const OAuthClientSchema = z.object({
 });
 
 /**
+ * @constant ClientConnectionSchema
+ * @description Zod schema for an app the owner authorized, such as Claude: its name, when it was authorized and when it
+ * last used its access.
+ */
+export const ClientConnectionSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    connectedAt: z.coerce.date(),
+    lastUsedAt: z.coerce.date()
+});
+
+/**
  * @constant AuthorizationSchema
  * @description Zod schema for where the authorization page sends the client back, with its code.
  */
@@ -137,6 +149,12 @@ export type Passkey = z.infer<typeof PasskeySchema>;
  * @description Who an MCP client asking to be authorized is.
  */
 export type OAuthClient = z.infer<typeof OAuthClientSchema>;
+
+/**
+ * @type ClientConnection
+ * @description An app the owner authorized, as the account page lists it.
+ */
+export type ClientConnection = z.infer<typeof ClientConnectionSchema>;
 
 /**
  * @interface ClientAuthorization

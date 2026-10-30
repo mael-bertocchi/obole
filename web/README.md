@@ -7,7 +7,7 @@
 - **Passkey only** • one button, Face ID or Touch ID, and the passkey stays in your password manager. No password, no code. While the server has an enrollment token set, the sign-in page also offers to create the first passkey with it.
 - **Home** • a greeting, today's date, and a tile for each app with a glance at it (what is left to spend this month, for the budget; how many titles are left to watch, for the watchlist).
 - **App switcher and account button** • in the bar, on every page. The app switcher fades the page out and shows, in its place, the home page and every app as large icons; Escape or the button again brings the page back. The account button, the owner's initial, opens the account page, where they can also sign out.
-- **Account** • the passkeys that open the portal (add one, remove one, but never the last), the language every app speaks, signing out.
+- **Account** • the passkeys that open the portal (add one, remove one, but never the last), the apps authorized with one through `/authorize`, such as Claude, with when each was authorized and last used (revoke one, and it loses its access at once), the language every app speaks, signing out.
 - **Connect** • `/connect` is the page the iOS app opens in a browser sheet to sign in with the passkey; it hands the app a one-time code, never a session.
 - **Authorize** • `/authorize` is the OAuth authorization page MCP clients such as Claude send the owner to: it names the client, and once confirmed with the passkey sends it back with a one-time code bound to its PKCE challenge, never a session.
 

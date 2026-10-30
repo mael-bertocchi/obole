@@ -5,10 +5,10 @@ import ListGroupComponent from 'components/list-group/list-group';
 import ListRowComponent from 'components/list-row/list-row';
 import SheetComponent from 'components/sheet/sheet';
 import SpinnerComponent from 'components/spinner/spinner';
-import { KeyRound, Languages, LogOut, Pencil, Plus, Trash2 } from 'lucide-react';
+import { KeyRound, Languages, LogOut, Pencil, Plug, Plus, Trash2, Unplug } from 'lucide-react';
 import type { Maybe } from 'models';
 import { useIdentityContext } from 'modules/identity/identity-hooks';
-import type { Passkey } from 'modules/identity/identity-models';
+import type { ClientConnection, Passkey } from 'modules/identity/identity-models';
 import type { IdentityContextProps } from 'modules/identity/identity-models';
 import { authenticatorName, createPasskey, forgetPasskey, PasskeyError, passkeyName } from 'modules/identity/identity-passkeys';
 import identityService from 'modules/identity/identity-service';
@@ -107,6 +107,54 @@ function PasskeyRowComponent(props: PasskeyRowComponentProps): JSX.Element {
 }
 
 /**
+ * @function moment
+ * @description A date and a time, written in the page's language.
+ */
+function moment(date: Date): string {
+    return new Intl.DateTimeFormat(currentLanguage(), { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+}
+
+/**
+ * @interface ConnectionRowComponentProps
+ * @description Properties of one connected app's row
+ */
+interface ConnectionRowComponentProps {
+    connection: ClientConnection; /*!< The app */
+    onRevoke: () => void; /*!< Called to revoke it */
+}
+
+/**
+ * @function ConnectionRowComponent
+ * @description One app the owner authorized: its name, when it was authorized and last used, and a button to revoke it.
+ *
+ * @param {ConnectionRowComponentProps} props The properties of the component
+ */
+function ConnectionRowComponent(props: ConnectionRowComponentProps): JSX.Element {
+    const { name, connectedAt, lastUsedAt } = props.connection;
+
+    /**
+     * @constant title
+     * @description The app's name, and when it was authorized and last used
+     */
+    const title = (
+        <span className='block'>
+            <span className='block'>{name}</span>
+            <span className='block text-[13px] text-ink-secondary'>
+                {t('account.connected', { date: day(connectedAt) })} • {t('account.lastUsed', { date: moment(lastUsedAt) })}
+            </span>
+        </span>
+    );
+
+    return (
+        <ListRowComponent icon={<IconTileComponent icon={Plug} color={ACCENT} size={30} />} title={title}>
+            <button type='button' onClick={props.onRevoke} aria-label={t('account.revokeConnection', { name })} className='flex h-8 w-8 items-center justify-center rounded-full text-ink-tertiary transition hover:bg-negative-soft hover:text-negative-text'>
+                <Unplug size={17} />
+            </button>
+        </ListRowComponent>
+    );
+}
+
+/**
  * @interface PasskeyNameFormComponentProps
  * @description Properties of the rename form
  */
@@ -147,8 +195,8 @@ function PasskeyNameFormComponent(props: PasskeyNameFormComponentProps): JSX.Ele
 
 /**
  * @function AccountPage
- * @description The portal's account settings: the passkeys that open it (add one, rename one, remove one), the language every app
- * speaks, and signing out.
+ * @description The portal's account settings: the passkeys that open it (add one, rename one, remove one), the apps
+ * authorized with one (revoke one), the language every app speaks, and signing out.
  */
 function AccountPage(): JSX.Element {
     const { signOut }: IdentityContextProps = useIdentityContext();
@@ -157,6 +205,8 @@ function AccountPage(): JSX.Element {
     const [isAdding, setIsAdding] = useState(false);
     const [renaming, setRenaming] = useState<Maybe<Passkey>>(null);
     const [removing, setRemoving] = useState<Maybe<Passkey>>(null);
+    const [connections, setConnections] = useState<Maybe<ClientConnection[]>>(null);
+    const [revoking, setRevoking] = useState<Maybe<ClientConnection>>(null);
     const [isConfirmingSignOut, setIsConfirmingSignOut] = useState(false);
     const [language, setLanguage] = useState(languageChoice);
     const [revision, setRevision] = useState(0);
@@ -167,6 +217,12 @@ function AccountPage(): JSX.Element {
         identityService.getPasskeys().then((found: Passkey[]) => {
             if (isCurrent) {
                 setPasskeys(found);
+            }
+        }).catch((failure: unknown) => showToast(messageOf(failure)));
+
+        identityService.getConnections().then((found: ClientConnection[]) => {
+            if (isCurrent) {
+                setConnections(found);
             }
         }).catch((failure: unknown) => showToast(messageOf(failure)));
 
@@ -247,6 +303,31 @@ function AccountPage(): JSX.Element {
     };
 
     /**
+     * @function revoke
+     * @description Takes an app's access away
+     */
+    const revoke = async (connection: ClientConnection): Promise<void> => {
+        setRevoking(null);
+
+        try {
+            await identityService.revokeConnection(connection.id);
+            setRevision((current) => current + 1);
+        } catch (failure: unknown) {
+            showToast(messageOf(failure));
+        }
+    };
+
+    /**
+     * @function confirmRevoke
+     * @description Revokes the app asked about, once confirmed
+     */
+    const confirmRevoke = (): void => {
+        if (revoking !== null) {
+            void revoke(revoking);
+        }
+    };
+
+    /**
      * @function pickLanguage
      * @description Switches every app to the language picked
      */
@@ -311,6 +392,18 @@ function AccountPage(): JSX.Element {
                     </ListRowComponent>
                 </ListGroupComponent>
 
+                <ListGroupComponent title={t('account.connections')} note={t('account.connectionsNote')}>
+                    {connections === null && (
+                        <div className='flex min-h-[52px] items-center justify-center'><SpinnerComponent /></div>
+                    )}
+                    {connections !== null && connections.length === 0 && (
+                        <ListRowComponent icon={<IconTileComponent icon={Plug} color={ACCENT} size={30} />} title={<span className='text-ink-secondary'>{t('account.noConnection')}</span>} />
+                    )}
+                    {connections?.map((connection) => (
+                        <ConnectionRowComponent key={connection.id} connection={connection} onRevoke={() => setRevoking(connection)} />
+                    ))}
+                </ListGroupComponent>
+
                 <ListGroupComponent title={t('account.general')}>
                     <ListRowComponent icon={<IconTileComponent icon={Languages} color={ACCENT} size={30} />} title={<label htmlFor='language'>{t('account.language')}</label>}>
                         <select id='language' value={language} onChange={pickLanguage} className='cursor-pointer rounded-lg bg-transparent py-1 text-right text-[15px] text-ink-secondary outline-none focus:ring-2 focus:ring-accent/40'>
@@ -334,6 +427,7 @@ function AccountPage(): JSX.Element {
                     {renaming !== null && <PasskeyNameFormComponent passkey={renaming} onSave={saveName} />}
                 </SheetComponent>
                 <AlertComponent open={removing !== null} title={t('account.confirmRemove')} message={t('account.removeMessage')} action={t('account.removeAction')} onConfirm={confirmRemove} onCancel={() => setRemoving(null)} />
+                <AlertComponent open={revoking !== null} title={t('account.confirmRevoke', { name: revoking?.name ?? '' })} message={t('account.revokeMessage')} action={t('account.revokeAction')} onConfirm={confirmRevoke} onCancel={() => setRevoking(null)} />
                 <AlertComponent open={isConfirmingSignOut} title={t('account.confirmSignOut')} message={t('account.signOutMessage')} action={t('account.signOut')} onConfirm={confirmSignOut} onCancel={() => setIsConfirmingSignOut(false)} />
             </div>
         </FrameComponent>

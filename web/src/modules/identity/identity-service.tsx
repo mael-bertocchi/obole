@@ -1,6 +1,6 @@
 import type { Maybe } from 'models';
-import type { Account, ClientAuthorization, OAuthClient, Passkey } from 'modules/identity/identity-models';
-import { AccountSchema, AuthorizationSchema, ConnectionSchema, CreationOptionsSchema, EnrollmentSchema, IdentityTokensSchema, OAuthClientSchema, PasskeySchema, RequestOptionsSchema } from 'modules/identity/identity-models';
+import type { Account, ClientAuthorization, ClientConnection, OAuthClient, Passkey } from 'modules/identity/identity-models';
+import { AccountSchema, AuthorizationSchema, ClientConnectionSchema, ConnectionSchema, CreationOptionsSchema, EnrollmentSchema, IdentityTokensSchema, OAuthClientSchema, PasskeySchema, RequestOptionsSchema } from 'modules/identity/identity-models';
 import type { AuthenticationResponseJSON, PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON, RegistrationResponseJSON } from 'modules/identity/identity-passkeys';
 import { t } from 'modules/language/language-service';
 import { endSession, fetchPublic, fetchWithAuthentication, rewording } from 'utils/request';
@@ -178,6 +178,27 @@ async function removePasskey(id: string): Promise<void> {
 }
 
 /**
+ * @function getConnections
+ * @description Lists the apps the owner authorized and that still hold their access, most recently used first
+ *
+ * @returns {Promise<ClientConnection[]>} The apps
+ */
+async function getConnections(): Promise<ClientConnection[]> {
+    return await fetchWithAuthentication('/v1/oauth/connections', { method: 'GET' }, z.array(ClientConnectionSchema));
+}
+
+/**
+ * @function revokeConnection
+ * @description Takes an app's access away at once
+ *
+ * @param {string} id The connection's identifier
+ * @returns {Promise<void>} Resolves once it is revoked
+ */
+async function revokeConnection(id: string): Promise<void> {
+    await fetchWithAuthentication(`/v1/oauth/connections/${encodeURIComponent(id)}`, { method: 'DELETE' }, z.unknown());
+}
+
+/**
  * @function logoutUser
  * @description Closes the session on the server, then forgets it and tells the listeners. Forgetting it never waits on
  * the server.
@@ -210,5 +231,7 @@ export default {
     addPasskey,
     renamePasskey,
     removePasskey,
+    getConnections,
+    revokeConnection,
     logoutUser
 };
