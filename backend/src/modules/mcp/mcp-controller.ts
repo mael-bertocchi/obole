@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { StatusCodes } from 'http-status-codes';
 import { answerMcp } from 'src/modules/mcp/mcp-service';
 import type { ToolContext } from 'src/modules/mcp/mcp-tools';
+import { useConnection } from 'src/modules/oauth/oauth-service';
 import { RequestError } from 'src/shared/models';
 import { publicOrigin } from 'src/shared/public-origin';
 
@@ -12,6 +13,23 @@ import { publicOrigin } from 'src/shared/public-origin';
 const LANGUAGE = 'fr';
 
 /**
+ * @function checkConnection
+ * @description Checks the bearer access token and, for a client the owner authorized, that its connection wasn't revoked,
+ * marking it as used.
+ *
+ * @returns {Promise<void>} Resolves when both hold; rejects with 401 otherwise.
+ */
+async function checkConnection(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    await request.server.identity.authenticate(request, reply);
+
+    const connectionId = request.user.cid;
+
+    if (connectionId !== undefined && !await useConnection(request.server.prisma, connectionId)) {
+        throw new RequestError(StatusCodes.UNAUTHORIZED, 'Revoked or expired connection');
+    }
+}
+
+/**
  * @function authenticate
  * @description Guards the MCP endpoint with a bearer access token. A client without one is told where to read how to
  * get one, as the MCP authorization spec asks.
@@ -20,7 +38,7 @@ const LANGUAGE = 'fr';
  */
 async function authenticate(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     try {
-        await request.server.identity.authenticate(request, reply);
+        await checkConnection(request, reply);
     } catch (error: unknown) {
         reply.header('WWW-Authenticate', `Bearer resource_metadata="${publicOrigin(request)}/.well-known/oauth-protected-resource/mcp"`);
 

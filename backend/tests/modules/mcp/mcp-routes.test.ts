@@ -13,6 +13,12 @@ import { standIn } from '../../support/stand-in';
 import { testVariables } from '../../support/variables';
 
 /**
+ * @constant LIVE_CONNECTION
+ * @description The id of a client's connection the owner hasn't revoked
+ */
+const LIVE_CONNECTION = '5f0c6a8e-2b1d-4c3e-9f7a-1d2e3f4a5b6c';
+
+/**
  * @interface TestApp
  * @description A server carrying the MCP endpoint, a token to call it with, and the stand-in operations table.
  */
@@ -44,6 +50,7 @@ async function buildApp(): Promise<TestApp> {
         budgetOperation: operations,
         budgetCategory: { findMany: vi.fn(() => Promise.resolve([{ id: 'groceries', name: 'Groceries', monthlyLimit: 400 }])) },
         budgetState: { upsert: vi.fn(() => Promise.resolve({ revision: 2 })) },
+        identityRefreshSession: { updateMany: vi.fn(({ where }: { where: { connectionId: string } }) => Promise.resolve({ count: where.connectionId === LIVE_CONNECTION ? 1 : 0 })) },
         $transaction: <T>(work: (transaction: unknown) => Promise<T>): Promise<T> => work(prisma)
     };
     const app = Fastify();
@@ -110,6 +117,15 @@ describe('the MCP endpoint', () => {
 
         expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED);
         expect(response.headers['www-authenticate']).toBe('Bearer resource_metadata="https://api.example.fr/.well-known/oauth-protected-resource/mcp"');
+    });
+
+    it('lets an authorized client in until its connection is revoked', async () => {
+        const { app } = await buildApp();
+        const live = app.jwt.sign({ id: 'owner', type: 'access', cid: LIVE_CONNECTION });
+        const revoked = app.jwt.sign({ id: 'owner', type: 'access', cid: '00000000-0000-4000-8000-000000000000' });
+
+        expect((await rpc(app, 'tools/list', {}, live)).statusCode).toBe(StatusCodes.OK);
+        expect((await rpc(app, 'tools/list', {}, revoked)).statusCode).toBe(StatusCodes.UNAUTHORIZED);
     });
 
     it('introduces itself with its instructions', async () => {

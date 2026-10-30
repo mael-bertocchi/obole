@@ -1,8 +1,11 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
+import { StatusCodes } from 'http-status-codes';
+import type { PrismaClient } from 'prisma/generated/prisma/client';
 import { pkceChallenge } from 'src/modules/identity/identity-service';
-import type { OAuthClient } from 'src/modules/oauth/oauth-models';
+import type { ConnectionSummary, OAuthClient } from 'src/modules/oauth/oauth-models';
 import type { Maybe } from 'src/shared/models';
+import { RequestError } from 'src/shared/models';
 import { OneTimeStore } from 'src/shared/one-time-store';
 import { z } from 'zod';
 
@@ -169,4 +172,54 @@ export function closeAuthorization(code: string, clientId: string, redirectUri: 
     const pending = codes.take(code);
 
     return pending !== undefined && pending.clientId === clientId && pending.redirectUri === redirectUri && pending.challenge === pkceChallenge(verifier);
+}
+
+/**
+ * @function listConnections
+ * @description The clients the owner authorized and that can still use their access, most recently used first. Each
+ * connection has one live session at a time, the one its last rotation opened.
+ *
+ * @param {PrismaClient} prisma The database.
+ * @param {string} userId The owner.
+ *
+ * @returns {Promise<ConnectionSummary[]>} The connections.
+ */
+export async function listConnections(prisma: PrismaClient, userId: string): Promise<ConnectionSummary[]> {
+    const sessions = await prisma.identityRefreshSession.findMany({ where: { userId, connectionId: { not: null }, expiresAt: { gt: new Date() } }, orderBy: { lastUsedAt: 'desc' } });
+
+    return sessions.flatMap((session) => (session.connectionId === null || session.clientName === null ? [] : [{ id: session.connectionId, name: session.clientName, connectedAt: session.connectedAt, lastUsedAt: session.lastUsedAt ?? session.connectedAt }]));
+}
+
+/**
+ * @function revokeConnection
+ * @description Forgets a client's connection: its refresh token stops working at once, and so does its access token,
+ * since the MCP endpoint checks the connection on every request.
+ *
+ * @param {PrismaClient} prisma The database.
+ * @param {string} userId The owner.
+ * @param {string} connectionId The connection.
+ *
+ * @returns {Promise<void>} Resolves when it is forgotten; rejects with 404 when there is none.
+ */
+export async function revokeConnection(prisma: PrismaClient, userId: string, connectionId: string): Promise<void> {
+    const { count } = await prisma.identityRefreshSession.deleteMany({ where: { userId, connectionId } });
+
+    if (count === 0) {
+        throw new RequestError(StatusCodes.NOT_FOUND, 'Unknown connection');
+    }
+}
+
+/**
+ * @function useConnection
+ * @description Marks a client's connection as used now, when it still holds.
+ *
+ * @param {PrismaClient} prisma The database.
+ * @param {string} connectionId The connection.
+ *
+ * @returns {Promise<boolean>} Whether it still holds: not revoked, and not lapsed.
+ */
+export async function useConnection(prisma: PrismaClient, connectionId: string): Promise<boolean> {
+    const { count } = await prisma.identityRefreshSession.updateMany({ where: { connectionId, expiresAt: { gt: new Date() } }, data: { lastUsedAt: new Date() } });
+
+    return count > 0;
 }

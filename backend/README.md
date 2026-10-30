@@ -63,6 +63,8 @@ Node 24 · Fastify 5 · TypeScript · Prisma 7 · PostgreSQL · Zod · SimpleWeb
 | `POST /oauth/token` | public | Trade a code and its PKCE verifier, or a refresh token, for tokens, in OAuth's shape |
 | `GET /v1/oauth/client?clientId=&redirectUri=` | public | For the portal's authorization page: the client's name and the host it waits on |
 | `POST /v1/oauth/authorize` | public | For that page: exchange the passkey's signed `{ response }` for the address to send the client back to, with its code |
+| `GET /v1/oauth/connections` | access | The MCP clients the owner authorized and that still hold their access, with when they were authorized and last used |
+| `DELETE /v1/oauth/connections/:id` | access | Revoke a client's access: its refresh token and its access token stop working at once |
 
 Every response is wrapped in `{ "data": … }`; errors are `{ "message": …, "data": … }`. The catalog routes write in `?language=en` or `fr` (French by default).
 
@@ -138,7 +140,7 @@ Without it, the watchlist still lists its titles, but searching and opening one 
 - **Read** • `budget_list_categories`, `budget_search_operations`, `budget_month_summary`, `watchlist_search`, and `watchlist_title_details`, which reads a title's synopsis, genres and streaming services from TMDB.
 - **Write** • `budget_create_operation` (priced at its day's rate with the bank's markup, as the apps price it, and dated at noon UTC on its day), `budget_update_operation`, `budget_delete_operation` (to the trash), `watchlist_rate_title` and `watchlist_add_title`. Each is marked as writing, and the delete as destructive, so the client asks before running them.
 
-The server keeps no MCP session: each message is answered on its own. Client ids are signed with `JWT_SECRET` rather than stored, so they survive restarts; changing the secret signs every client out. The tokens are the apps' own (`JWT_ACCESS_EXPIRY`, refreshed with `JWT_REFRESH_EXPIRY`). Outside `localhost`, the addresses the metadata gives are always HTTPS.
+The server keeps no MCP session: each message is answered on its own. Client ids are signed with `JWT_SECRET` rather than stored, so they survive restarts; changing the secret signs every client out. The tokens are the apps' own (`JWT_ACCESS_EXPIRY`, refreshed with `JWT_REFRESH_EXPIRY`), but they name the client's connection, which keeps its id across every rotation: the portal's and the app's settings list the connections, and revoking one cuts the client off at once, since `/mcp` checks its connection on every message and marks it as used. Outside `localhost`, the addresses the metadata gives are always HTTPS.
 
 ## Scripts
 

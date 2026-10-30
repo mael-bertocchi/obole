@@ -9,12 +9,17 @@ datasource db {
 }
 
 model IdentityRefreshSession {
-  id        String   @id
-  userId    String   @map("user_id")
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  id           String    @id
+  userId       String    @map("user_id")
+  expiresAt    DateTime  @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  connectionId String?   @map("connection_id")
+  clientName   String?   @map("client_name")
+  connectedAt  DateTime  @default(now()) @map("connected_at")
+  lastUsedAt   DateTime? @map("last_used_at")
 
   @@index([userId])
+  @@index([connectionId])
   @@map("identity_refresh_sessions")
 }
 

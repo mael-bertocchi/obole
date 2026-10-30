@@ -1,9 +1,9 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { StatusCodes } from 'http-status-codes';
 import { verifySignIn } from 'src/modules/identity/identity-service';
-import type { AuthorizationRequest, ClientRequest, OAuthClient, RegistrationRequest } from 'src/modules/oauth/oauth-models';
+import type { AuthorizationRequest, ClientRequest, ConnectionDeleteRequest, OAuthClient, RegistrationRequest } from 'src/modules/oauth/oauth-models';
 import { TokenSchema } from 'src/modules/oauth/oauth-models';
-import { closeAuthorization, isAllowedRedirect, openAuthorization, readClient, registerClient } from 'src/modules/oauth/oauth-service';
+import { closeAuthorization, isAllowedRedirect, listConnections, openAuthorization, readClient, registerClient, revokeConnection } from 'src/modules/oauth/oauth-service';
 import type { IdentityTokens } from 'src/plugins/identity';
 import { OWNER_ID } from 'src/plugins/identity';
 import type { Maybe } from 'src/shared/models';
@@ -195,13 +195,15 @@ async function token(request: FastifyRequest, reply: FastifyReply): Promise<void
     const grant = parsed.data;
 
     if (grant.grant_type === 'authorization_code') {
-        if (!closeAuthorization(grant.code, grant.client_id, grant.redirect_uri, grant.code_verifier)) {
+        const authorized = readClient(request.server.variables.JWT_SECRET, grant.client_id);
+
+        if (authorized === null || !closeAuthorization(grant.code, grant.client_id, grant.redirect_uri, grant.code_verifier)) {
             oauthError(reply, 'invalid_grant', 'Invalid or expired code');
 
             return;
         }
 
-        reply.status(StatusCodes.OK).header('Cache-Control', 'no-store').send(tokenResponse(request, await identity.issueTokens(OWNER_ID)));
+        reply.status(StatusCodes.OK).header('Cache-Control', 'no-store').send(tokenResponse(request, await identity.issueTokens(OWNER_ID, authorized.name)));
 
         return;
     }
@@ -223,11 +225,35 @@ async function token(request: FastifyRequest, reply: FastifyReply): Promise<void
     reply.status(StatusCodes.OK).header('Cache-Control', 'no-store').send(tokenResponse(request, tokens));
 }
 
+/**
+ * @function connections
+ * @description Lists the clients the owner authorized and that still hold their access.
+ *
+ * @returns {Promise<void>} Resolves when the list is sent.
+ */
+async function connections(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    reply.status(StatusCodes.OK).send({ data: await listConnections(request.server.prisma, request.user.id) });
+}
+
+/**
+ * @function deleteConnection
+ * @description Revokes a client's access.
+ *
+ * @returns {Promise<void>} Resolves when it is revoked.
+ */
+async function deleteConnection(request: FastifyRequest<ConnectionDeleteRequest>, reply: FastifyReply): Promise<void> {
+    await revokeConnection(request.server.prisma, request.user.id, request.params.id);
+
+    reply.status(StatusCodes.OK).send({ data: { message: 'Connection revoked' } });
+}
+
 export default {
     resourceMetadata,
     serverMetadata,
     register,
     client,
     authorize,
-    token
+    token,
+    connections,
+    deleteConnection
 };

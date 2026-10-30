@@ -49,6 +49,42 @@ interface StoredPasskey {
 }
 
 /**
+ * @interface StoredSession
+ * @description A refresh session row as the in-memory database keeps it.
+ */
+interface StoredSession {
+    id: string; /*!< The session's id */
+    userId: string; /*!< Whose it is */
+    expiresAt: Date; /*!< When it lapses */
+    connectionId: Maybe<string>; /*!< The connection of the client it was opened for, if any */
+    clientName: Maybe<string>; /*!< That client's name */
+    connectedAt: Date; /*!< When that client was authorized */
+    lastUsedAt: Maybe<Date>; /*!< When that client last used it */
+}
+
+/**
+ * @interface SessionFilter
+ * @description The filters the identity and OAuth modules put on refresh sessions.
+ */
+interface SessionFilter {
+    id?: string; /*!< One session */
+    userId?: string; /*!< One owner's */
+    connectionId?: string | { not: null }; /*!< One connection's, or any client's */
+    expiresAt?: { gt: Date }; /*!< Only those not lapsed */
+}
+
+/**
+ * @function matches
+ * @description Whether a stored session passes a filter.
+ */
+function matches(session: StoredSession, where: SessionFilter): boolean {
+    const connection = where.connectionId === undefined || (typeof where.connectionId === 'string' ? session.connectionId === where.connectionId : session.connectionId !== null);
+    const live = where.expiresAt === undefined || session.expiresAt > where.expiresAt.gt;
+
+    return (where.id === undefined || session.id === where.id) && (where.userId === undefined || session.userId === where.userId) && connection && live;
+}
+
+/**
  * @interface MemoryDatabase
  * @description The in-memory stand-in for PostgreSQL, and its passkey table for the tests to look into.
  */
@@ -81,7 +117,7 @@ interface TestTokens {
  */
 function memoryDatabase(): MemoryDatabase {
     const passkeys = new Map<string, StoredPasskey>();
-    const sessions = new Map<string, { id: string; userId: string; expiresAt: Date }>();
+    const sessions = new Map<string, StoredSession>();
     const prisma = {
         identityPasskey: {
             findUnique: ({ where }: { where: { id: string } }) => Promise.resolve(passkeys.get(where.id) ?? null),
@@ -110,14 +146,30 @@ function memoryDatabase(): MemoryDatabase {
             }
         },
         identityRefreshSession: {
-            create: ({ data }: { data: { id: string; userId: string; expiresAt: Date } }) => {
-                sessions.set(data.id, data);
+            create: ({ data }: { data: Partial<StoredSession> & Pick<StoredSession, 'id' | 'userId' | 'expiresAt'> }) => {
+                const row = { connectionId: null, clientName: null, connectedAt: new Date(), lastUsedAt: null, ...data };
 
-                return Promise.resolve(data);
+                sessions.set(row.id, row);
+
+                return Promise.resolve(row);
             },
             findUnique: ({ where }: { where: { id: string } }) => Promise.resolve(sessions.get(where.id) ?? null),
+            findMany: ({ where }: { where: SessionFilter }) => Promise.resolve([...sessions.values()].filter((session) => matches(session, where))),
+            updateMany: ({ where, data }: { where: SessionFilter; data: Partial<StoredSession> }) => {
+                const found = [...sessions.values()].filter((session) => matches(session, where));
+
+                found.forEach((session) => sessions.set(session.id, { ...session, ...data }));
+
+                return Promise.resolve({ count: found.length });
+            },
             delete: ({ where }: { where: { id: string } }) => Promise.resolve(sessions.delete(where.id)),
-            deleteMany: ({ where }: { where: { id: string } }) => Promise.resolve({ count: sessions.delete(where.id) ? 1 : 0 })
+            deleteMany: ({ where }: { where: SessionFilter }) => {
+                const found = [...sessions.values()].filter((session) => matches(session, where));
+
+                found.forEach((session) => sessions.delete(session.id));
+
+                return Promise.resolve({ count: found.length });
+            }
         },
         $transaction: <T>(work: (transaction: unknown) => Promise<T>): Promise<T> => work(prisma)
     };
@@ -560,6 +612,28 @@ describe('authorizing an MCP client', () => {
 
         expect(refreshed.statusCode).toBe(StatusCodes.OK);
         expect((await token(app, { grant_type: 'refresh_token', refresh_token: tokens.refresh_token })).json()).toMatchObject({ error: 'invalid_grant' });
+    });
+
+    it('lists the clients the owner authorized, across their rotations, and revokes them', async () => {
+        const { app } = await buildApp();
+        const authenticator = new SoftwareAuthenticator({ origin: ORIGIN });
+        const owner = (await enroll(app, authenticator)).accessToken;
+        const clientId = await registerClient(app);
+        const authorized = await authorize(app, authenticator, clientId);
+        const code = new URL(authorized.json<{ data: { redirectUrl: string } }>().data.redirectUrl).searchParams.get('code') ?? '';
+        const tokens = (await token(app, { grant_type: 'authorization_code', code, code_verifier: VERIFIER, client_id: clientId, redirect_uri: CALLBACK })).json<{ refresh_token: string }>();
+        const refreshed = (await token(app, { grant_type: 'refresh_token', refresh_token: tokens.refresh_token })).json<{ refresh_token: string }>();
+        const listed = await app.inject({ method: 'GET', url: '/v1/oauth/connections', headers: { authorization: `Bearer ${owner}` } });
+        const connections = listed.json<{ data: { id: string; name: string }[] }>().data;
+
+        expect(connections).toHaveLength(1);
+        expect(connections[0]).toMatchObject({ name: 'Claude' });
+
+        const revoked = await app.inject({ method: 'DELETE', url: `/v1/oauth/connections/${connections[0]?.id ?? ''}`, headers: { authorization: `Bearer ${owner}` } });
+
+        expect(revoked.statusCode).toBe(StatusCodes.OK);
+        expect((await token(app, { grant_type: 'refresh_token', refresh_token: refreshed.refresh_token })).json()).toMatchObject({ error: 'invalid_grant' });
+        expect((await app.inject({ method: 'GET', url: '/v1/oauth/connections', headers: { authorization: `Bearer ${owner}` } })).json()).toEqual({ data: [] });
     });
 
     it('hands out no code for an address the client did not register, or a forged client', async () => {

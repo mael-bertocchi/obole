@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import oauthController from 'src/modules/oauth/oauth-controller';
-import type { AuthorizationRequest, ClientRequest, RegistrationRequest } from 'src/modules/oauth/oauth-models';
-import { AuthorizationSchema, ClientQuerySchema, RegistrationSchema } from 'src/modules/oauth/oauth-models';
+import type { AuthorizationRequest, ClientRequest, ConnectionDeleteRequest, RegistrationRequest } from 'src/modules/oauth/oauth-models';
+import { AuthorizationSchema, ClientQuerySchema, ConnectionParamsSchema, RegistrationSchema } from 'src/modules/oauth/oauth-models';
 
 /**
  * @constant OAUTH_LIMIT
@@ -24,7 +24,7 @@ function parseForm(body: string): Record<string, string> {
 /**
  * @function oauthRoutes
  * @description Defines the OAuth 2.1 server MCP clients such as Claude go through: the metadata telling them how, their
- * registration, the portal's authorization with the passkey, and the tokens.
+ * registration, the portal's authorization with the passkey, the tokens, and the list of clients the owner authorized.
  */
 export default function (fastify: FastifyInstance): void {
     fastify.addContentTypeParser('application/x-www-form-urlencoded', { parseAs: 'string' }, (_request, body, done) => {
@@ -60,4 +60,15 @@ export default function (fastify: FastifyInstance): void {
             body: AuthorizationSchema
         }
     }, oauthController.authorize);
+
+    fastify.get('/v1/oauth/connections', {
+        preHandler: [fastify.identity.authenticate]
+    }, oauthController.connections);
+
+    fastify.delete<ConnectionDeleteRequest>('/v1/oauth/connections/:id', {
+        preHandler: [fastify.identity.authenticate],
+        schema: {
+            params: ConnectionParamsSchema
+        }
+    }, oauthController.deleteConnection);
 }

@@ -4,6 +4,7 @@ import fastifyJwt from '@fastify/jwt';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import { StatusCodes } from 'http-status-codes';
+import type { Maybe, Perhaps } from 'src/shared/models';
 import { RequestError } from 'src/shared/models';
 import { OneTimeStore } from 'src/shared/one-time-store';
 
@@ -49,6 +50,17 @@ export interface TokenPayload {
     id: string; /*!< The owner's identifier */
     type: 'access' | 'refresh'; /*!< Distinguishes an access token from a refresh token */
     sid?: string; /*!< Refresh-session id, present on refresh tokens only */
+    cid?: string; /*!< The connection's id, present on the tokens of a client the owner authorized, such as Claude */
+}
+
+/**
+ * @interface ClientConnection
+ * @description A client the owner authorized, such as Claude, as its sessions remember it from one rotation to the next.
+ */
+export interface ClientConnection {
+    id: string; /*!< The connection's id, kept by every session it rotates into */
+    name: string; /*!< The client's name, as it registered */
+    connectedAt: Date; /*!< When the owner authorized it */
 }
 
 /**
@@ -70,7 +82,7 @@ export interface IdentityService {
     challenges: OneTimeStore<ChallengePurpose>; /*!< The challenges handed out and not signed yet */
     connections: OneTimeStore<string>; /*!< The app's one-time codes, each with the PKCE challenge it was asked with */
     isEnrollmentToken: (token: string) => boolean; /*!< Constant-time check of the optional enrollment token */
-    issueTokens: (userId: string) => Promise<IdentityTokens>; /*!< Creates a refresh session and returns a token pair */
+    issueTokens: (userId: string, clientName?: Perhaps<string>) => Promise<IdentityTokens>; /*!< Creates a refresh session, for a client the owner just authorized when it is named, and returns a token pair */
     rotateTokens: (refreshToken: string) => Promise<IdentityTokens>; /*!< Validates and rotates a refresh token into a new pair */
     revokeSession: (userId: string, refreshToken: string) => Promise<void>; /*!< Invalidates a single refresh session (logout) */
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>; /*!< preHandler guarding a route with a bearer access token */
@@ -119,20 +131,33 @@ export default fp(async function (fastify: FastifyInstance): Promise<void> {
     };
 
     /**
-     * @function issueTokens
-     * @description Persists a new refresh session and returns the matching access/refresh token pair.
+     * @function openSession
+     * @description Persists a new refresh session and returns the matching access/refresh token pair. A session of a
+     * client's connection carries the connection on, and both its tokens name it.
      */
-    const issueTokens = async (userId: string): Promise<IdentityTokens> => {
+    const openSession = async (userId: string, connection: Maybe<ClientConnection>): Promise<IdentityTokens> => {
         const sid = randomUUID();
-        const refreshToken = fastify.jwt.sign({ id: userId, type: 'refresh', sid }, { expiresIn: fastify.variables.JWT_REFRESH_EXPIRY });
+        const cid = connection?.id;
+        const refreshToken = fastify.jwt.sign({ id: userId, type: 'refresh', sid, cid }, { expiresIn: fastify.variables.JWT_REFRESH_EXPIRY });
         const decoded = fastify.jwt.decode<{ exp: number }>(refreshToken);
         const expiresAt = decoded !== null ? new Date(decoded.exp * 1000) : new Date();
+        const connectionData = connection === null ? {} : { connectionId: connection.id, clientName: connection.name, connectedAt: connection.connectedAt, lastUsedAt: new Date() };
 
-        await fastify.prisma.identityRefreshSession.create({ data: { id: sid, userId, expiresAt } });
+        await fastify.prisma.identityRefreshSession.create({ data: { id: sid, userId, expiresAt, ...connectionData } });
 
-        const accessToken = fastify.jwt.sign({ id: userId, type: 'access' }, { expiresIn: fastify.variables.JWT_ACCESS_EXPIRY });
+        const accessToken = fastify.jwt.sign({ id: userId, type: 'access', cid }, { expiresIn: fastify.variables.JWT_ACCESS_EXPIRY });
 
         return { accessToken, refreshToken };
+    };
+
+    /**
+     * @function issueTokens
+     * @description Opens a session, starting a connection when a client the owner just authorized is named.
+     */
+    const issueTokens = async (userId: string, clientName?: Perhaps<string>): Promise<IdentityTokens> => {
+        const connection = clientName === undefined ? null : { id: randomUUID(), name: clientName, connectedAt: new Date() };
+
+        return await openSession(userId, connection);
     };
 
     /**
@@ -189,7 +214,9 @@ export default fp(async function (fastify: FastifyInstance): Promise<void> {
 
             await fastify.prisma.identityRefreshSession.delete({ where: { id: sid } });
 
-            return await issueTokens(id);
+            const connection = session.connectionId === null || session.clientName === null ? null : { id: session.connectionId, name: session.clientName, connectedAt: session.connectedAt };
+
+            return await openSession(id, connection);
         },
 
         /**

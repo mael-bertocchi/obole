@@ -71,6 +71,14 @@ export const TokenSchema = z.discriminatedUnion('grant_type', [
 ]);
 
 /**
+ * @constant ConnectionParamsSchema
+ * @description Zod schema for the path naming one client's connection.
+ */
+export const ConnectionParamsSchema = z.object({
+    id: z.uuid()
+});
+
+/**
  * @type Registration
  * @description What a client says when it registers.
  */
@@ -90,6 +98,17 @@ export interface OAuthClient {
     redirectUris: string[]; /*!< Where it may be sent back */
     name: string; /*!< Its name, shown to the owner */
     issuedAt: number; /*!< When it registered, in seconds */
+}
+
+/**
+ * @interface ConnectionSummary
+ * @description A client the owner authorized, as the settings list it.
+ */
+export interface ConnectionSummary {
+    id: string; /*!< The connection's id */
+    name: string; /*!< The client's name, as it registered */
+    connectedAt: Date; /*!< When the owner authorized it */
+    lastUsedAt: Date; /*!< When it last renewed its access or called a tool */
 }
 
 /**
@@ -120,4 +139,14 @@ export interface ClientRequest extends RequestGenericInterface {
  */
 export interface AuthorizationRequest extends RequestGenericInterface {
     Body: Authorization; /*!< The authorization */
+}
+
+/**
+ * @interface ConnectionDeleteRequest
+ * @description Fastify request generic for the owner revoking a client's connection.
+ *
+ * @extends RequestGenericInterface
+ */
+export interface ConnectionDeleteRequest extends RequestGenericInterface {
+    Params: z.infer<typeof ConnectionParamsSchema>; /*!< The connection */
 }
