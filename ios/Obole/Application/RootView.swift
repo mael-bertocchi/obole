@@ -7,7 +7,7 @@ import SwiftUI
 enum AppTab: String, CaseIterable, Identifiable {
     case budget /*!< The budget ring and the categories */
     case history /*!< The operations, day by day */
-    case analysis /*!< Where the month is heading, and how it compares with usual */
+    case analysis /*!< The spending over the last year, the recurring expenses and the habits */
     case settings /*!< The settings */
 
     var id: String { rawValue } /*!< Its identifier, for the tab view */
@@ -98,7 +98,7 @@ struct MainShell: View {
                 )
                 .screenBackground()
             }
-            Tab("Analysis", systemImage: "chart.line.uptrend.xyaxis", value: AppTab.analysis) {
+            Tab("Analysis", systemImage: "chart.bar.xaxis", value: AppTab.analysis) {
                 AnalysisView()
                     .screenBackground()
             }

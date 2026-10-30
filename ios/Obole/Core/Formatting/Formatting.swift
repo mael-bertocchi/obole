@@ -374,6 +374,31 @@ enum Formatting {
     }
 
     /**
+     * @method monthShort
+     * @description A month's short name, under a chart's bar: Oct
+     *
+     * @param date Any day of the month
+     * @returns The name
+     */
+    static func monthShort(_ date: Date) -> String {
+        self.date(date, format: "LLL")
+    }
+
+    /**
+     * @method weekdayShort
+     * @description A weekday's short name: Mon
+     *
+     * @param weekday The weekday, 1 for Sunday like the calendar's
+     * @returns The name
+     */
+    static func weekdayShort(_ weekday: Int) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Localization.locale
+        let symbols = formatter.shortStandaloneWeekdaySymbols ?? []
+        return symbols.indices.contains(weekday - 1) ? symbols[weekday - 1] : ""
+    }
+
+    /**
      * @method dayShort
      * @description A day and its month: 5 Oct
      *

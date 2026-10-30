@@ -4,6 +4,26 @@
     "" : {
       "shouldTranslate" : false
     },
+    "%@ / month" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ / mois"
+          }
+        }
+      }
+    },
+    "%@ / year" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ / an"
+          }
+        }
+      }
+    },
     "%@ at %@" : {
       "localizations" : {
         "fr" : {
@@ -60,6 +80,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ à répartir"
+          }
+        }
+      }
+    },
+    "%lld times" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld fois"
+          }
+        }
+      }
+    },
+    "A typical day" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une journée type"
           }
         }
       }
@@ -154,26 +194,6 @@
         }
       }
     },
-    "At this point of the month, against last month." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "À ce stade du mois, comparé au mois dernier."
-          }
-        }
-      }
-    },
-    "At this point of the month, against the average of your last %lld months." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "À ce stade du mois, comparé à la moyenne de vos %lld derniers mois."
-          }
-        }
-      }
-    },
     "Authorized: %@" : {
       "localizations" : {
         "fr" : {
@@ -190,6 +210,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automatique"
+          }
+        }
+      }
+    },
+    "Average" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moyenne"
           }
         }
       }
@@ -324,22 +354,32 @@
         }
       }
     },
-    "Compared with usual" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Par rapport à d’habitude"
-          }
-        }
-      }
-    },
     "Connected apps" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Applications connectées"
+          }
+        }
+      }
+    },
+    "Costliest month" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mois le plus cher"
+          }
+        }
+      }
+    },
+    "Costliest: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le plus cher : %@"
           }
         }
       }
@@ -604,6 +644,16 @@
         }
       }
     },
+    "Habits" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Habitudes"
+          }
+        }
+      }
+    },
     "Haptics" : {
       "localizations" : {
         "fr" : {
@@ -614,12 +664,22 @@
         }
       }
     },
-    "In all" : {
+    "How you pay" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Au total"
+            "value" : "Comment vous payez"
+          }
+        }
+      }
+    },
+    "In person" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur place"
           }
         }
       }
@@ -634,12 +694,52 @@
         }
       }
     },
+    "last %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dernière le %@"
+          }
+        }
+      }
+    },
+    "Last 3 months, on average" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 derniers mois, en moyenne"
+          }
+        }
+      }
+    },
     "Last used: %@" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dernière utilisation : %@"
+          }
+        }
+      }
+    },
+    "Marked recurring, or logged under the same name for about the same amount in at least 3 of the last 7 months." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquées récurrentes, ou notées sous le même nom pour à peu près le même montant sur au moins 3 des 7 derniers mois."
+          }
+        }
+      }
+    },
+    "Monthly average" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moyenne par mois"
           }
         }
       }
@@ -664,22 +764,32 @@
         }
       }
     },
-    "Nothing spent yet this month." : {
+    "No expense comes back every month yet." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rien de dépensé ce mois-ci pour l’instant."
+            "value" : "Aucune dépense ne revient chaque mois pour l’instant."
           }
         }
       }
     },
-    "Once a month is over, each category shows here against your usual spending." : {
+    "Nothing spent over the last 90 days." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dès qu’un mois sera terminé, chaque catégorie s’affichera ici face à vos dépenses habituelles."
+            "value" : "Rien de dépensé sur les 90 derniers jours."
+          }
+        }
+      }
+    },
+    "Over %lld months" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur %lld mois"
           }
         }
       }
@@ -694,22 +804,22 @@
         }
       }
     },
-    "Projection" : {
+    "Over the last 90 days, recurring expenses left out." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Projection"
+            "value" : "Sur les 90 derniers jours, hors dépenses récurrentes."
           }
         }
       }
     },
-    "Projection: %@" : {
+    "Recurring expenses" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Projection : %@"
+            "value" : "Dépenses récurrentes"
           }
         }
       }
@@ -1384,16 +1494,6 @@
         }
       }
     },
-    "This month" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ce mois-ci"
-          }
-        }
-      }
-    },
     "This month and the next ones: past months keep their budget." : {
       "localizations" : {
         "fr" : {
@@ -1474,12 +1574,32 @@
         }
       }
     },
+    "Trends" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tendances"
+          }
+        }
+      }
+    },
     "Uncategorized" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sans catégorie"
+          }
+        }
+      }
+    },
+    "Under way" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En cours"
           }
         }
       }
@@ -1494,32 +1614,32 @@
         }
       }
     },
-    "Usually" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "D’habitude"
-          }
-        }
-      }
-    },
-    "Usually %@" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "D’habitude %@"
-          }
-        }
-      }
-    },
     "Weekly groceries with Anna" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Courses de la semaine avec Anna"
+          }
+        }
+      }
+    },
+    "What each month spent, the current one still under way." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que chaque mois a dépensé, le mois en cours n’étant pas terminé."
+          }
+        }
+      }
+    },
+    "Where you spend most" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Là où vous dépensez le plus"
           }
         }
       }

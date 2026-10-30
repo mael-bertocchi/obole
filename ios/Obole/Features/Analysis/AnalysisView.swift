@@ -3,8 +3,8 @@ import SwiftUI
 
 /**
  * @class AnalysisView
- * @description The Analysis tab: where the current month is heading at its pace, and how it compares with the usual
- * spending at the same point of the month, in all and per category. Everything is worked out on the device
+ * @description The Analysis tab, about what a single month can't show: how the spending moved over the last year, the
+ * expenses that come back every month, and the recent habits. Everything is worked out on the device
  */
 struct AnalysisView: View {
     @Environment(LocalStore.self) private var store /*!< The budget */
@@ -15,29 +15,21 @@ struct AnalysisView: View {
      */
     var body: some View {
         let now = Date.now
-        let projection = BudgetAnalysis.project(store.operations, limit: store.monthlyBudget(for: now).monthlyLimit, now: now)
-        let comparison = BudgetAnalysis.compare(store.operations, categories: store.categories, now: now)
+        let totals = BudgetAnalysis.monthTotals(store.operations, limit: { store.monthlyBudget(for: $0).monthlyLimit }, now: now)
+        let spending = Set(totals.flatMap { $0.byCategory.filter { $0.value > 0 }.keys })
 
         return ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                ScreenTitle(Formatting.monthTitle(projection.month))
+                ScreenTitle(String(appLocalized: "Over \(totals.count) months"))
                     .padding(.bottom, 20)
 
-                SectionLabel(String(appLocalized: "End of the month"))
-                    .padding(.bottom, 10)
-                ProjectionCard(projection: projection)
+                TrendsSection(totals: totals, categories: store.categories.filter { spending.contains($0.id) })
 
-                HStack(spacing: 10) {
-                    StatCard(label: String(appLocalized: "Spent"), value: Formatting.euro(projection.spent))
-                    StatCard(label: String(appLocalized: "Per day"), value: Formatting.euro(projection.pace))
-                    StatCard(label: String(appLocalized: "Budget"), value: projection.limit > 0 ? Formatting.euro(projection.limit) : "•")
-                }
-                .padding(.top, 10)
+                RecurringSection(expenses: BudgetAnalysis.recurringExpenses(store.operations, categories: store.categories, now: now))
+                    .padding(.top, 26)
 
-                SectionLabel(String(appLocalized: "Compared with usual"))
-                    .padding(.top, 22)
-                    .padding(.bottom, 10)
-                ComparisonSection(comparison: comparison)
+                HabitsSection(habits: BudgetAnalysis.spendingHabits(store.operations, now: now))
+                    .padding(.top, 26)
             }
             .padding(.top, 8)
             .padding(.horizontal, Theme.screenPadding)
@@ -49,102 +41,204 @@ struct AnalysisView: View {
 }
 
 /**
- * @class ProjectionCard
- * @description Where the month ends at the current pace, against its budget, with how it was worked out and the
- * month's curve next to the usual one
+ * @class SectionNote
+ * @description The small text under a section's title, saying what it measures
  */
-private struct ProjectionCard: View {
-    let projection: MonthProjection /*!< Where the month is heading */
+private struct SectionNote: View {
+    let text: String /*!< The note */
 
     /**
      * @method body
-     * @description The card
+     * @description The note
      */
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(verbatim: Formatting.euro(projection.projected))
-                .font(Theme.font(34, .semibold))
+        Text(verbatim: text)
+            .font(Theme.font(12))
+            .foregroundStyle(Theme.muted)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+/**
+ * @class TrendsSection
+ * @description What each month spent over the last year, in all or in one category: a bar per month against its budget,
+ * the average of the finished months, the costliest month, and the last three finished months against the three before
+ */
+private struct TrendsSection: View {
+    let totals: [MonthTotal] /*!< The months, the oldest first */
+    let categories: [Category] /*!< The categories that spent over them */
+
+    @State private var categoryId: String? /*!< The category shown, nil for all of them */
+
+    /**
+     * @constant comparedMonths
+     * @description How many finished months the latest trend compares with the ones before them
+     */
+    private let comparedMonths = 3
+
+    /**
+     * @method body
+     * @description The section
+     */
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionLabel(String(appLocalized: "Trends"))
+            SectionNote(text: String(appLocalized: "What each month spent, the current one still under way."))
+
+            ScrollView(.horizontal) {
+                HStack(spacing: 8) {
+                    FilterChip(title: String(appLocalized: "All"), isActive: categoryId == nil) {
+                        categoryId = nil
+                    }
+                    ForEach(categories) { category in
+                        FilterChip(title: category.title, isActive: categoryId == category.id) {
+                            categoryId = category.id
+                        }
+                    }
+                }
+                .padding(.vertical, 6)
+            }
+            .scrollIndicators(.hidden)
+
+            MonthBarsChart(totals: totals, categoryId: categoryId, average: average)
+                .frame(height: 210)
+                .padding(16)
+                .glassCard()
+
+            VStack(spacing: 0) {
+                FigureRow(label: String(appLocalized: "Monthly average"), value: average.map(Formatting.euro) ?? "•")
+                RowDivider()
+                FigureRow(label: costliestLabel, value: costliest.map { Formatting.euro($0.amount(in: categoryId)) } ?? "•")
+                RowDivider()
+                FigureRow(label: String(appLocalized: "Last 3 months, on average"), value: recent.map(Formatting.euro) ?? "•", isCompared: before != nil, change: change)
+            }
+            .glassCard()
+        }
+    }
+
+    /**
+     * @method values
+     * @description What each finished month spent in the category shown, the oldest first
+     */
+    private var values: [Double] {
+        totals.filter { !$0.isCurrent }.map { $0.amount(in: categoryId) }
+    }
+
+    /**
+     * @method mean
+     * @description The average of some numbers
+     *
+     * @param values The numbers
+     * @returns Their average, or nil without any
+     */
+    private func mean(_ values: [Double]) -> Double? {
+        values.isEmpty ? nil : values.reduce(0, +) / Double(values.count)
+    }
+
+    /**
+     * @method average
+     * @description The average of the finished months
+     */
+    private var average: Double? {
+        mean(values)
+    }
+
+    /**
+     * @method costliest
+     * @description The finished month that spent the most in the category shown
+     */
+    private var costliest: MonthTotal? {
+        totals.filter { !$0.isCurrent }.max { $0.amount(in: categoryId) < $1.amount(in: categoryId) }
+    }
+
+    /**
+     * @method costliestLabel
+     * @description The costliest month's label, naming it
+     */
+    private var costliestLabel: String {
+        guard let costliest else {
+            return String(appLocalized: "Costliest month")
+        }
+        return String(appLocalized: "Costliest: \(Formatting.monthWithYear(costliest.month))")
+    }
+
+    /**
+     * @method recent
+     * @description The average of the last three finished months
+     */
+    private var recent: Double? {
+        mean(Array(values.suffix(comparedMonths)))
+    }
+
+    /**
+     * @method before
+     * @description The average of the three finished months before them, nil without enough history
+     */
+    private var before: Double? {
+        guard values.count >= comparedMonths * 2 else {
+            return nil
+        }
+        return mean(Array(values.dropLast(comparedMonths).suffix(comparedMonths)))
+    }
+
+    /**
+     * @method change
+     * @description How the last three months moved from the three before, as a fraction
+     */
+    private var change: Double? {
+        guard let recent, let before else {
+            return nil
+        }
+        return BudgetAnalysis.change(recent, from: before)
+    }
+}
+
+/**
+ * @class FigureRow
+ * @description One figure under the trends' chart, with a badge when it is compared
+ */
+private struct FigureRow: View {
+    let label: String /*!< What the figure is */
+    let value: String /*!< The figure */
+    var isCompared = false /*!< Whether to show the badge */
+    var change: Double? = nil /*!< The change the badge shows */
+
+    /**
+     * @method body
+     * @description The row
+     */
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(verbatim: label)
+                .font(Theme.font(13))
+                .foregroundStyle(Theme.muted)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            if isCompared {
+                TrendBadge(change: change)
+            }
+            Text(verbatim: value)
+                .font(Theme.font(15, .semibold))
                 .foregroundStyle(Theme.text)
                 .monospacedDigit()
-
-            if projection.limit > 0 {
-                Text(isOver ? String(appLocalized: "Over budget by \(Formatting.euro(-margin))") : String(appLocalized: "\(Formatting.euro(margin)) left"))
-                    .font(Theme.font(13, .medium))
-                    .foregroundStyle(isOver ? Theme.negative : Theme.positive)
-                    .padding(.top, 2)
-            }
-
-            Text(basis)
-                .font(Theme.font(12))
-                .foregroundStyle(Theme.muted)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 8)
-
-            if projection.isEarly {
-                Text("The month has only just started: take it as a rough estimate.")
-                    .font(Theme.font(11))
-                    .foregroundStyle(Theme.faint)
-                    .padding(.top, 4)
-            }
-
-            PaceChart(projection: projection)
-                .frame(height: 190)
-                .padding(.top, 16)
         }
-        .padding(16)
-        .glassCard()
-    }
-
-    /**
-     * @method margin
-     * @description What the budget leaves at the end of the month, negative when it is overspent
-     */
-    private var margin: Double {
-        projection.limit - projection.projected
-    }
-
-    /**
-     * @method isOver
-     * @description Whether the month is heading over its budget
-     */
-    private var isOver: Bool {
-        margin < 0
-    }
-
-    /**
-     * @method basis
-     * @description How the projection was worked out
-     */
-    private var basis: String {
-        let pace = Formatting.euro(projection.pace)
-        guard projection.recurring > 0 else {
-            return String(appLocalized: "At \(pace) a day since the 1st, carried on to the end of the month.")
-        }
-        return String(appLocalized: "At \(pace) a day since the 1st, carried on to the end of the month, plus \(Formatting.euro(projection.recurring)) of recurring operations counted once.")
+        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
+        .accessibilityElement(children: .combine)
     }
 }
 
 /**
- * @class PacePoint
- * @description One point of a curve of the chart
+ * @class MonthBarsChart
+ * @description What each month spent as a bar, the month under way drawn lighter, its budget marked across it, and the
+ * average of the finished months as a dashed line. Touching a month reads its figures
  */
-private struct PacePoint: Identifiable {
-    let series: String /*!< The curve it belongs to */
-    let day: Int /*!< The day it closes, 0 for the month's start */
-    let amount: Double /*!< Euros spent by then */
+private struct MonthBarsChart: View {
+    let totals: [MonthTotal] /*!< The months, the oldest first */
+    let categoryId: String? /*!< The category shown, nil for all of them */
+    let average: Double? /*!< The average of the finished months */
 
-    var id: String { "\(series)-\(day)" } /*!< Its identifier, by curve and day */
-}
-
-/**
- * @class PaceChart
- * @description The month's spending as it builds up day by day, carried on dashed to where it ends, against the usual
- * spending and the budget's line. Touching a day reads its figures
- */
-private struct PaceChart: View {
-    let projection: MonthProjection /*!< Where the month is heading */
-
-    @State private var selectedDay: Int? /*!< The day being touched */
+    @State private var selectedKey: String? /*!< The month being touched */
 
     /**
      * @method body
@@ -152,48 +246,36 @@ private struct PaceChart: View {
      */
     var body: some View {
         Chart {
-            ForEach(points(of: usualSeries, values: projection.usual ?? [])) { point in
-                LineMark(x: .value("Day", point.day), y: .value("Amount", point.amount), series: .value("Series", point.series))
-                    .foregroundStyle(Theme.neutral400)
-                    .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
-            }
-            ForEach(points(of: actualSeries, values: projection.cumulative)) { point in
-                AreaMark(x: .value("Day", point.day), y: .value("Amount", point.amount))
-                    .foregroundStyle(Theme.accent.opacity(0.12))
-                LineMark(x: .value("Day", point.day), y: .value("Amount", point.amount), series: .value("Series", point.series))
-                    .foregroundStyle(Theme.accent)
-                    .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
-            }
-            if projection.today < projection.length {
-                ForEach(projectionPoints) { point in
-                    LineMark(x: .value("Day", point.day), y: .value("Amount", point.amount), series: .value("Series", point.series))
-                        .foregroundStyle(Theme.accent)
-                        .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, dash: [3, 5]))
-                }
-            }
-            if projection.limit > 0 {
-                RuleMark(y: .value("Budget", projection.limit))
-                    .foregroundStyle(Theme.faint)
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
-            }
-            PointMark(x: .value("Day", projection.today), y: .value("Amount", projection.spent))
-                .foregroundStyle(Theme.accent)
-                .symbolSize(60)
-            if let selectedDay {
-                RuleMark(x: .value("Day", selectedDay))
-                    .foregroundStyle(Theme.faint)
+            if let selected {
+                RuleMark(x: .value("Month", key(of: selected)))
+                    .foregroundStyle(Theme.divider)
+                    .lineStyle(StrokeStyle(lineWidth: 24))
                     .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
-                        tooltip(for: selectedDay)
+                        tooltip(for: selected)
                     }
             }
+            ForEach(totals) { total in
+                BarMark(x: .value("Month", key(of: total)), y: .value("Spent", total.amount(in: categoryId)), width: .ratio(0.62))
+                    .foregroundStyle(Theme.accent.opacity(total.isCurrent ? 0.4 : 1))
+                    .cornerRadius(4)
+                if categoryId == nil, total.limit > 0 {
+                    RectangleMark(x: .value("Month", key(of: total)), y: .value("Budget", total.limit), width: .ratio(0.8), height: .fixed(2))
+                        .foregroundStyle(Theme.text)
+                }
+            }
+            if let average {
+                RuleMark(y: .value("Average", average))
+                    .foregroundStyle(Theme.neutral400)
+                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+            }
         }
-        .chartXScale(domain: 0...projection.length)
-        .chartXSelection(value: $selectedDay)
+        .chartXScale(domain: totals.map { key(of: $0) })
+        .chartXSelection(value: $selectedKey)
         .chartXAxis {
-            AxisMarks(values: ticks) { value in
+            AxisMarks(values: labelledKeys) { value in
                 AxisValueLabel {
-                    if let day = value.as(Int.self) {
-                        Text(verbatim: label(for: day))
+                    if let key = value.as(String.self), let total = totals.first(where: { self.key(of: $0) == key }) {
+                        Text(verbatim: Formatting.monthShort(total.month))
                     }
                 }
                 .font(Theme.font(10))
@@ -214,105 +296,56 @@ private struct PaceChart: View {
             }
         }
         .chartLegend(.hidden)
-        .overlay(alignment: .topTrailing) {
+        .safeAreaInset(edge: .top, spacing: 12) {
             legend
         }
-        .accessibilityLabel(String(appLocalized: "Projection: \(Formatting.euro(projection.projected))"))
+        .accessibilityLabel(totals.map { Formatting.monthWithYear($0.month) + " " + Formatting.euro($0.amount(in: categoryId)) }.joined(separator: ", "))
     }
 
     /**
-     * @constant actualSeries
-     * @description The name of this month's curve
-     */
-    private let actualSeries = "actual"
-    /**
-     * @constant usualSeries
-     * @description The name of the usual curve
-     */
-    private let usualSeries = "usual"
-    /**
-     * @constant projectionSeries
-     * @description The name of the projection's line
-     */
-    private let projectionSeries = "projection"
-
-    /**
-     * @method points
-     * @description A curve's points, from the month's start
+     * @method key
+     * @description A month's place along the axis
      *
-     * @param series The curve
-     * @param values Euros spent by the end of each day
-     * @returns The points
+     * @param total The month
+     * @returns Its key
      */
-    private func points(of series: String, values: [Double]) -> [PacePoint] {
-        guard !values.isEmpty else {
-            return []
-        }
-        return [PacePoint(series: series, day: 0, amount: 0)] + values.enumerated().map { PacePoint(series: series, day: $0.offset + 1, amount: $0.element) }
+    private func key(of total: MonthTotal) -> String {
+        BudgetMath.monthKey(total.month)
     }
 
     /**
-     * @method projectionPoints
-     * @description The projection's line, from today to the month's end
+     * @method labelledKeys
+     * @description The months the axis names: every other one past six months, the latest kept, so the names never
+     * overlap
      */
-    private var projectionPoints: [PacePoint] {
-        [PacePoint(series: projectionSeries, day: projection.today, amount: projection.spent), PacePoint(series: projectionSeries, day: projection.length, amount: projection.projected)]
+    private var labelledKeys: [String] {
+        let every = totals.count > 6 ? 2 : 1
+        return totals.enumerated().filter { (totals.count - 1 - $0.offset) % every == 0 }.map { key(of: $0.element) }
     }
 
     /**
-     * @method ticks
-     * @description The days the axis names
+     * @method selected
+     * @description The month being touched
      */
-    private var ticks: [Int] {
-        Array(Set([1, 10, 20, projection.length])).sorted()
-    }
-
-    /**
-     * @method label
-     * @description A day of the month, with the month's short name
-     *
-     * @param day The day
-     * @returns The label
-     */
-    private func label(for day: Int) -> String {
-        let date = BudgetMath.calendar.date(byAdding: .day, value: day - 1, to: projection.month) ?? projection.month
-        return Formatting.dayShort(date)
-    }
-
-    /**
-     * @method amount
-     * @description Where a curve stands at the end of a day: this month's up to today, the projection after
-     *
-     * @param day The day
-     * @returns The euros, and whether they are projected
-     */
-    private func amount(at day: Int) -> (value: Double, isProjected: Bool) {
-        if day <= projection.today {
-            return (day > 0 ? projection.cumulative[day - 1] : 0, false)
-        }
-        let share = Double(day - projection.today) / Double(max(1, projection.length - projection.today))
-        return (projection.spent + (projection.projected - projection.spent) * share, true)
+    private var selected: MonthTotal? {
+        totals.first { key(of: $0) == selectedKey }
     }
 
     /**
      * @method tooltip
-     * @description The figures of the day being touched
+     * @description The figures of the month being touched
      *
-     * @param day The day
+     * @param total The month
      * @returns The tooltip
      */
-    private func tooltip(for day: Int) -> some View {
-        let clamped = min(max(day, 1), projection.length)
-        let current = amount(at: clamped)
-        let usual = projection.usual.map { $0[clamped - 1] }
-
-        return VStack(alignment: .leading, spacing: 3) {
-            Text(verbatim: label(for: clamped))
+    private func tooltip(for total: MonthTotal) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(verbatim: Formatting.monthWithYear(total.month))
                 .font(Theme.font(11, .semibold))
                 .foregroundStyle(Theme.text)
-            tooltipRow(title: current.isProjected ? String(appLocalized: "Projection") : String(appLocalized: "This month"), amount: current.value, color: Theme.accent)
-            if let usual {
-                tooltipRow(title: String(appLocalized: "Usually"), amount: usual, color: Theme.neutral400)
+            tooltipRow(title: String(appLocalized: "Spent"), amount: total.amount(in: categoryId))
+            if categoryId == nil, total.limit > 0 {
+                tooltipRow(title: String(appLocalized: "Budget"), amount: total.limit)
             }
         }
         .padding(.vertical, 6)
@@ -322,18 +355,14 @@ private struct PaceChart: View {
 
     /**
      * @method tooltipRow
-     * @description One figure of the tooltip, after its curve's colour
+     * @description One figure of the tooltip
      *
      * @param title What the figure is
      * @param amount The euros
-     * @param color The curve's colour
      * @returns The row
      */
-    private func tooltipRow(title: String, amount: Double, color: Color) -> some View {
+    private func tooltipRow(title: String, amount: Double) -> some View {
         HStack(spacing: 6) {
-            Circle()
-                .fill(color)
-                .frame(width: 6, height: 6)
             Text(verbatim: title)
                 .font(Theme.font(11))
                 .foregroundStyle(Theme.muted)
@@ -343,41 +372,53 @@ private struct PaceChart: View {
                 .foregroundStyle(Theme.text)
                 .monospacedDigit()
         }
-        .frame(width: 150)
+        .frame(width: 140)
     }
 
     /**
      * @method legend
-     * @description The curves' names, so they never rest on colour alone
+     * @description What the marks stand for, so they never rest on colour alone
      */
     private var legend: some View {
-        HStack(spacing: 10) {
-            legendItem(title: String(appLocalized: "This month"), color: Theme.accent, isDashed: false)
-            legendItem(title: String(appLocalized: "Projection"), color: Theme.accent, isDashed: true)
-            if projection.usual != nil {
-                legendItem(title: String(appLocalized: "Usually"), color: Theme.neutral400, isDashed: false)
+        HStack(spacing: 12) {
+            legendItem(title: String(appLocalized: "Spent")) {
+                RoundedRectangle(cornerRadius: 2).fill(Theme.accent).frame(width: 9, height: 9)
             }
+            if totals.contains(where: \.isCurrent) {
+                legendItem(title: String(appLocalized: "Under way")) {
+                    RoundedRectangle(cornerRadius: 2).fill(Theme.accent.opacity(0.4)).frame(width: 9, height: 9)
+                }
+            }
+            if categoryId == nil, totals.contains(where: { $0.limit > 0 }) {
+                legendItem(title: String(appLocalized: "Budget")) {
+                    Capsule().fill(Theme.text).frame(width: 12, height: 2)
+                }
+            }
+            if average != nil {
+                legendItem(title: String(appLocalized: "Average")) {
+                    Path { path in
+                        path.move(to: CGPoint(x: 1, y: 1))
+                        path.addLine(to: CGPoint(x: 13, y: 1))
+                    }
+                    .stroke(Theme.neutral400, style: StrokeStyle(lineWidth: 2, dash: [3, 3]))
+                    .frame(width: 14, height: 2)
+                }
+            }
+            Spacer(minLength: 0)
         }
-        .padding(.top, -2)
     }
 
     /**
      * @method legendItem
-     * @description A short line in a curve's colour and style, with its name
+     * @description A small drawing of a mark, with its name
      *
-     * @param title The curve's name
-     * @param color Its colour
-     * @param isDashed Whether it is drawn dashed
+     * @param title The mark's name
+     * @param swatch The mark, drawn small
      * @returns The item
      */
-    private func legendItem(title: String, color: Color, isDashed: Bool) -> some View {
+    private func legendItem(title: String, @ViewBuilder swatch: () -> some View) -> some View {
         HStack(spacing: 5) {
-            Path { path in
-                path.move(to: CGPoint(x: 1, y: 1))
-                path.addLine(to: CGPoint(x: 13, y: 1))
-            }
-            .stroke(color, style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: isDashed ? [2, 3] : []))
-            .frame(width: 14, height: 2)
+            swatch()
             Text(verbatim: title)
                 .font(Theme.font(10))
                 .foregroundStyle(Theme.muted)
@@ -386,53 +427,142 @@ private struct PaceChart: View {
 }
 
 /**
- * @class ComparisonSection
- * @description The month so far against what is usually spent by the same day: in all, then category by category, the
- * largest rise first
+ * @class RecurringSection
+ * @description The expenses that come back every month, with what they all cost over a year
  */
-private struct ComparisonSection: View {
-    let comparison: MonthComparison /*!< The month so far against usual */
+private struct RecurringSection: View {
+    let expenses: [RecurringExpense] /*!< The expenses, the costliest first */
 
     /**
      * @method body
      * @description The section
      */
     var body: some View {
-        if comparison.referenceCount == 0 {
-            EmptyStateCard(message: String(appLocalized: "Once a month is over, each category shows here against your usual spending."))
-        } else {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(note)
-                    .font(Theme.font(12))
-                    .foregroundStyle(Theme.muted)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                HStack(alignment: .center, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("In all")
-                            .font(Theme.font(11))
-                            .foregroundStyle(Theme.muted)
-                        Text(verbatim: Formatting.euro(comparison.spent))
-                            .font(Theme.font(22, .semibold))
-                            .foregroundStyle(Theme.text)
-                            .monospacedDigit()
-                        Text("Usually \(Formatting.euro(comparison.usual))")
-                            .font(Theme.font(11))
-                            .foregroundStyle(Theme.muted)
-                    }
-                    Spacer(minLength: 8)
-                    TrendBadge(change: comparison.change)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                SectionLabel(String(appLocalized: "Recurring expenses"))
+                Spacer(minLength: 8)
+                if !expenses.isEmpty {
+                    Text(verbatim: String(appLocalized: "\(Formatting.euro(yearly)) / year"))
+                        .font(Theme.font(13, .semibold))
+                        .foregroundStyle(Theme.text)
+                        .monospacedDigit()
                 }
-                .padding(14)
+            }
+            SectionNote(text: String(appLocalized: "Marked recurring, or logged under the same name for about the same amount in at least 3 of the last 7 months."))
+
+            if expenses.isEmpty {
+                EmptyStateCard(message: String(appLocalized: "No expense comes back every month yet."))
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(expenses.enumerated()), id: \.element.id) { index, expense in
+                        RecurringRow(expense: expense)
+                        if index < expenses.count - 1 {
+                            RowDivider()
+                        }
+                    }
+                }
+                .glassCard()
+            }
+        }
+    }
+
+    /**
+     * @method yearly
+     * @description What the expenses all cost over a year
+     */
+    private var yearly: Double {
+        expenses.reduce(0) { $0 + $1.yearly }
+    }
+}
+
+/**
+ * @class RecurringRow
+ * @description A recurring expense: its name and category, when it was last paid, and what it costs a month and a year
+ */
+private struct RecurringRow: View {
+    let expense: RecurringExpense /*!< The expense */
+
+    /**
+     * @method body
+     * @description The row
+     */
+    var body: some View {
+        HStack(spacing: 11) {
+            IconTile(symbol: expense.category.symbol, color: expense.category.color)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: expense.name)
+                    .font(Theme.font(14))
+                    .foregroundStyle(Theme.text)
+                    .lineLimit(1)
+                Text(verbatim: expense.category.title + " • " + String(appLocalized: "last \(Formatting.dayShort(expense.lastDate))"))
+                    .font(Theme.font(11))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(verbatim: String(appLocalized: "\(Formatting.euro(expense.monthly)) / month"))
+                    .font(Theme.font(14, .semibold))
+                    .foregroundStyle(Theme.text)
+                    .monospacedDigit()
+                Text(verbatim: String(appLocalized: "\(Formatting.euro(expense.yearly)) / year"))
+                    .font(Theme.font(11))
+                    .foregroundStyle(Theme.muted)
+                    .monospacedDigit()
+            }
+            .fixedSize()
+        }
+        .padding(.vertical, 11)
+        .padding(.horizontal, 14)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/**
+ * @class HabitsSection
+ * @description How the last ninety days were spent, recurring operations left out: what each weekday costs on average,
+ * the share paid online, and the places most spent at
+ */
+private struct HabitsSection: View {
+    let habits: SpendingHabits /*!< The habits */
+
+    /**
+     * @method body
+     * @description The section
+     */
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionLabel(String(appLocalized: "Habits"))
+            SectionNote(text: String(appLocalized: "Over the last 90 days, recurring expenses left out."))
+
+            if habits.total == 0 {
+                EmptyStateCard(message: String(appLocalized: "Nothing spent over the last 90 days."))
+            } else {
+                VStack(alignment: .leading, spacing: 0) {
+                    subtitle(String(appLocalized: "A typical day"))
+                    VStack(spacing: 7) {
+                        ForEach(habits.weekdays) { entry in
+                            WeekdayRow(entry: entry, busiest: busiest)
+                        }
+                    }
+                    .padding(.top, 8)
+
+                    subtitle(String(appLocalized: "How you pay"))
+                        .padding(.top, 18)
+                    PaymentSplit(onlineShare: habits.onlineShare)
+                        .padding(.top, 8)
+                }
+                .padding(16)
                 .glassCard()
 
-                if comparison.categories.isEmpty {
-                    EmptyStateCard(message: String(appLocalized: "Nothing spent yet this month."))
-                } else {
+                if !habits.places.isEmpty {
+                    SectionLabel(String(appLocalized: "Where you spend most"))
+                        .padding(.top, 8)
                     VStack(spacing: 0) {
-                        ForEach(Array(comparison.categories.enumerated()), id: \.element.id) { index, entry in
-                            ComparisonRow(comparison: entry)
-                            if index < comparison.categories.count - 1 {
+                        ForEach(Array(habits.places.enumerated()), id: \.element.id) { index, place in
+                            PlaceRow(place: place)
+                            if index < habits.places.count - 1 {
                                 RowDivider()
                             }
                         }
@@ -444,139 +574,143 @@ private struct ComparisonSection: View {
     }
 
     /**
-     * @method note
-     * @description What "usual" is measured on
+     * @method busiest
+     * @description What the costliest weekday spends on average, the bars' full length
      */
-    private var note: String {
-        comparison.referenceCount == 1 ? String(appLocalized: "At this point of the month, against last month.") : String(appLocalized: "At this point of the month, against the average of your last \(comparison.referenceCount) months.")
+    private var busiest: Double {
+        max(1, habits.weekdays.map(\.average).max() ?? 0)
+    }
+
+    /**
+     * @method subtitle
+     * @description A part's title inside the card
+     *
+     * @param text The title
+     * @returns The title
+     */
+    private func subtitle(_ text: String) -> some View {
+        Text(verbatim: text)
+            .font(Theme.font(12, .semibold))
+            .foregroundStyle(Theme.muted)
     }
 }
 
 /**
- * @class ComparisonRow
- * @description A category's spending this month so far, what it usually is by now, and the change
+ * @class WeekdayRow
+ * @description A weekday's average spending as a bar, the costliest one drawn stronger
  */
-private struct ComparisonRow: View {
-    let comparison: CategoryComparison /*!< The category, this month and usually */
+private struct WeekdayRow: View {
+    let entry: WeekdaySpend /*!< The weekday */
+    let busiest: Double /*!< What the costliest weekday spends, the bar's full length */
 
     /**
      * @method body
      * @description The row
      */
     var body: some View {
-        HStack(spacing: 11) {
-            IconTile(symbol: comparison.category.symbol, color: comparison.category.color)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(comparison.category.title)
-                    .font(Theme.font(14))
-                    .foregroundStyle(Theme.text)
-                    .lineLimit(1)
-                Text("Usually \(Formatting.euro(comparison.usual))")
-                    .font(Theme.font(11))
-                    .foregroundStyle(Theme.muted)
-            }
-            Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(verbatim: Formatting.euro(comparison.spent))
-                    .font(Theme.font(14, .semibold))
-                    .foregroundStyle(Theme.text)
-                    .monospacedDigit()
-                TrendBadge(change: comparison.change)
-            }
+        HStack(spacing: 10) {
+            Text(verbatim: Formatting.weekdayShort(entry.weekday))
+                .font(Theme.font(12))
+                .foregroundStyle(Theme.muted)
+                .frame(width: 38, alignment: .leading)
+            TrackBar(progress: entry.average / busiest, color: Theme.accent.opacity(entry.average >= busiest ? 1 : 0.55))
+            Text(verbatim: Formatting.euro(entry.average))
+                .font(Theme.font(12, .medium))
+                .foregroundStyle(Theme.text)
+                .monospacedDigit()
+                .frame(width: 52, alignment: .trailing)
         }
-        .padding(.vertical, 11)
-        .padding(.horizontal, 14)
         .accessibilityElement(children: .combine)
     }
 }
 
 /**
- * @class TrendBadge
- * @description A change from usual, with an arrow and its sign so it never rests on colour alone: spending more reads
- * red, spending less green, a change under 5% grey
+ * @class PaymentSplit
+ * @description The share spent online against in person, as one split bar with both shares named
  */
-private struct TrendBadge: View {
-    let change: Double? /*!< The change, as a fraction, or nil when it usually is nothing */
-
-    /**
-     * @type Trend
-     * @description Which way the figure moved
-     */
-    private enum Trend {
-        case up /*!< More than usual */
-        case down /*!< Less than usual */
-        case steady /*!< About as usual */
-        case new /*!< Usually nothing */
-    }
+private struct PaymentSplit: View {
+    let onlineShare: Double /*!< The share spent online, between 0 and 1 */
 
     /**
      * @method body
-     * @description The badge
+     * @description The split
      */
     var body: some View {
-        HStack(spacing: 3) {
-            if let symbol {
-                Image(systemName: symbol)
-                    .font(.system(size: 10, weight: .bold))
+        VStack(spacing: 8) {
+            GeometryReader { proxy in
+                HStack(spacing: 2) {
+                    Capsule()
+                        .fill(Theme.accent)
+                        .frame(width: max(0, (proxy.size.width - 2) * onlineShare))
+                    Capsule()
+                        .fill(Theme.accent.opacity(0.35))
+                }
             }
-            Text(verbatim: label)
-                .font(Theme.font(11, .semibold))
+            .frame(height: Theme.trackHeight)
+
+            HStack {
+                share(symbol: "globe", title: String(appLocalized: "Online"), value: onlineShare, color: Theme.accent)
+                Spacer(minLength: 8)
+                share(symbol: "mappin.and.ellipse", title: String(appLocalized: "In person"), value: 1 - onlineShare, color: Theme.muted)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    /**
+     * @method share
+     * @description One share, with its icon and name
+     *
+     * @param symbol The SF Symbol drawn
+     * @param title What the share is
+     * @param value The share, between 0 and 1
+     * @param color The icon's colour
+     * @returns The share
+     */
+    private func share(symbol: String, title: String, value: Double, color: Color) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: symbol)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(color)
+            Text(verbatim: title)
+                .font(Theme.font(12))
+                .foregroundStyle(Theme.muted)
+            Text(verbatim: Formatting.percent(value))
+                .font(Theme.font(12, .semibold))
+                .foregroundStyle(Theme.text)
                 .monospacedDigit()
         }
-        .foregroundStyle(color)
-        .padding(.vertical, 3)
-        .padding(.horizontal, 7)
-        .background(color.opacity(0.16), in: Capsule())
     }
+}
+
+/**
+ * @class PlaceRow
+ * @description A place, how many times it was spent at, and what was spent there
+ */
+private struct PlaceRow: View {
+    let place: PlaceSpend /*!< The place */
 
     /**
-     * @method trend
-     * @description Which way the figure moved, a change rounding under 5% reading as steady
+     * @method body
+     * @description The row
      */
-    private var trend: Trend {
-        guard let change else {
-            return .new
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(verbatim: place.name)
+                .font(Theme.font(14))
+                .foregroundStyle(Theme.text)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            Text(verbatim: String(appLocalized: "\(place.count) times"))
+                .font(Theme.font(12))
+                .foregroundStyle(Theme.muted)
+            Text(verbatim: Formatting.euro(place.spent))
+                .font(Theme.font(14, .semibold))
+                .foregroundStyle(Theme.text)
+                .monospacedDigit()
         }
-        if (abs(change) * 100).rounded() < 5 {
-            return .steady
-        }
-        return change > 0 ? .up : .down
-    }
-
-    /**
-     * @method label
-     * @description The change, signed, or a word that it is new
-     */
-    private var label: String {
-        guard let change else {
-            return String(appLocalized: "New")
-        }
-        return (change > 0 ? "+" : "") + Formatting.percent(change)
-    }
-
-    /**
-     * @method symbol
-     * @description The arrow drawn before the change
-     */
-    private var symbol: String? {
-        switch trend {
-        case .up: return "arrow.up.right"
-        case .down: return "arrow.down.right"
-        case .steady: return "minus"
-        case .new: return nil
-        }
-    }
-
-    /**
-     * @method color
-     * @description The badge's colour
-     */
-    private var color: Color {
-        switch trend {
-        case .up: return Theme.negative
-        case .down: return Theme.positive
-        case .steady: return Theme.muted
-        case .new: return Theme.accent
-        }
+        .padding(.vertical, 11)
+        .padding(.horizontal, 14)
+        .accessibilityElement(children: .combine)
     }
 }

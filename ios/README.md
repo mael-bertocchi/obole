@@ -7,10 +7,11 @@ The native **iOS** app, built entirely in SwiftUI against the iOS 26 "Liquid Gla
 - **Budget ring** • left to spend, spent, days left, and a per-day allowance that recomputes as the month runs down.
 - **Per-category limits** • a tinted tile, a progress bar, and an over-budget state that turns everything red.
 - **Month stepper** • walk back through previous months; every figure recomputes.
+- **End of the month** • the current month shows where it ends at its pace (recurring operations counted once) and, per category, a badge with the change from its usual spending at the same day of the last six months.
 - **History ledger** • day groups with day totals, each operation at the time it happened (latest first, read in the time zone the phone is in now), a search field, and filter chips for each category.
 - **Multi-currency** • pick the entry currency; the euro equivalent recomputes live and is stored with the operation, so past entries keep the rate they were logged at. Every rate carries the 1% a bank adds on top of the reference rate, so the euro figure matches the statement rather than the mid-market quote.
 - **English & French** • the language follows the device, or the one picked in Settings, and switches on the spot. Amounts and dates follow it too: `€1,234.50` in English, `1 234,50 €` in French.
-- **Analysis** • where the month is heading at its pace (recurring operations counted once, the rest carried on to the end of the month), drawn against the usual curve and the budget with Swift Charts, and each category so far against its average at the same day of the last six months. Worked out on the phone, from the budget it holds.
+- **Analysis** • what each of the last twelve months spent, in all or per category, against its budget and the average, with Swift Charts; the expenses that come back every month and what they cost over a year; and the habits of the last 90 days: each weekday's average, the share paid online, the places most spent at. Worked out on the phone, from the budget it holds.
 - **Trash** • a deleted operation leaves the budget but stays in the server's trash, listed under **Settings ▸ Trash**, until it is restored.
 - **Connected apps** • the apps authorized with the passkey on the portal, such as Claude through its MCP connector, listed under **Settings ▸ Connected apps** with when each was authorized and last used; revoking one cuts its access at once.
 - **Sign in & sync** • one account, opened with the passkey of the Obole portal, behind Face ID; every change is pushed to the server and restored on a fresh device. Offline changes stay local and reconcile when the connection returns, and edits made in the web interface merge in rather than being overwritten.
@@ -30,7 +31,7 @@ Obole/
 ├─ Application/    App entry, root shell (auth gate + native TabView)
 ├─ Core/
 │  ├─ Errors/      UserFacingError: the failures written for the person, and the generic message for any other
-│  ├─ Budget/      Derived selectors (month summary, category spend, day groups) and the analysis (projection, comparison with usual)
+│  ├─ Budget/      Derived selectors (month summary, category spend, day groups) and the analysis (projection, comparison with usual, trends, recurring expenses, habits)
 │  ├─ Formatting/  Euro, amount, rate and date formatting, in the interface's language
 │  ├─ Models/      Domain types (Category, Operation, BudgetSettings)
 │  ├─ Localization/ Interface language (automatic, English, French) and lookups in it
