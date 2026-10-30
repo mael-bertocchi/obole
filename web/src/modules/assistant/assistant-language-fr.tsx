@@ -38,6 +38,7 @@ export const assistantFr: AssistantMessages = {
     'assistant.proposeUpdate': 'Modifier une opération',
     'assistant.proposeDelete': 'Supprimer une opération',
     'assistant.proposeRate': 'Noter un titre',
+    'assistant.proposeAdd': 'Ajouter à la watchlist',
     'assistant.deleteNote': 'Elle ira dans la corbeille, d’où vous pourrez la restaurer.',
     'assistant.confirm': 'Confirmer',
     'assistant.dismiss': 'Ignorer',

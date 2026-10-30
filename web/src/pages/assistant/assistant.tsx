@@ -24,7 +24,7 @@ import { useToastContext } from 'modules/toast/toast-hooks';
 import type { ToastContextProps } from 'modules/toast/toast-models';
 import { useWatchlistContext } from 'modules/watchlist/watchlist-hooks';
 import { WatchlistProvider } from 'modules/watchlist/watchlist-provider';
-import { ratingText } from 'modules/watchlist/watchlist-formatting';
+import { imageUrl, kindName, ratingText, releaseYear } from 'modules/watchlist/watchlist-formatting';
 import { useEffect, useRef, useState, type FormEvent, type JSX, type KeyboardEvent } from 'react';
 import { messageOf } from 'utils/errors';
 
@@ -36,7 +36,8 @@ const PROPOSAL_TITLES: Record<Proposal['kind'], MessageKey> = {
     createOperation: 'assistant.proposeCreate',
     updateOperation: 'assistant.proposeUpdate',
     deleteOperation: 'assistant.proposeDelete',
-    rateTitle: 'assistant.proposeRate'
+    rateTitle: 'assistant.proposeRate',
+    addTitle: 'assistant.proposeAdd'
 };
 
 /**
@@ -96,7 +97,7 @@ interface ProposalBodyComponentProps {
 /**
  * @function ProposalBodyComponent
  * @description What a suggestion would do: the operation to log, the operation before and after a change, the
- * operation to delete, or the rating to give
+ * operation to delete, the rating to give, or the title to add
  *
  * @param {ProposalBodyComponentProps} props The properties of the component
  */
@@ -116,6 +117,21 @@ function ProposalBodyComponent(props: ProposalBodyComponentProps): JSX.Element {
                     <span className='text-[12px] text-ink-tertiary'>{t('assistant.watchedOn', { date: dayLabel(proposal.watchedAt) })}</span>
                 </div>
                 {proposal.comment !== null && <p className='mt-1 text-[14px] text-ink-secondary'>{proposal.comment}</p>}
+            </div>
+        );
+    }
+
+    if (proposal.kind === 'addTitle') {
+        const facts = [releaseYear(proposal.releaseDate), kindName(proposal.mediaType)].filter((fact) => fact !== null);
+
+        return (
+            <div className='flex gap-3'>
+                {proposal.posterPath !== null && <img src={imageUrl(proposal.posterPath, 'w92')} alt='' loading='lazy' className='h-[69px] w-[46px] shrink-0 rounded-lg object-cover' />}
+                <div className='min-w-0'>
+                    <p className='text-[16px] font-semibold tracking-tight'>{proposal.title}</p>
+                    <p className='text-[13px] text-ink-tertiary'>{facts.join(' • ')}</p>
+                    {proposal.overview !== '' && <p className='mt-1 line-clamp-3 text-[14px] text-ink-secondary'>{proposal.overview}</p>}
+                </div>
             </div>
         );
     }

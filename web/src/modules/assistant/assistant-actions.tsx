@@ -110,7 +110,7 @@ function draftOf(operation: Operation): AssistantOperationDraft {
 /**
  * @function applyProposal
  * @description Carries out a suggestion the owner confirmed, as the apps would: an operation logged, changed or moved to
- * the trash goes through the budget's own sync, a rating through the watchlist.
+ * the trash goes through the budget's own sync, a rating or a new title through the watchlist.
  *
  * @param {ProposalServices} services The budget and the watchlist
  * @param {Proposal} proposal The suggestion
@@ -152,6 +152,9 @@ export async function applyProposal(services: ProposalServices, proposal: Propos
             return;
         case 'rateTitle':
             await services.watchlist.update(proposal.entryId, { watchedAt: dayOf(proposal.watchedAt), rating: proposal.rating, comment: proposal.comment });
+            return;
+        case 'addTitle':
+            await services.watchlist.add({ mediaType: proposal.mediaType, tmdbId: proposal.tmdbId });
             return;
     }
 }

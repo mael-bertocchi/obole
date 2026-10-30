@@ -36,6 +36,7 @@ export const assistantEn = {
     'assistant.proposeUpdate': 'Change an operation',
     'assistant.proposeDelete': 'Delete an operation',
     'assistant.proposeRate': 'Rate a title',
+    'assistant.proposeAdd': 'Add to the watchlist',
     'assistant.deleteNote': 'It will go to the trash, where you can restore it.',
     'assistant.confirm': 'Confirm',
     'assistant.dismiss': 'Dismiss',

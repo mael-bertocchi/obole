@@ -1,3 +1,4 @@
+import { MediaTypeSchema } from 'modules/watchlist/watchlist-models';
 import { z } from 'zod';
 
 /**
@@ -37,7 +38,8 @@ export const ProposalSchema = z.discriminatedUnion('kind', [
     z.object({ kind: z.literal('createOperation'), id: z.string(), draft: OperationDraftSchema }),
     z.object({ kind: z.literal('updateOperation'), operation: OperationSummarySchema, changes: OperationDraftSchema.partial() }),
     z.object({ kind: z.literal('deleteOperation'), operation: OperationSummarySchema }),
-    z.object({ kind: z.literal('rateTitle'), entryId: z.string(), title: z.string(), rating: z.number().int(), comment: z.string().nullable(), watchedAt: z.string() })
+    z.object({ kind: z.literal('rateTitle'), entryId: z.string(), title: z.string(), rating: z.number().int(), comment: z.string().nullable(), watchedAt: z.string() }),
+    z.object({ kind: z.literal('addTitle'), mediaType: MediaTypeSchema, tmdbId: z.number().int(), title: z.string(), releaseDate: z.string().nullable(), posterPath: z.string().nullable(), overview: z.string() })
 ]);
 
 /**
