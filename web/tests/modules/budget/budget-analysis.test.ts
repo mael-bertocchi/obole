@@ -1,4 +1,4 @@
-import { compareMonth, isNotable, monthTotals, projectMonth, recurringExpenses, referenceMonths, spendingHabits } from 'modules/budget/budget-analysis';
+import { compareMonth, isNotable, monthTotals, recurringExpenses, referenceMonths, spendingHabits } from 'modules/budget/budget-analysis';
 import { describe, expect, it } from 'vitest';
 
 import { document, NOW, operation } from '../../support/fixtures';
@@ -9,24 +9,6 @@ describe('referenceMonths', () => {
         const months = referenceMonths(operations, new Date(2026, 8, 1));
 
         expect(months.map((month) => month.getMonth())).toEqual([7, 6, 5, 4, 3, 2]);
-    });
-});
-
-describe('projectMonth', () => {
-    it('counts recurring operations once and carries the rest at its pace to the end of the month', () => {
-        const operations = [
-            operation({ id: 'rent', date: new Date(2026, 8, 1), amount: 900, categoryId: 'rent', isRecurring: true }),
-            operation({ id: 'a', date: new Date(2026, 8, 3), amount: 270 }),
-            operation({ id: 'b', date: new Date(2026, 8, 20), amount: 270 }),
-            operation({ id: 'later', date: new Date(2026, 8, 29), amount: 1000 })
-        ];
-        const projection = projectMonth(document(operations), NOW);
-
-        expect(projection.spent).toBeCloseTo(1440);
-        expect(projection.recurring).toBeCloseTo(900);
-        expect(projection.pace).toBeCloseTo(20);
-        expect(projection.projected).toBeCloseTo(1500);
-        expect(projection.isEarly).toBe(false);
     });
 });
 

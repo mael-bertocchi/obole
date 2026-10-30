@@ -14,12 +14,6 @@ export const budgetEn = {
     'navigation.newOperation': 'New operation',
 
     'analysis.eyebrow': 'Analysis',
-    'analysis.projection': 'End of the month',
-    'analysis.over': 'Over budget by {amount}',
-    'analysis.under': '{amount} left',
-    'analysis.basis': 'Your pace, recurring left out: {pace} a day since the 1st, carried on to the end of the month.',
-    'analysis.basisRecurring': 'Your pace, recurring left out: {pace} a day since the 1st, carried on to the end of the month, plus {recurring} of recurring operations.',
-    'analysis.early': 'The month has only just started: take it as a rough estimate.',
     'analysis.limit': 'Budget',
     'analysis.new': 'New',
     'analysis.title': 'Over {count} months',

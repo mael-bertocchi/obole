@@ -16,12 +16,6 @@ export const budgetFr: BudgetMessages = {
     'navigation.newOperation': 'Nouvelle opération',
 
     'analysis.eyebrow': 'Analyse',
-    'analysis.projection': 'Fin du mois',
-    'analysis.over': 'Dépassement prévu de {amount}',
-    'analysis.under': 'Il devrait rester {amount}',
-    'analysis.basis': 'Votre rythme hors récurrent : {pace} par jour depuis le 1er, prolongé jusqu’à la fin du mois.',
-    'analysis.basisRecurring': 'Votre rythme hors récurrent : {pace} par jour depuis le 1er, prolongé jusqu’à la fin du mois, plus {recurring} d’opérations récurrentes.',
-    'analysis.early': 'Le mois vient de commencer : c’est une estimation grossière.',
     'analysis.limit': 'Budget',
     'analysis.new': 'Nouveau',
     'analysis.title': 'Sur {count} mois',

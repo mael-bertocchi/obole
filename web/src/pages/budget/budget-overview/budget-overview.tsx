@@ -4,8 +4,7 @@ import RingComponent from 'components/ring/ring';
 import TrackBarComponent from 'components/track-bar/track-bar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Maybe, Perhaps } from 'models';
-import type { MonthProjection } from 'modules/budget/budget-analysis';
-import { compareMonth, isNotable, projectMonth } from 'modules/budget/budget-analysis';
+import { compareMonth, isNotable } from 'modules/budget/budget-analysis';
 import { categoryName, hexColor } from 'modules/budget/budget-categories';
 import { dayKey, daysInMonth, monthKey, monthStart, parseMonthKey, shiftMonth } from 'modules/budget/budget-dates';
 import { euro, monthTitle } from 'modules/budget/budget-formatting';
@@ -89,39 +88,6 @@ function StatTileComponent(props: StatTileComponentProps): JSX.Element {
 }
 
 /**
- * @interface ProjectionRowComponentProps
- * @description Properties of the end-of-month projection
- */
-interface ProjectionRowComponentProps {
-    projection: MonthProjection; /*!< Where the month is heading */
-}
-
-/**
- * @function ProjectionRowComponent
- * @description Where the current month ends at its pace, against its budget, with how it was worked out.
- *
- * @param {ProjectionRowComponentProps} props The properties of the component
- */
-function ProjectionRowComponent(props: ProjectionRowComponentProps): JSX.Element {
-    const { projection } = props;
-    const margin = projection.limit - projection.projected;
-    const isOver = projection.limit > 0 && margin < 0;
-    const basis = projection.recurring > 0 ? t('analysis.basisRecurring', { pace: euro(projection.pace), recurring: euro(projection.recurring) }) : t('analysis.basis', { pace: euro(projection.pace) });
-    const status = isOver ? t('analysis.over', { amount: euro(-margin) }) : t('analysis.under', { amount: euro(margin) });
-
-    return (
-        <div className='mt-2.5 w-full rounded-2xl bg-fill px-4 py-3' title={basis}>
-            <div className='flex items-baseline justify-between gap-3'>
-                <p className='text-[12px] font-medium text-ink-secondary'>{t('analysis.projection')}</p>
-                <p className='text-[19px] font-semibold tracking-tight tabular-nums'>{euro(projection.projected)}</p>
-            </div>
-            {projection.limit > 0 && <p className={`text-right text-[13px] font-medium ${isOver ? 'text-negative-text' : 'text-positive-text'}`}>{status}</p>}
-            <p className='mt-1.5 text-[12px] leading-snug text-ink-tertiary'>{projection.isEarly ? t('analysis.early') : basis}</p>
-        </div>
-    );
-}
-
-/**
  * @interface CategoryRowComponentProps
  * @description Properties of one category row
  */
@@ -159,8 +125,8 @@ function CategoryRowComponent(props: CategoryRowComponentProps): JSX.Element {
 /**
  * @function BudgetOverviewComponent
  * @description The Budget tab: what is left to spend in a month, the spent, days-left and per-day figures, and every
- * category against its limit. In the current month, where it ends at its pace, and each category's change from what it
- * usually spent by the same day. Each month is measured against its own budget, which can be edited at any time. The
+ * category against its limit. In the current month, each category's change from what it usually spent by the same
+ * day. Each month is measured against its own budget, which can be edited at any time. The
  * month shown lives in the address, so coming back from a category's operations lands on the same month.
  */
 function BudgetOverviewComponent(): JSX.Element {
@@ -179,7 +145,6 @@ function BudgetOverviewComponent(): JSX.Element {
     const dispatch = toDispatch(document.categories, budget);
     const spends = categorySpends(document.operations, document.categories, month, budget).filter((spend) => spend.limit > 0 || spend.spent > 0);
     const isCurrent = month.getTime() === monthStart(now).getTime();
-    const projection = isCurrent && hasOperations ? projectMonth(document, now) : null;
     const comparison = isCurrent ? compareMonth(document, now) : null;
     const changes = new Map((comparison !== null && comparison.referenceCount > 0 ? comparison.categories.filter(isNotable) : []).map((entry) => [entry.category.id, entry.change]));
 
@@ -228,7 +193,6 @@ function BudgetOverviewComponent(): JSX.Element {
                         <StatTileComponent label={t('budget.daysLeft')} value={hasOperations ? String(figures.daysLeft) : '•'} />
                         <StatTileComponent label={t('budget.perDay')} value={hasOperations ? euro(figures.perDay) : '•'} />
                     </div>
-                    {projection !== null && <ProjectionRowComponent projection={projection} />}
                 </section>
 
                 <section className='card p-6 sm:p-8 lg:col-span-3'>

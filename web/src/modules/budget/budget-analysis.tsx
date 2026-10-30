@@ -1,6 +1,6 @@
 import type { Maybe } from 'models';
 import { categoriesOf } from 'modules/budget/budget-categories';
-import { daysInMonth, monthKey, monthStart, shiftMonth, startOfDay } from 'modules/budget/budget-dates';
+import { monthKey, monthStart, shiftMonth, startOfDay } from 'modules/budget/budget-dates';
 import { euroAmount, monthlyBudgetFor, operationsIn } from 'modules/budget/budget-math';
 import type { BudgetDocument, Category, Operation } from 'modules/budget/budget-models';
 
@@ -9,12 +9,6 @@ import type { BudgetDocument, Category, Operation } from 'modules/budget/budget-
  * @description How many past months "usual" is measured on, at most.
  */
 const REFERENCE_MONTHS = 6;
-
-/**
- * @constant EARLY_DAYS
- * @description Before this day of the month, too little was spent for the projection to say much.
- */
-const EARLY_DAYS = 5;
 
 /**
  * @constant NOTABLE_CHANGE
@@ -28,22 +22,6 @@ const NOTABLE_CHANGE = 0.15;
  * coffee more never reads as a rise.
  */
 const NOTABLE_AMOUNT = 10;
-
-/**
- * @interface MonthProjection
- * @description Where the current month is heading: what was spent so far, and where it ends at the same pace.
- */
-export interface MonthProjection {
-    month: Date; /*!< The first day of the month */
-    today: number; /*!< Today's day of the month */
-    length: number; /*!< How many days the month has */
-    limit: number; /*!< The month's budget */
-    spent: number; /*!< Euros spent so far */
-    recurring: number; /*!< Euros of it spent on recurring operations, which don't repeat within the month */
-    pace: number; /*!< Euros spent per day on everything else */
-    projected: number; /*!< Euros spent by the end of the month, at that pace */
-    isEarly: boolean; /*!< Whether the month only just started, so the projection is rough */
-}
 
 /**
  * @interface CategoryComparison
@@ -83,51 +61,6 @@ export function referenceMonths(operations: readonly Operation[], month: Date): 
     const keys = new Set(operations.filter((operation) => monthStart(operation.date).getTime() < current).map((operation) => monthKey(operation.date)));
 
     return [...keys].sort().reverse().slice(0, REFERENCE_MONTHS).map((key) => new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, 1));
-}
-
-/**
- * @function spentByDay
- * @description What a month's operations spent by the end of a day, from its first.
- *
- * @param {readonly Operation[]} operations The month's operations.
- * @param {number} day The day of the month, past its last one meaning the whole month.
- *
- * @returns {number} The euros spent.
- */
-function spentByDay(operations: readonly Operation[], day: number): number {
-    return operations.filter((operation) => operation.date.getDate() <= day).reduce((total, operation) => total + euroAmount(operation), 0);
-}
-
-/**
- * @function projectMonth
- * @description Where the current month is heading. Recurring operations, such as the rent or a subscription, are
- * counted once; everything else is spread over the days gone by, today included, and carried on to the month's end.
- *
- * @param {BudgetDocument} document The budget.
- * @param {Date} now The current date.
- *
- * @returns {MonthProjection} The projection.
- */
-export function projectMonth(document: BudgetDocument, now: Date = new Date()): MonthProjection {
-    const month = monthStart(now);
-    const length = daysInMonth(month);
-    const today = now.getDate();
-    const operations = operationsIn(document.operations, month).filter((operation) => operation.date.getDate() <= today);
-    const spent = spentByDay(operations, today);
-    const recurring = operations.filter((operation) => operation.isRecurring).reduce((total, operation) => total + euroAmount(operation), 0);
-    const pace = (spent - recurring) / today;
-
-    return {
-        month,
-        today,
-        length,
-        limit: monthlyBudgetFor(document, month).monthlyLimit,
-        spent,
-        recurring,
-        pace,
-        projected: spent + pace * (length - today),
-        isEarly: today < EARLY_DAYS
-    };
 }
 
 /**
