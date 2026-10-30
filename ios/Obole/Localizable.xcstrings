@@ -44,16 +44,6 @@
         }
       }
     },
-    "%@ left" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Il devrait rester %@"
-          }
-        }
-      }
-    },
     "%@ of the budget is not dispatched yet" : {
       "localizations" : {
         "fr" : {
@@ -524,16 +514,6 @@
         }
       }
     },
-    "End of the month" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fin du mois"
-          }
-        }
-      }
-    },
     "Entry" : {
       "localizations" : {
         "fr" : {
@@ -810,16 +790,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sur %lld mois"
-          }
-        }
-      }
-    },
-    "Over budget by %@" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dépassement prévu de %@"
           }
         }
       }
@@ -1434,16 +1404,6 @@
         }
       }
     },
-    "The month has only just started: take it as a rough estimate." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Le mois vient de commencer : c’est une estimation grossière."
-          }
-        }
-      }
-    },
     "The server is unavailable right now." : {
       "localizations" : {
         "fr" : {
@@ -1690,26 +1650,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vos plafonds reviennent aussi à leurs valeurs par défaut. Les opérations vont dans la corbeille, d’où vous pourrez les restaurer."
-          }
-        }
-      }
-    },
-    "Your pace, recurring left out: %@ a day since the 1st, carried on to the end of the month, plus %@ of recurring operations." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Votre rythme hors récurrent : %@ par jour depuis le 1er, prolongé jusqu’à la fin du mois, plus %@ d’opérations récurrentes."
-          }
-        }
-      }
-    },
-    "Your pace, recurring left out: %@ a day since the 1st, carried on to the end of the month." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Votre rythme hors récurrent : %@ par jour depuis le 1er, prolongé jusqu’à la fin du mois."
           }
         }
       }

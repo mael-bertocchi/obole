@@ -3,8 +3,8 @@ import SwiftUI
 /**
  * @class BudgetView
  * @description The Budget tab: the ring with what is left to spend, the spent, days-left and per-day figures, and every
- * category against its limit, month by month. The current month also shows where it ends at its pace, and how each
- * category compares with its usual spending by the same day
+ * category against its limit, month by month. The current month also shows how each category compares with its usual
+ * spending by the same day
  */
 struct BudgetView: View {
     var onOpenCategory: (Category, Date) -> Void = { _, _ in } /*!< Opens a category's operations of a month in History */
@@ -39,12 +39,7 @@ struct BudgetView: View {
 
                 statCards
                     .padding(.top, 14)
-                    .padding(.bottom, projection == nil ? 22 : 10)
-
-                if let projection {
-                    ProjectionRow(projection: projection)
-                        .padding(.bottom, 22)
-                }
+                    .padding(.bottom, 22)
 
                 categoryHeader
                     .padding(.bottom, showDispatchNote ? 6 : 12)
@@ -124,17 +119,6 @@ struct BudgetView: View {
      */
     private var isCurrentMonth: Bool {
         BudgetMath.isSameMonth(month, .now)
-    }
-
-    /**
-     * @method projection
-     * @description Where the current month is heading, nil for another month or one without operations
-     */
-    private var projection: MonthProjection? {
-        guard isCurrentMonth, hasOperations else {
-            return nil
-        }
-        return BudgetAnalysis.project(store.operations, limit: monthlyBudget.monthlyLimit)
     }
 
     /**
@@ -314,76 +298,5 @@ private struct CategoryProgressRow: View {
             return Formatting.euro(spend.spent)
         }
         return Formatting.euro(spend.spent) + " / " + Formatting.euro(spend.limit)
-    }
-}
-
-/**
- * @class ProjectionRow
- * @description Where the current month ends at its pace, against its budget, with how it was worked out
- */
-private struct ProjectionRow: View {
-    let projection: MonthProjection /*!< Where the month is heading */
-
-    /**
-     * @method body
-     * @description The row
-     */
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("End of the month")
-                    .font(Theme.font(12, .medium))
-                    .foregroundStyle(Theme.muted)
-                Spacer(minLength: 8)
-                Text(verbatim: Formatting.euro(projection.projected))
-                    .font(Theme.font(19, .semibold))
-                    .foregroundStyle(Theme.text)
-                    .monospacedDigit()
-            }
-
-            if projection.limit > 0 {
-                Text(isOver ? String(appLocalized: "Over budget by \(Formatting.euro(-margin))") : String(appLocalized: "\(Formatting.euro(margin)) left"))
-                    .font(Theme.font(13, .medium))
-                    .foregroundStyle(isOver ? Theme.negative : Theme.positive)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-
-            Text(projection.isEarly ? String(appLocalized: "The month has only just started: take it as a rough estimate.") : basis)
-                .font(Theme.font(11))
-                .foregroundStyle(Theme.faint)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 6)
-        }
-        .padding(14)
-        .glassCard()
-        .accessibilityElement(children: .combine)
-    }
-
-    /**
-     * @method margin
-     * @description What the budget leaves at the end of the month, negative when it is overspent
-     */
-    private var margin: Double {
-        projection.limit - projection.projected
-    }
-
-    /**
-     * @method isOver
-     * @description Whether the month is heading over its budget
-     */
-    private var isOver: Bool {
-        margin < 0
-    }
-
-    /**
-     * @method basis
-     * @description How the projection was worked out
-     */
-    private var basis: String {
-        let pace = Formatting.euro(projection.pace)
-        guard projection.recurring > 0 else {
-            return String(appLocalized: "Your pace, recurring left out: \(pace) a day since the 1st, carried on to the end of the month.")
-        }
-        return String(appLocalized: "Your pace, recurring left out: \(pace) a day since the 1st, carried on to the end of the month, plus \(Formatting.euro(projection.recurring)) of recurring operations.")
     }
 }

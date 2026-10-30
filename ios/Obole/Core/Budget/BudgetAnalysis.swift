@@ -1,23 +1,6 @@
 import Foundation
 
 /**
- * @class MonthProjection
- * @description Where the current month is heading: what was spent so far, and where it ends at the same pace
- */
-struct MonthProjection: Equatable {
-    var month: Date /*!< The first day of the month */
-    var today: Int /*!< Today's day of the month */
-    var length: Int /*!< How many days the month has */
-    var limit: Double /*!< The month's budget */
-    var spent: Double /*!< Euros spent so far */
-    var recurring: Double /*!< Euros of it spent on recurring operations, which don't repeat within the month */
-    var pace: Double /*!< Euros spent per day on everything else */
-
-    var projected: Double { spent + pace * Double(length - today) } /*!< Euros spent by the end of the month, at that pace */
-    var isEarly: Bool { today < BudgetAnalysis.earlyDays } /*!< Whether the month only just started, so the projection is rough */
-}
-
-/**
  * @class CategoryComparison
  * @description What one category spent this month so far, against what it usually had by the same day
  */
@@ -139,11 +122,6 @@ enum BudgetAnalysis {
      */
     static let referenceLimit = 6
     /**
-     * @constant earlyDays
-     * @description Before this day of the month, too little was spent for the projection to say much
-     */
-    static let earlyDays = 5
-    /**
      * @constant notableChange
      * @description How far a category must stray from its usual spending, as a fraction, for the change to be worth showing
      */
@@ -215,17 +193,6 @@ enum BudgetAnalysis {
     }
 
     /**
-     * @method length
-     * @description How many days a month has
-     *
-     * @param month Any day of the month
-     * @returns The number of days
-     */
-    static func length(of month: Date) -> Int {
-        BudgetMath.calendar.range(of: .day, in: .month, for: month)?.count ?? 30
-    }
-
-    /**
      * @method referenceMonths
      * @description The past months "usual" is measured on: the latest ones holding operations, before the month and at
      * most six, latest first
@@ -249,27 +216,6 @@ enum BudgetAnalysis {
      */
     static func spent(_ operations: [Operation]) -> Double {
         operations.reduce(0) { $0 + $1.euroAmount }
-    }
-
-    /**
-     * @method project
-     * @description Where the current month is heading. Recurring operations, such as the rent or a subscription, are
-     * counted once; everything else is spread over the days gone by, today included, and carried on to the month's end
-     *
-     * @param operations Every operation
-     * @param limit The month's budget
-     * @param now The current date
-     * @returns The projection
-     */
-    static func project(_ operations: [Operation], limit: Double, now: Date = .now) -> MonthProjection {
-        let month = BudgetMath.monthStart(now)
-        let today = day(of: now)
-        let days = length(of: month)
-        let current = BudgetMath.operations(operations, in: month).filter { day(of: $0.date) <= today }
-        let total = spent(current)
-        let recurring = spent(current.filter(\.isRecurring))
-
-        return MonthProjection(month: month, today: today, length: days, limit: limit, spent: total, recurring: recurring, pace: (total - recurring) / Double(today))
     }
 
     /**
