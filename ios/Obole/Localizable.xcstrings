@@ -14,6 +14,16 @@
         }
       }
     },
+    "%@ left" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il devrait rester %@"
+          }
+        }
+      }
+    },
     "%@ of the budget is not dispatched yet" : {
       "localizations" : {
         "fr" : {
@@ -94,6 +104,16 @@
         }
       }
     },
+    "Analysis" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Analyse"
+          }
+        }
+      }
+    },
     "Apply" : {
       "localizations" : {
         "fr" : {
@@ -110,6 +130,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les applications, comme Claude, que vous avez autorisées avec votre clé d’accès. Elles lisent et modifient tout votre compte tant que vous ne les révoquez pas."
+          }
+        }
+      }
+    },
+    "At %@ a day since the 1st, carried on to the end of the month, plus %@ of recurring operations counted once." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au rythme de %1$@ par jour depuis le 1er, prolongé jusqu’à la fin du mois, plus %2$@ d’opérations récurrentes comptées une seule fois."
+          }
+        }
+      }
+    },
+    "At %@ a day since the 1st, carried on to the end of the month." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au rythme de %@ par jour depuis le 1er, prolongé jusqu’à la fin du mois."
+          }
+        }
+      }
+    },
+    "At this point of the month, against last month." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À ce stade du mois, comparé au mois dernier."
+          }
+        }
+      }
+    },
+    "At this point of the month, against the average of your last %lld months." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À ce stade du mois, comparé à la moyenne de vos %lld derniers mois."
           }
         }
       }
@@ -260,6 +320,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Café"
+          }
+        }
+      }
+    },
+    "Compared with usual" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par rapport à d’habitude"
           }
         }
       }
@@ -424,6 +494,16 @@
         }
       }
     },
+    "End of the month" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fin du mois"
+          }
+        }
+      }
+    },
     "Entry" : {
       "localizations" : {
         "fr" : {
@@ -534,6 +614,16 @@
         }
       }
     },
+    "In all" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au total"
+          }
+        }
+      }
+    },
     "It will lose its access to Obole at once. To connect it again, you'll authorize it with your passkey." : {
       "localizations" : {
         "fr" : {
@@ -554,12 +644,72 @@
         }
       }
     },
+    "New" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau"
+          }
+        }
+      }
+    },
     "No app is connected." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucune application n’est connectée."
+          }
+        }
+      }
+    },
+    "Nothing spent yet this month." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien de dépensé ce mois-ci pour l’instant."
+          }
+        }
+      }
+    },
+    "Once a month is over, each category shows here against your usual spending." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dès qu’un mois sera terminé, chaque catégorie s’affichera ici face à vos dépenses habituelles."
+          }
+        }
+      }
+    },
+    "Over budget by %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dépassement prévu de %@"
+          }
+        }
+      }
+    },
+    "Projection" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projection"
+          }
+        }
+      }
+    },
+    "Projection: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projection : %@"
           }
         }
       }
@@ -1164,6 +1314,16 @@
         }
       }
     },
+    "The month has only just started: take it as a rough estimate." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le mois vient de commencer : c’est une estimation grossière."
+          }
+        }
+      }
+    },
     "The server is unavailable right now." : {
       "localizations" : {
         "fr" : {
@@ -1220,6 +1380,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La corbeille est vide."
+          }
+        }
+      }
+    },
+    "This month" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce mois-ci"
           }
         }
       }
@@ -1320,6 +1490,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dollar américain"
+          }
+        }
+      }
+    },
+    "Usually" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "D’habitude"
+          }
+        }
+      }
+    },
+    "Usually %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "D’habitude %@"
           }
         }
       }
