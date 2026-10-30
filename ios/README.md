@@ -11,6 +11,7 @@ The native **iOS** app, built entirely in SwiftUI against the iOS 26 "Liquid Gla
 - **Multi-currency** • pick the entry currency; the euro equivalent recomputes live and is stored with the operation, so past entries keep the rate they were logged at. Every rate carries the 1% a bank adds on top of the reference rate, so the euro figure matches the statement rather than the mid-market quote.
 - **English & French** • the language follows the device, or the one picked in Settings, and switches on the spot. Amounts and dates follow it too: `€1,234.50` in English, `1 234,50 €` in French.
 - **Trash** • a deleted operation leaves the budget but stays in the server's trash, listed under **Settings ▸ Trash**, until it is restored.
+- **Connected apps** • the apps authorized with the passkey on the portal, such as Claude through its MCP connector, listed under **Settings ▸ Connected apps** with when each was authorized and last used; revoking one cuts its access at once.
 - **Sign in & sync** • one account, opened with the passkey of the Obole portal, behind Face ID; every change is pushed to the server and restored on a fresh device. Offline changes stay local and reconcile when the connection returns, and edits made in the web interface merge in rather than being overwritten.
 
 ## Screens

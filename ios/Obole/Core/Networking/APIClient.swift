@@ -131,6 +131,17 @@ private struct CategoryFields: Encodable {
 }
 
 /**
+ * @class ClientConnection
+ * @description An app the owner authorized with the passkey, such as Claude, as the server lists it
+ */
+struct ClientConnection: Decodable, Identifiable {
+    let id: String /*!< The connection's id */
+    let name: String /*!< The app's name, as it registered */
+    let connectedAt: Date /*!< When it was authorized */
+    let lastUsedAt: Date /*!< When it last used its access */
+}
+
+/**
  * @type APIError
  * @description Why a request to the server failed, worded for the person in the interface's language
  */
@@ -329,6 +340,26 @@ final class APIClient {
      */
     func restoreOperation(id: String) async throws {
         try await sendDiscarding(entryPath("operations", id, "restore"), method: "POST")
+    }
+
+    /**
+     * @method getConnections
+     * @description Reads the apps authorized with the passkey that still hold their access, the most recently used first
+     *
+     * @returns The apps
+     */
+    func getConnections() async throws -> [ClientConnection] {
+        try await send("/v1/oauth/connections", method: "GET")
+    }
+
+    /**
+     * @method revokeConnection
+     * @description Takes an app's access away at once
+     *
+     * @param id The connection's id
+     */
+    func revokeConnection(id: String) async throws {
+        try await sendDiscarding("/v1/oauth/connections/\(id)", method: "DELETE")
     }
 
     /**

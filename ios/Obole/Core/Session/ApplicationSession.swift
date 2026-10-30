@@ -159,6 +159,26 @@ final class ApplicationSession {
     }
 
     /**
+     * @method connections
+     * @description Reads the apps authorized with the passkey, such as Claude
+     *
+     * @returns The apps, the most recently used first
+     */
+    func connections() async throws -> [ClientConnection] {
+        try await api.getConnections()
+    }
+
+    /**
+     * @method revokeConnection
+     * @description Takes an app's access away at once
+     *
+     * @param id The connection's id
+     */
+    func revokeConnection(id: String) async throws {
+        try await api.revokeConnection(id: id)
+    }
+
+    /**
      * @method applicationBecameActive
      * @description Catches up with the server whenever the app comes back to the foreground
      */

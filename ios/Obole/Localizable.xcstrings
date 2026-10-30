@@ -104,6 +104,26 @@
         }
       }
     },
+    "Apps such as Claude that you authorized with your passkey. They read and change your whole account until you revoke them." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les applications, comme Claude, que vous avez autorisées avec votre clé d’accès. Elles lisent et modifient tout votre compte tant que vous ne les révoquez pas."
+          }
+        }
+      }
+    },
+    "Authorized: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisée : %@"
+          }
+        }
+      }
+    },
     "Automatic" : {
       "localizations" : {
         "fr" : {
@@ -240,6 +260,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Café"
+          }
+        }
+      }
+    },
+    "Connected apps" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Applications connectées"
           }
         }
       }
@@ -504,12 +534,62 @@
         }
       }
     },
+    "It will lose its access to Obole at once. To connect it again, you'll authorize it with your passkey." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle perdra aussitôt son accès à Obole. Pour la reconnecter, il faudra l’autoriser avec votre clé d’accès."
+          }
+        }
+      }
+    },
+    "Last used: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière utilisation : %@"
+          }
+        }
+      }
+    },
+    "No app is connected." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune application n’est connectée."
+          }
+        }
+      }
+    },
     "Restore" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurer"
+          }
+        }
+      }
+    },
+    "Revoke" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Révoquer"
+          }
+        }
+      }
+    },
+    "Revoke %@?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Révoquer %@ ?"
           }
         }
       }
@@ -1070,6 +1150,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le budget a changé sur le serveur."
+          }
+        }
+      }
+    },
+    "The connected apps couldn't be loaded." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les applications connectées n’ont pas pu être chargées."
           }
         }
       }

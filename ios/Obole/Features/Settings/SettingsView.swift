@@ -2,7 +2,7 @@ import SwiftUI
 
 /**
  * @class SettingsView
- * @description The Settings tab: the sync state and signing out, the budget and its limits, the default currency, the
+ * @description The Settings tab: the sync state, the connected apps and signing out, the budget and its limits, the default currency, the
  * language, the haptics, the exchange rates and what the budget holds
  */
 struct SettingsView: View {
@@ -14,6 +14,7 @@ struct SettingsView: View {
     @State private var showLimits = false /*!< Whether the limits sheet is open */
     @State private var showCurrencyPicker = false /*!< Whether the currency picker is open */
     @State private var showTrash = false /*!< Whether the trash is open */
+    @State private var showConnections = false /*!< Whether the connected apps are open */
     @State private var showResetConfirmation = false /*!< Whether the reset is being confirmed */
     @State private var showSignOutConfirmation = false /*!< Whether signing out is being confirmed */
 
@@ -42,6 +43,10 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 11)
                     .padding(.horizontal, 14)
+                    RowDivider()
+                    valueRow(symbol: "powerplug", color: Theme.accent, title: String(appLocalized: "Connected apps"), value: "") {
+                        showConnections = true
+                    }
                     RowDivider()
                     Button {
                         showSignOutConfirmation = true
@@ -189,6 +194,9 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showTrash) {
             TrashSheet()
+        }
+        .sheet(isPresented: $showConnections) {
+            ConnectionsSheet()
         }
         .sheet(isPresented: $showCurrencyPicker) {
             CurrencyPickerSheet(selection: $preferences.lastUsedCurrencyCode)
