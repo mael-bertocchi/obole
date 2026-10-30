@@ -144,6 +144,17 @@ enum BudgetAnalysis {
      */
     static let earlyDays = 5
     /**
+     * @constant notableChange
+     * @description How far a category must stray from its usual spending, as a fraction, for the change to be worth showing
+     */
+    static let notableChange = 0.15
+    /**
+     * @constant notableAmount
+     * @description How many euros a category must stray from its usual spending for the change to be worth showing, so a
+     * coffee more never reads as a rise
+     */
+    static let notableAmount = 10.0
+    /**
      * @constant trendMonths
      * @description How many months the trends cover, the current one included
      */
@@ -286,6 +297,25 @@ enum BudgetAnalysis {
         let shown = rows.filter { $0.spent > 0 || $0.usual > 0 }.sorted { ($0.spent - $0.usual) > ($1.spent - $1.usual) }
 
         return MonthComparison(referenceCount: references.count, spent: spent(current), usual: spent(past) / count, categories: shown)
+    }
+
+    /**
+     * @method isNotable
+     * @description Whether a category's change from usual is worth showing: it spent something this month, since nothing
+     * spent yet only means the month is young, and it strays from usual by at least 15% and 10 euros. One that usually
+     * spends nothing counts once it spent 10 euros
+     *
+     * @param comparison The category, this month and usually
+     * @returns Whether to show its change
+     */
+    static func isNotable(_ comparison: CategoryComparison) -> Bool {
+        guard comparison.spent > 0 else {
+            return false
+        }
+        guard let change = comparison.change else {
+            return comparison.spent >= notableAmount
+        }
+        return abs(change) >= notableChange && abs(comparison.spent - comparison.usual) >= notableAmount
     }
 
     /**

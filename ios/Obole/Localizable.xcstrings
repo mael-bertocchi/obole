@@ -24,6 +24,16 @@
         }
       }
     },
+    "%@ a month against %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ par mois contre %@"
+          }
+        }
+      }
+    },
     "%@ at %@" : {
       "localizations" : {
         "fr" : {
@@ -170,26 +180,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les applications, comme Claude, que vous avez autorisées avec votre clé d’accès. Elles lisent et modifient tout votre compte tant que vous ne les révoquez pas."
-          }
-        }
-      }
-    },
-    "At %@ a day since the 1st, carried on to the end of the month, plus %@ of recurring operations counted once." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Au rythme de %1$@ par jour depuis le 1er, prolongé jusqu’à la fin du mois, plus %2$@ d’opérations récurrentes comptées une seule fois."
-          }
-        }
-      }
-    },
-    "At %@ a day since the 1st, carried on to the end of the month." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Au rythme de %@ par jour depuis le 1er, prolongé jusqu’à la fin du mois."
           }
         }
       }
@@ -704,12 +694,22 @@
         }
       }
     },
-    "Last 3 months, on average" : {
+    "Last %@" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "3 derniers mois, en moyenne"
+            "value" : "Dernière le %@"
+          }
+        }
+      }
+    },
+    "Last 3 months vs the 3 before" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 derniers mois vs les 3 d’avant"
           }
         }
       }
@@ -720,6 +720,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dernière utilisation : %@"
+          }
+        }
+      }
+    },
+    "Left a day" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reste par jour"
           }
         }
       }
@@ -740,6 +750,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Moyenne par mois"
+          }
+        }
+      }
+    },
+    "Needs six finished months" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il faut six mois terminés"
           }
         }
       }
@@ -1090,16 +1110,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dépassement"
-          }
-        }
-      }
-    },
-    "Per day" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Par jour"
           }
         }
       }
@@ -1680,6 +1690,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vos plafonds reviennent aussi à leurs valeurs par défaut. Les opérations vont dans la corbeille, d’où vous pourrez les restaurer."
+          }
+        }
+      }
+    },
+    "Your pace, recurring left out: %@ a day since the 1st, carried on to the end of the month, plus %@ of recurring operations." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre rythme hors récurrent : %@ par jour depuis le 1er, prolongé jusqu’à la fin du mois, plus %@ d’opérations récurrentes."
+          }
+        }
+      }
+    },
+    "Your pace, recurring left out: %@ a day since the 1st, carried on to the end of the month." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre rythme hors récurrent : %@ par jour depuis le 1er, prolongé jusqu’à la fin du mois."
           }
         }
       }

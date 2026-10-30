@@ -7,7 +7,7 @@ The native **iOS** app, built entirely in SwiftUI against the iOS 26 "Liquid Gla
 - **Budget ring** • left to spend, spent, days left, and a per-day allowance that recomputes as the month runs down.
 - **Per-category limits** • a tinted tile, a progress bar, and an over-budget state that turns everything red.
 - **Month stepper** • walk back through previous months; every figure recomputes.
-- **End of the month** • the current month shows where it ends at its pace (recurring operations counted once) and, per category, a badge with the change from its usual spending at the same day of the last six months.
+- **End of the month** • the current month shows where it ends at its pace (recurring operations counted once) and, per category, a badge with the change from its usual spending at the same day of the last six months, once it strays by 15% and €10 or more.
 - **History ledger** • day groups with day totals, each operation at the time it happened (latest first, read in the time zone the phone is in now), a search field, and filter chips for each category.
 - **Multi-currency** • pick the entry currency; the euro equivalent recomputes live and is stored with the operation, so past entries keep the rate they were logged at. Every rate carries the 1% a bank adds on top of the reference rate, so the euro figure matches the statement rather than the mid-market quote.
 - **English & French** • the language follows the device, or the one picked in Settings, and switches on the spot. Amounts and dates follow it too: `€1,234.50` in English, `1 234,50 €` in French.

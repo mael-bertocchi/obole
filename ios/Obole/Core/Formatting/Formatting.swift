@@ -400,13 +400,16 @@ enum Formatting {
 
     /**
      * @method dayShort
-     * @description A day and its month: 5 Oct
+     * @description A day and its month: 5 Oct, and 1er oct. in French
      *
      * @param date The date
      * @returns The day, written
      */
     static func dayShort(_ date: Date) -> String {
-        self.date(date, format: "d MMM")
+        guard Localization.isFrench, BudgetMath.calendar.component(.day, from: date) == 1 else {
+            return self.date(date, format: "d MMM")
+        }
+        return "1er " + self.date(date, format: "MMM")
     }
 
     /**

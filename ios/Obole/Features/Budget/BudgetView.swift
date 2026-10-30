@@ -140,7 +140,7 @@ struct BudgetView: View {
     /**
      * @method changes
      * @description Each category's change from its usual spending by the same day, only for the current month with some
-     * history: nil for a category that usually spends nothing
+     * history and only when it is worth showing: nil for a category that usually spends nothing
      */
     private var changes: [String: Double?] {
         guard isCurrentMonth else {
@@ -150,7 +150,7 @@ struct BudgetView: View {
         guard comparison.referenceCount > 0 else {
             return [:]
         }
-        return Dictionary(comparison.categories.map { ($0.id, $0.change) }, uniquingKeysWith: { first, _ in first })
+        return Dictionary(comparison.categories.filter(BudgetAnalysis.isNotable).map { ($0.id, $0.change) }, uniquingKeysWith: { first, _ in first })
     }
 
     /**
@@ -205,7 +205,7 @@ struct BudgetView: View {
         HStack(spacing: 10) {
             StatCard(label: String(appLocalized: "Spent"), value: hasOperations ? Formatting.euro(summary.spent) : "•")
             StatCard(label: String(appLocalized: "Days left"), value: hasOperations ? "\(summary.daysLeft)" : "•")
-            StatCard(label: String(appLocalized: "Per day"), value: hasOperations ? Formatting.euro(summary.perDay) : "•")
+            StatCard(label: String(appLocalized: "Left a day"), value: hasOperations ? Formatting.euro(summary.perDay) : "•")
         }
     }
 
@@ -382,8 +382,8 @@ private struct ProjectionRow: View {
     private var basis: String {
         let pace = Formatting.euro(projection.pace)
         guard projection.recurring > 0 else {
-            return String(appLocalized: "At \(pace) a day since the 1st, carried on to the end of the month.")
+            return String(appLocalized: "Your pace, recurring left out: \(pace) a day since the 1st, carried on to the end of the month.")
         }
-        return String(appLocalized: "At \(pace) a day since the 1st, carried on to the end of the month, plus \(Formatting.euro(projection.recurring)) of recurring operations counted once.")
+        return String(appLocalized: "Your pace, recurring left out: \(pace) a day since the 1st, carried on to the end of the month, plus \(Formatting.euro(projection.recurring)) of recurring operations.")
     }
 }

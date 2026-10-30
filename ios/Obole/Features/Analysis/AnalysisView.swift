@@ -110,7 +110,7 @@ private struct TrendsSection: View {
                 RowDivider()
                 FigureRow(label: costliestLabel, value: costliest.map { Formatting.euro($0.amount(in: categoryId)) } ?? "•")
                 RowDivider()
-                FigureRow(label: String(appLocalized: "Last 3 months, on average"), value: recent.map(Formatting.euro) ?? "•", isCompared: before != nil, change: change)
+                FigureRow(label: String(appLocalized: "Last 3 months vs the 3 before"), value: trend, note: trendNote)
             }
             .glassCard()
         }
@@ -182,6 +182,28 @@ private struct TrendsSection: View {
     }
 
     /**
+     * @method trend
+     * @description How the last three months moved from the three before, signed, or a dot without enough history
+     */
+    private var trend: String {
+        guard let change else {
+            return "•"
+        }
+        return (change > 0 ? "+" : "") + Formatting.percent(change)
+    }
+
+    /**
+     * @method trendNote
+     * @description What the trend is measured on, or that it needs more history
+     */
+    private var trendNote: String {
+        guard let recent, let before else {
+            return String(appLocalized: "Needs six finished months")
+        }
+        return String(appLocalized: "\(Formatting.euro(recent)) a month against \(Formatting.euro(before))")
+    }
+
+    /**
      * @method change
      * @description How the last three months moved from the three before, as a fraction
      */
@@ -195,13 +217,12 @@ private struct TrendsSection: View {
 
 /**
  * @class FigureRow
- * @description One figure under the trends' chart, with a badge when it is compared
+ * @description One figure under the trends' chart, with a line under its label saying what it is measured on
  */
 private struct FigureRow: View {
     let label: String /*!< What the figure is */
     let value: String /*!< The figure */
-    var isCompared = false /*!< Whether to show the badge */
-    var change: Double? = nil /*!< The change the badge shows */
+    var note: String? = nil /*!< What it is measured on, if worth saying */
 
     /**
      * @method body
@@ -209,14 +230,20 @@ private struct FigureRow: View {
      */
     var body: some View {
         HStack(spacing: 10) {
-            Text(verbatim: label)
-                .font(Theme.font(13))
-                .foregroundStyle(Theme.muted)
-                .lineLimit(1)
-            Spacer(minLength: 8)
-            if isCompared {
-                TrendBadge(change: change)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: label)
+                    .font(Theme.font(13))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(1)
+                if let note {
+                    Text(verbatim: note)
+                        .font(Theme.font(11))
+                        .foregroundStyle(Theme.faint)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                }
             }
+            Spacer(minLength: 8)
             Text(verbatim: value)
                 .font(Theme.font(15, .semibold))
                 .foregroundStyle(Theme.text)
@@ -495,7 +522,7 @@ private struct RecurringRow: View {
                     .font(Theme.font(14))
                     .foregroundStyle(Theme.text)
                     .lineLimit(1)
-                Text(verbatim: expense.category.title + " • " + String(appLocalized: "last \(Formatting.dayShort(expense.lastDate))"))
+                Text(verbatim: detail)
                     .font(Theme.font(11))
                     .foregroundStyle(Theme.muted)
                     .lineLimit(1)
@@ -516,6 +543,18 @@ private struct RecurringRow: View {
         .padding(.vertical, 11)
         .padding(.horizontal, 14)
         .accessibilityElement(children: .combine)
+    }
+
+    /**
+     * @method detail
+     * @description Its category and when it was last paid, the category left out when the expense is named after it
+     */
+    private var detail: String {
+        let day = Formatting.dayShort(expense.lastDate)
+        guard expense.name.trimmingCharacters(in: .whitespaces).lowercased() != expense.category.title.lowercased() else {
+            return String(appLocalized: "Last \(day)")
+        }
+        return expense.category.title + " • " + String(appLocalized: "last \(day)")
     }
 }
 
