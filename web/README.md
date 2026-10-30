@@ -16,6 +16,7 @@
 - **Budget** • the ring with what is left to spend, the spent, days-left and per-day figures, and every category against its limit. Step back through past months; a past month is measured against the budget frozen when it ended.
 - **History** • operations grouped by day with day totals, each at the time it happened (latest first, read in the browser's time zone), a search, and a filter chip per category.
 - **New & edit operation** • amount in any currency with the euro equivalent at the rate of the operation's own day (bank markup included), category, name, note, date and time, online, place, recurring. Delete with a confirmation.
+- **Analysis** • where the month is heading at its pace (recurring operations counted once, the rest carried on to the end of the month), drawn day by day against the usual curve and the budget, and each category so far against its average at the same day of the last six months, the largest rise first. Worked out in the page, from the budget it holds.
 - **Limits** • the monthly budget and each category's limit, with what is left to dispatch.
 - **Settings** • sync state, budget and limits, default currency, exchange rates, operation and category counts, the trash (restore a deleted operation), reset.
 - **English & French** • the page follows the browser's language, or the one picked in the account settings, and switches on the spot. Amounts and dates are written as in the app: `€1,234.50` in English, `1 234,50 €` in French.
@@ -58,7 +59,7 @@ src/
 │  └─ watchlist/     The watchlist app: manifest, service, store, shelves, formatting, sentences…
 ├─ pages/         One folder per page area, each page or section in its own folder:
 │  ├─ portal/        Home, account, login, connect, authorize
-│  ├─ budget/        The budget's root page, its tabs (overview, history, settings), sheets and home tile
+│  ├─ budget/        The budget's root page, its tabs (overview, history, analysis, settings), sheets and home tile
 │  └─ watchlist/     The watchlist's root page, its tabs (to watch, watched), search and title sheets and home tile
 ├─ styles/        Tailwind entry
 ├─ types/         Vite's environment types

@@ -2,7 +2,7 @@ import FrameActionComponent from 'components/frame-action/frame-action';
 import type { FrameTab } from 'components/frame/frame';
 import FrameComponent from 'components/frame/frame';
 import LoadingScreenComponent from 'components/loading-screen/loading-screen';
-import { ChartPie, History as HistoryIcon, Settings } from 'lucide-react';
+import { ChartLine, ChartPie, History as HistoryIcon, Settings } from 'lucide-react';
 import { useBudgetEditorContext } from 'modules/budget/budget-editor-hooks';
 import { BudgetEditorProvider } from 'modules/budget/budget-editor-provider';
 import { useBudget, useBudgetContext, useCatchUp } from 'modules/budget/budget-hooks';
@@ -12,6 +12,7 @@ import { BudgetProvider } from 'modules/budget/budget-provider';
 import { t } from 'modules/language/language-service';
 import { useToastContext } from 'modules/toast/toast-hooks';
 import type { ToastContextProps } from 'modules/toast/toast-models';
+import BudgetAnalysisComponent from 'pages/budget/budget-analysis/budget-analysis';
 import BudgetHistoryComponent from 'pages/budget/budget-history/budget-history';
 import BudgetOperationComponent from 'pages/budget/budget-operation/budget-operation';
 import BudgetOverviewComponent from 'pages/budget/budget-overview/budget-overview';
@@ -21,11 +22,12 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 /**
  * @constant TABS
- * @description Budget, History and Settings, like the app's tab bar
+ * @description Budget, History, Analysis and Settings, like the app's tab bar
  */
 const TABS: readonly FrameTab[] = [
     { to: '/budget', label: 'navigation.budget', icon: ChartPie, end: true },
     { to: '/budget/history', label: 'navigation.history', icon: HistoryIcon },
+    { to: '/budget/analysis', label: 'navigation.analysis', icon: ChartLine },
     { to: '/budget/settings', label: 'navigation.settings', icon: Settings }
 ];
 
@@ -92,6 +94,7 @@ function BudgetShellComponent(): JSX.Element {
                 <Routes>
                     <Route index element={<BudgetOverviewComponent />} />
                     <Route path='history' element={<BudgetHistoryComponent />} />
+                    <Route path='analysis' element={<BudgetAnalysisComponent />} />
                     <Route path='settings' element={<BudgetSettingsComponent />} />
                     <Route path='*' element={<Navigate to='/budget' replace />} />
                 </Routes>
