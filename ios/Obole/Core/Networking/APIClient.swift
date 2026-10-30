@@ -131,6 +131,15 @@ private struct CategoryFields: Encodable {
 }
 
 /**
+ * @class EntryAddition
+ * @description A title to put on the watchlist, as the server takes it: the server reads the rest from the catalog
+ */
+private struct EntryAddition: Encodable {
+    let mediaType: String /*!< `movie` or `tv` */
+    let tmdbId: Int /*!< Its identifier in the catalog */
+}
+
+/**
  * @class EntryRating
  * @description A rating for a title of the watchlist, as the server takes it. A missing comment is written as null,
  * which clears it
@@ -409,6 +418,17 @@ final class APIClient {
      */
     func getAssistantStatus() async throws -> AssistantStatus {
         try await send("/v1/assistant/status", method: "GET")
+    }
+
+    /**
+     * @method addWatchlistEntry
+     * @description Puts a film or a series on the watchlist
+     *
+     * @param mediaType `movie` or `tv`
+     * @param tmdbId Its identifier in the catalog
+     */
+    func addWatchlistEntry(mediaType: String, tmdbId: Int) async throws {
+        try await sendDiscarding("/v1/watchlist/entries", method: "POST", body: EntryAddition(mediaType: mediaType, tmdbId: tmdbId))
     }
 
     /**

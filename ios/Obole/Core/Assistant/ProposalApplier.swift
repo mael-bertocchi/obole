@@ -57,6 +57,8 @@ struct ProposalApplier {
             store.deleteOperation(id: summary.id)
         case .rateTitle(let entryId, _, let rating, let comment, let watchedAt):
             try await session.rateTitle(entryId: entryId, rating: rating, comment: comment, watchedAt: Self.moment(on: watchedAt))
+        case .addTitle(let mediaType, let tmdbId, _, _, _):
+            try await session.addToWatchlist(mediaType: mediaType, tmdbId: tmdbId)
         }
     }
 

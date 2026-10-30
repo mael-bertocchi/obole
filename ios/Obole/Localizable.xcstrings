@@ -74,6 +74,16 @@
         }
       }
     },
+    "Add to the watchlist" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter à la watchlist"
+          }
+        }
+      }
+    },
     "All" : {
       "localizations" : {
         "fr" : {
@@ -550,6 +560,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Taux de change"
+          }
+        }
+      }
+    },
+    "Film" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Film"
           }
         }
       }
@@ -1110,6 +1130,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Envoyer"
+          }
+        }
+      }
+    },
+    "Series" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Série"
           }
         }
       }

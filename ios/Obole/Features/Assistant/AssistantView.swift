@@ -693,6 +693,7 @@ struct ProposalCard: View {
         case .updateOperation: return String(appLocalized: "Change an operation")
         case .deleteOperation: return String(appLocalized: "Delete an operation")
         case .rateTitle: return String(appLocalized: "Rate a title")
+        case .addTitle: return String(appLocalized: "Add to the watchlist")
         }
     }
 
@@ -706,6 +707,7 @@ struct ProposalCard: View {
         case .updateOperation: return "pencil"
         case .deleteOperation: return "trash"
         case .rateTitle: return "star"
+        case .addTitle: return "film"
         }
     }
 
@@ -741,7 +743,37 @@ struct ProposalCard: View {
                 lines.append("“\(comment)”")
             }
             return lines
+        case .addTitle(let mediaType, _, let title, let releaseDate, let overview):
+            let kind = mediaType == "tv" ? String(appLocalized: "Series") : String(appLocalized: "Film")
+            let year = releaseDate.map { String($0.prefix(4)) }.flatMap { $0.isEmpty ? nil : $0 }
+            var lines = [title, [year, kind].compactMap { $0 }.joined(separator: " · ")]
+            if !overview.isEmpty {
+                lines.append(Self.shortened(overview))
+            }
+            return lines
         }
+    }
+
+    /**
+     * @constant overviewLimit
+     * @description How many characters of a title's synopsis a card shows
+     */
+    private static let overviewLimit = 180
+
+    /**
+     * @method shortened
+     * @description A synopsis cut to what a card shows, at a word, with an ellipsis when cut
+     *
+     * @param overview The synopsis
+     * @returns The synopsis, shortened
+     */
+    private static func shortened(_ overview: String) -> String {
+        guard overview.count > overviewLimit else {
+            return overview
+        }
+        let cut = overview.prefix(overviewLimit)
+        let atWord = cut.lastIndex(of: " ").map { cut[..<$0] } ?? cut
+        return atWord.trimmingCharacters(in: .whitespacesAndNewlines) + "…"
     }
 
     /**

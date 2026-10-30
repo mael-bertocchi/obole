@@ -218,6 +218,18 @@ final class ApplicationSession {
     }
 
     /**
+     * @method addToWatchlist
+     * @description Puts a film or a series on the watchlist. The app has no watchlist of its own, so this goes straight
+     * to the server
+     *
+     * @param mediaType `movie` or `tv`
+     * @param tmdbId Its identifier in the catalog
+     */
+    func addToWatchlist(mediaType: String, tmdbId: Int) async throws {
+        try await api.addWatchlistEntry(mediaType: mediaType, tmdbId: tmdbId)
+    }
+
+    /**
      * @method applicationBecameActive
      * @description Catches up with the server whenever the app comes back to the foreground
      */

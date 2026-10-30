@@ -136,6 +136,7 @@ enum AssistantProposal: Decodable, Equatable {
     case updateOperation(operation: OperationSummary, changes: OperationChanges) /*!< Change an operation */
     case deleteOperation(operation: OperationSummary) /*!< Move an operation to the trash */
     case rateTitle(entryId: String, title: String, rating: Int, comment: String?, watchedAt: String) /*!< Mark a title of the watchlist watched, with a rating */
+    case addTitle(mediaType: String, tmdbId: Int, title: String, releaseDate: String?, overview: String) /*!< Put a film or a series on the watchlist */
 
     /**
      * @type CodingKeys
@@ -152,6 +153,10 @@ enum AssistantProposal: Decodable, Equatable {
         case rating /*!< The rating */
         case comment /*!< The comment */
         case watchedAt /*!< The day it was watched */
+        case mediaType /*!< Whether the title to add is a film or a series */
+        case tmdbId /*!< The title's identifier in the catalog */
+        case releaseDate /*!< The day it came out */
+        case overview /*!< What it is about */
     }
 
     /**
@@ -184,6 +189,14 @@ enum AssistantProposal: Decodable, Equatable {
                 rating: try container.decode(Int.self, forKey: .rating),
                 comment: try container.decodeIfPresent(String.self, forKey: .comment),
                 watchedAt: try container.decode(String.self, forKey: .watchedAt)
+            )
+        case "addTitle":
+            self = .addTitle(
+                mediaType: try container.decode(String.self, forKey: .mediaType),
+                tmdbId: try container.decode(Int.self, forKey: .tmdbId),
+                title: try container.decode(String.self, forKey: .title),
+                releaseDate: try container.decodeIfPresent(String.self, forKey: .releaseDate),
+                overview: try container.decodeIfPresent(String.self, forKey: .overview) ?? ""
             )
         default:
             throw DecodingError.dataCorruptedError(forKey: .kind, in: container, debugDescription: "Unknown suggestion \(kind)")
