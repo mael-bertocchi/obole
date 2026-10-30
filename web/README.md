@@ -9,6 +9,7 @@
 - **App switcher and account button** • in the bar, on every page. The app switcher fades the page out and shows, in its place, the home page and every app as large icons; Escape or the button again brings the page back. The account button, the owner's initial, opens the account page, where they can also sign out.
 - **Account** • the passkeys that open the portal (add one, remove one, but never the last), the language every app speaks, signing out.
 - **Connect** • `/connect` is the page the iOS app opens in a browser sheet to sign in with the passkey; it hands the app a one-time code, never a session.
+- **Authorize** • `/authorize` is the OAuth authorization page MCP clients such as Claude send the owner to: it names the client, and once confirmed with the passkey sends it back with a one-time code bound to its PKCE challenge, never a session.
 
 ## The budget
 
@@ -63,7 +64,7 @@ src/
 │  ├─ watchlist/     The watchlist app: manifest, service, store, shelves, formatting, sentences…
 │  └─ assistant/     The assistant app: manifest, service, availability, carrying out a confirmed suggestion, sentences
 ├─ pages/         One folder per page area, each page or section in its own folder:
-│  ├─ portal/        Home, account, login, connect
+│  ├─ portal/        Home, account, login, connect, authorize
 │  ├─ budget/        The budget's root page, its tabs (overview, history, settings), sheets and home tile
 │  ├─ watchlist/     The watchlist's root page, its tabs (to watch, watched), search and title sheets and home tile
 │  └─ assistant/     The conversation, its suggestion cards and home tile

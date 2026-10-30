@@ -6,6 +6,7 @@ import { IdentityProvider } from 'modules/identity/identity-provider';
 import { LanguageProvider } from 'modules/language/language-provider';
 import { ToastProvider } from 'modules/toast/toast-provider';
 import AccountPage from 'pages/portal/account/account';
+import AuthorizePage from 'pages/portal/authorize/authorize';
 import ConnectPage from 'pages/portal/connect/connect';
 import HomePage from 'pages/portal/home/home';
 import LoginPage from 'pages/portal/login/login';
@@ -36,8 +37,8 @@ const APP_ROUTES: RouteObject[] = APPS.map((app) => {
 
 /**
  * @constant router
- * @description Defines the portal's routing structure: the sign-in page and the page the iOS app signs in through,
- * then, behind the passkey, the home page, the account settings and every app
+ * @description Defines the portal's routing structure: the sign-in page, the page the iOS app signs in through and the
+ * page MCP clients are authorized on, then, behind the passkey, the home page, the account settings and every app
  */
 const router = createBrowserRouter([
     {
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
     {
         path: 'connect',
         element: <ConnectPage />
+    },
+    {
+        path: 'authorize',
+        element: <AuthorizePage />
     },
     {
         path: '/',

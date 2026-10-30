@@ -31,6 +31,13 @@ export const portalEn = {
     'connect.done': 'Signed in. You can go back to the app.',
     'connect.invalid': 'This link is incomplete. Start again from the app.',
 
+    'authorize.title': 'Authorize {name}',
+    'authorize.prompt': '{name} will be able to read and change everything in your Obole account, on your behalf. Confirm with your passkey to send it back to {host}.',
+    'authorize.action': 'Authorize with a passkey',
+    'authorize.deny': 'Deny',
+    'authorize.done': 'Authorized. You can go back to {name}.',
+    'authorize.invalid': 'This authorization request is incomplete or comes from an unknown client.',
+
     'frame.sections': 'Sections',
     'frame.home': 'Home',
     'frame.launcherEyebrow': 'Obole',

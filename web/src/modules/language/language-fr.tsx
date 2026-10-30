@@ -32,6 +32,13 @@ const portalFr: PortalMessages = {
     'connect.done': 'Connecté. Vous pouvez revenir à l’app.',
     'connect.invalid': 'Ce lien est incomplet. Recommencez depuis l’app.',
 
+    'authorize.title': 'Autoriser {name}',
+    'authorize.prompt': '{name} pourra lire et modifier tout votre compte Obole, en votre nom. Confirmez avec votre clé d’accès pour le renvoyer vers {host}.',
+    'authorize.action': 'Autoriser avec une clé d’accès',
+    'authorize.deny': 'Refuser',
+    'authorize.done': 'Autorisé. Vous pouvez revenir à {name}.',
+    'authorize.invalid': 'Cette demande d’autorisation est incomplète ou vient d’un client inconnu.',
+
     'frame.sections': 'Sections',
     'frame.home': 'Accueil',
     'frame.launcherEyebrow': 'Obole',

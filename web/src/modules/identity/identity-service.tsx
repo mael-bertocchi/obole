@@ -1,6 +1,6 @@
 import type { Maybe } from 'models';
-import type { Account, Passkey } from 'modules/identity/identity-models';
-import { AccountSchema, ConnectionSchema, CreationOptionsSchema, EnrollmentSchema, IdentityTokensSchema, PasskeySchema, RequestOptionsSchema } from 'modules/identity/identity-models';
+import type { Account, ClientAuthorization, OAuthClient, Passkey } from 'modules/identity/identity-models';
+import { AccountSchema, AuthorizationSchema, ConnectionSchema, CreationOptionsSchema, EnrollmentSchema, IdentityTokensSchema, OAuthClientSchema, PasskeySchema, RequestOptionsSchema } from 'modules/identity/identity-models';
 import type { AuthenticationResponseJSON, PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON, RegistrationResponseJSON } from 'modules/identity/identity-passkeys';
 import { t } from 'modules/language/language-service';
 import { endSession, fetchPublic, fetchWithAuthentication, rewording } from 'utils/request';
@@ -51,6 +51,33 @@ async function connectApplication(answer: AuthenticationResponseJSON, challenge:
     const { code } = await fetchPublic('/v1/identity/connect', { method: 'POST', body: JSON.stringify({ response: answer, challenge }) }, ConnectionSchema).catch(rewording(401, t('error.passkeyRefused')));
 
     return code;
+}
+
+/**
+ * @function describeClient
+ * @description Asks who an MCP client asking to be authorized is, checking the server knows it and the address it waits on
+ *
+ * @param {string} clientId The client's id
+ * @param {string} redirectUri Where it waits
+ * @returns {Promise<OAuthClient>} Its name and host; rejects when the server doesn't know it
+ */
+async function describeClient(clientId: string, redirectUri: string): Promise<OAuthClient> {
+    return await fetchPublic(`/v1/oauth/client?${new URLSearchParams({ clientId, redirectUri }).toString()}`, { method: 'GET' }, OAuthClientSchema);
+}
+
+/**
+ * @function authorizeClient
+ * @description Trades a passkey's signed answer for the address to send an MCP client back to, with its one-time code.
+ * It opens no session on this page.
+ *
+ * @param {AuthenticationResponseJSON} answer The signed answer
+ * @param {ClientAuthorization} authorization The client, where it waits, its PKCE challenge and its state
+ * @returns {Promise<string>} The address
+ */
+async function authorizeClient(answer: AuthenticationResponseJSON, authorization: ClientAuthorization): Promise<string> {
+    const { redirectUrl } = await fetchPublic('/v1/oauth/authorize', { method: 'POST', body: JSON.stringify({ response: answer, ...authorization }) }, AuthorizationSchema).catch(rewording(401, t('error.passkeyRefused')));
+
+    return redirectUrl;
 }
 
 /**
@@ -172,6 +199,8 @@ export default {
     getLoginOptions,
     loginUser,
     connectApplication,
+    describeClient,
+    authorizeClient,
     isEnrollmentOpen,
     getEnrollmentOptions,
     enrollUser,

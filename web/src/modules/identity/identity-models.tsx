@@ -1,5 +1,5 @@
 import type { PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
-import type { Maybe } from 'models';
+import type { Maybe, Perhaps } from 'models';
 import type { ReactNode } from 'react';
 import { z } from 'zod';
 
@@ -48,6 +48,23 @@ export const EnrollmentSchema = z.object({
  */
 export const ConnectionSchema = z.object({
     code: z.string()
+});
+
+/**
+ * @constant OAuthClientSchema
+ * @description Zod schema for who an MCP client asking to be authorized is: its name, and the host it waits on.
+ */
+export const OAuthClientSchema = z.object({
+    name: z.string(),
+    redirectHost: z.string()
+});
+
+/**
+ * @constant AuthorizationSchema
+ * @description Zod schema for where the authorization page sends the client back, with its code.
+ */
+export const AuthorizationSchema = z.object({
+    redirectUrl: z.string()
 });
 
 /**
@@ -114,6 +131,23 @@ export type Account = z.infer<typeof AccountSchema>;
  * @description One of the owner's passkeys, as the server lists it
  */
 export type Passkey = z.infer<typeof PasskeySchema>;
+
+/**
+ * @type OAuthClient
+ * @description Who an MCP client asking to be authorized is.
+ */
+export type OAuthClient = z.infer<typeof OAuthClientSchema>;
+
+/**
+ * @interface ClientAuthorization
+ * @description What the owner authorizes: the MCP client, where it waits, its PKCE challenge and its state to hand back.
+ */
+export interface ClientAuthorization {
+    clientId: string; /*!< The client's id */
+    redirectUri: string; /*!< Where it waits */
+    codeChallenge: string; /*!< Its PKCE challenge */
+    state: Perhaps<string>; /*!< What it asked to be handed back, if anything */
+}
 
 /**
  * @type IdentityStatus
