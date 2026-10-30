@@ -200,7 +200,7 @@ interface RecurringRowComponentProps {
  */
 function RecurringRowComponent(props: RecurringRowComponentProps): JSX.Element {
     const { expense } = props;
-    const lastPaid = t('analysis.lastPaid', { date: dayShort(expense.lastDate) });
+    const lastPaid = t('analysis.lastPaid', { date: dayShort(expense.lastDate).replaceAll(' ', '\u00a0') });
     const isNamedAfterCategory = expense.name.trim().toLowerCase() === categoryName(expense.category).toLowerCase();
     const detail = isNamedAfterCategory ? capitalised(lastPaid) : `${categoryName(expense.category)} • ${lastPaid}`;
 
@@ -209,7 +209,7 @@ function RecurringRowComponent(props: RecurringRowComponentProps): JSX.Element {
             <CategoryIconComponent category={expense.category} size={34} />
             <span className='min-w-0 flex-1'>
                 <span className='block truncate text-[15px] font-medium'>{expense.name}</span>
-                <span className='block truncate text-[13px] text-ink-secondary'>{detail}</span>
+                <span className='block text-[13px] leading-snug text-ink-secondary'>{detail}</span>
             </span>
             <span className='text-right'>
                 <span className='block text-[15px] font-semibold tabular-nums'>{t('analysis.perMonth', { amount: euro(expense.monthly) })}</span>
@@ -334,12 +334,12 @@ function PlacesCardComponent(props: PlacesCardComponentProps): JSX.Element {
         <section className='card p-6 sm:p-8'>
             <h2 className='text-[20px] font-semibold tracking-tight'>{t('analysis.places')}</h2>
             <p className='mt-1 text-[13px] text-ink-secondary'>{t('analysis.habitsNote')}</p>
-            <div className='mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5'>
+            <div className='mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-5'>
                 {props.places.map((place, index) => (
-                    <div key={place.name} className='flex min-w-0 flex-col rounded-2xl bg-fill px-3 py-3'>
-                        <span className='flex items-center gap-1.5 text-[12px] font-medium text-ink-secondary'><MapPin size={13} className='shrink-0 text-ink-tertiary' /><span className='tabular-nums'>{index + 1}</span></span>
-                        <span className='mt-1 truncate text-[15px] font-semibold'>{place.name}</span>
-                        <span className='mt-0.5 text-[13px] text-ink-secondary tabular-nums'>{euro(place.spent)} • {t('analysis.visits', { count: String(place.count) })}</span>
+                    <div key={place.name} className='flex min-w-0 items-center gap-3 rounded-2xl bg-fill px-3 py-2.5 sm:flex-col sm:items-start sm:gap-0 sm:py-3'>
+                        <span className='flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-ink-secondary'><MapPin size={13} className='shrink-0 text-ink-tertiary' /><span className='tabular-nums'>{index + 1}</span></span>
+                        <span className='min-w-0 flex-1 truncate text-[15px] font-semibold sm:mt-1 sm:w-full sm:flex-none'>{place.name}</span>
+                        <span className='shrink-0 text-[13px] text-ink-secondary tabular-nums sm:mt-0.5'>{euro(place.spent)} • {t('analysis.visits', { count: String(place.count) })}</span>
                     </div>
                 ))}
             </div>
