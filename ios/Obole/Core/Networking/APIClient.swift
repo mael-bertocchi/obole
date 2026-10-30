@@ -131,49 +131,6 @@ private struct CategoryFields: Encodable {
 }
 
 /**
- * @class EntryAddition
- * @description A title to put on the watchlist, as the server takes it: the server reads the rest from the catalog
- */
-private struct EntryAddition: Encodable {
-    let mediaType: String /*!< `movie` or `tv` */
-    let tmdbId: Int /*!< Its identifier in the catalog */
-}
-
-/**
- * @class EntryRating
- * @description A rating for a title of the watchlist, as the server takes it. A missing comment is written as null,
- * which clears it
- */
-private struct EntryRating: Encodable {
-    let watchedAt: Date /*!< When it was watched */
-    let rating: Int /*!< The rating, in half stars */
-    let comment: String? /*!< The comment, if any */
-
-    /**
-     * @type CodingKeys
-     * @description The fields the server takes
-     */
-    private enum CodingKeys: String, CodingKey {
-        case watchedAt /*!< When it was watched */
-        case rating /*!< The rating */
-        case comment /*!< The comment */
-    }
-
-    /**
-     * @method encode
-     * @description Writes the fields, a null comment included
-     *
-     * @param encoder The encoder
-     */
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(watchedAt, forKey: .watchedAt)
-        try container.encode(rating, forKey: .rating)
-        try container.encode(comment, forKey: .comment)
-    }
-}
-
-/**
  * @type APIError
  * @description Why a request to the server failed, worded for the person in the interface's language
  */
@@ -204,29 +161,10 @@ enum APIError: UserFacingError {
         case .notFound: return String(appLocalized: "The server refused the request.")
         case .server(let status, _) where status >= 500: return String(appLocalized: "The server is unavailable right now.")
         case .server: return String(appLocalized: "The server refused the request.")
-        case .explained(_, let reason) where Self.assistantMessage(reason: reason) != nil: return Self.assistantMessage(reason: reason)
-        case .explained(_, let reason) where reason == "assistant-timeout": return String(appLocalized: "The assistant took too long to answer. Try again.")
         case .explained(let status, _) where status >= 500: return String(appLocalized: "The server is unavailable right now.")
         case .explained: return String(appLocalized: "The server refused the request.")
         case .transport: return String(appLocalized: "Can't reach the server.")
         case .decoding: return String(appLocalized: "The server sent an unexpected response.")
-        }
-    }
-
-    /**
-     * @method assistantMessage
-     * @description What to tell the person when the server says why the assistant can't answer
-     *
-     * @param reason The server's reason
-     * @returns The message, or nil when the reason isn't the assistant's
-     */
-    static func assistantMessage(reason: String) -> String? {
-        switch reason {
-        case "assistant-not-configured": return String(appLocalized: "The assistant isn't available: no Gemini API key is set on the server.")
-        case "assistant-refused": return String(appLocalized: "The assistant isn't available: Gemini rejected the server's API key.")
-        case "assistant-unknown-model": return String(appLocalized: "The assistant isn't available: Gemini doesn't know the model set on the server.")
-        case "assistant-unreachable": return String(appLocalized: "The assistant isn't available: Gemini can't be reached right now.")
-        default: return nil
         }
     }
 
@@ -252,7 +190,6 @@ final class APIClient {
     private(set) var baseURL: URL? /*!< The server's address */
     private let tokens: TokenStore /*!< The session's tokens */
     private let session: URLSession /*!< The URL session the requests go through */
-    private let slowSession: URLSession /*!< The URL session of the requests the server takes long to answer, such as the assistant's */
     private var refreshTask: Task<Void, Error>? /*!< The renewal under way, shared by the requests that need it */
 
     /**
@@ -269,10 +206,6 @@ final class APIClient {
         configuration.timeoutIntervalForRequest = 20
         configuration.waitsForConnectivity = false
         self.session = URLSession(configuration: configuration)
-        let slowConfiguration = URLSessionConfiguration.default
-        slowConfiguration.timeoutIntervalForRequest = Self.slowTimeout
-        slowConfiguration.waitsForConnectivity = false
-        self.slowSession = URLSession(configuration: slowConfiguration)
     }
 
     /**
@@ -399,52 +332,6 @@ final class APIClient {
     }
 
     /**
-     * @method converse
-     * @description Asks the assistant: the conversation goes whole each time, ending with the new question, since the
-     * server keeps none of it
-     *
-     * @param conversation The conversation, the language to answer in and the person's day
-     * @returns The assistant's answer and the changes it suggests
-     */
-    func converse(_ conversation: AssistantConversation) async throws -> AssistantReply {
-        try await send("/v1/assistant/messages", method: "POST", body: conversation, isSlow: true)
-    }
-
-    /**
-     * @method getAssistantStatus
-     * @description Asks whether the assistant can answer: whether Gemini takes the server's key and knows its model
-     *
-     * @returns Whether it can, and why not
-     */
-    func getAssistantStatus() async throws -> AssistantStatus {
-        try await send("/v1/assistant/status", method: "GET")
-    }
-
-    /**
-     * @method addWatchlistEntry
-     * @description Puts a film or a series on the watchlist
-     *
-     * @param mediaType `movie` or `tv`
-     * @param tmdbId Its identifier in the catalog
-     */
-    func addWatchlistEntry(mediaType: String, tmdbId: Int) async throws {
-        try await sendDiscarding("/v1/watchlist/entries", method: "POST", body: EntryAddition(mediaType: mediaType, tmdbId: tmdbId))
-    }
-
-    /**
-     * @method rateWatchlistEntry
-     * @description Marks a title of the watchlist watched, with a rating and a comment
-     *
-     * @param id The entry's id
-     * @param rating The rating, in half stars from 1 to 10
-     * @param comment The comment, if any
-     * @param watchedAt When it was watched
-     */
-    func rateWatchlistEntry(id: String, rating: Int, comment: String?, watchedAt: Date) async throws {
-        try await sendDiscarding("/v1/watchlist/entries/\(id)", method: "PATCH", body: EntryRating(watchedAt: watchedAt, rating: rating, comment: comment))
-    }
-
-    /**
      * @method write
      * @description Sends one write. Every write can be sent again safely: a creation the server already holds (an
      * earlier send whose answer was lost) becomes a change, a change to an operation in the trash restores it first,
@@ -535,21 +422,19 @@ final class APIClient {
      * @param method The HTTP method
      * @param body The body, if any
      * @param authorized Whether to send the access token
-     * @param isSlow Whether the server takes long to answer it
      * @returns The answer's data
      */
     private func send<Response: Decodable>(
         _ path: String,
         method: String,
         body: Encodable? = nil,
-        authorized: Bool = true,
-        isSlow: Bool = false
+        authorized: Bool = true
     ) async throws -> Response {
         do {
-            return try await perform(path, method: method, body: body, authorized: authorized, isSlow: isSlow)
+            return try await perform(path, method: method, body: body, authorized: authorized)
         } catch APIError.unauthorized where authorized {
             try await refreshTokens()
-            return try await perform(path, method: method, body: body, authorized: true, isSlow: isSlow)
+            return try await perform(path, method: method, body: body, authorized: true)
         }
     }
 
@@ -579,17 +464,15 @@ final class APIClient {
      * @param method The HTTP method
      * @param body The body, if any
      * @param authorized Whether to send the access token
-     * @param isSlow Whether the server takes long to answer it
      * @returns The answer's data
      */
     private func perform<Response: Decodable>(
         _ path: String,
         method: String,
         body: Encodable?,
-        authorized: Bool,
-        isSlow: Bool = false
+        authorized: Bool
     ) async throws -> Response {
-        let data = try await exchange(path, method: method, body: body, authorized: authorized, isSlow: isSlow)
+        let data = try await exchange(path, method: method, body: body, authorized: authorized)
 
         do {
             return try JSONCoding.decoder.decode(Envelope<Response>.self, from: data).data
@@ -606,15 +489,13 @@ final class APIClient {
      * @param method The HTTP method
      * @param body The body, if any
      * @param authorized Whether to send the access token
-     * @param isSlow Whether the server takes long to answer it
      * @returns The answer's body
      */
     private func exchange(
         _ path: String,
         method: String,
         body: Encodable?,
-        authorized: Bool,
-        isSlow: Bool = false
+        authorized: Bool
     ) async throws -> Data {
         guard let baseURL else {
             throw APIError.notConfigured
@@ -636,7 +517,7 @@ final class APIClient {
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await (isSlow ? slowSession : session).data(for: request)
+            (data, response) = try await session.data(for: request)
         } catch {
             throw APIError.transport(error)
         }
@@ -671,13 +552,6 @@ final class APIClient {
 
         return data
     }
-
-    /**
-     * @constant slowTimeout
-     * @description How long to wait on a request the server takes long to answer: the assistant may think and read
-     * through several tools before it answers
-     */
-    private static let slowTimeout: TimeInterval = 120
 
     /**
      * @method refreshTokens

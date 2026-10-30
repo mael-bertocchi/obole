@@ -64,26 +64,6 @@
         }
       }
     },
-    "Add an operation" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajouter une opération"
-          }
-        }
-      }
-    },
-    "Add to the watchlist" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajouter à la watchlist"
-          }
-        }
-      }
-    },
     "All" : {
       "localizations" : {
         "fr" : {
@@ -120,36 +100,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Appliquer"
-          }
-        }
-      }
-    },
-    "Ask about your spending or your watchlist, or describe an expense to log. Nothing changes until you confirm." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Interrogez-le sur vos dépenses ou votre watchlist, ou décrivez une dépense à ajouter. Rien ne change sans votre confirmation."
-          }
-        }
-      }
-    },
-    "Ask the assistant" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Demandez à l’assistant"
-          }
-        }
-      }
-    },
-    "Assistant" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Assistant"
           }
         }
       }
@@ -264,16 +214,6 @@
         }
       }
     },
-    "Change an operation" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modifier une opération"
-          }
-        }
-      }
-    },
     "Clear search" : {
       "localizations" : {
         "fr" : {
@@ -300,36 +240,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Café"
-          }
-        }
-      }
-    },
-    "Confirm" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Confirmer"
-          }
-        }
-      }
-    },
-    "Copied" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copié"
-          }
-        }
-      }
-    },
-    "Copy" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copier"
           }
         }
       }
@@ -414,16 +324,6 @@
         }
       }
     },
-    "Delete an operation" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supprimer une opération"
-          }
-        }
-      }
-    },
     "Delete every operation?" : {
       "localizations" : {
         "fr" : {
@@ -484,36 +384,6 @@
         }
       }
     },
-    "Dismiss" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ignorer"
-          }
-        }
-      }
-    },
-    "Dismissed" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ignoré"
-          }
-        }
-      }
-    },
-    "Done" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fait"
-          }
-        }
-      }
-    },
     "Edit limits" : {
       "localizations" : {
         "fr" : {
@@ -560,16 +430,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Taux de change"
-          }
-        }
-      }
-    },
-    "Film" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Film"
           }
         }
       }
@@ -640,96 +500,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Retour haptique"
-          }
-        }
-      }
-    },
-    "How much on restaurants this month?" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Combien en restaurants ce mois-ci ?"
-          }
-        }
-      }
-    },
-    "In person" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sur place"
-          }
-        }
-      }
-    },
-    "It will go to the trash, where you can restore it." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elle ira dans la corbeille, d’où vous pourrez la restaurer."
-          }
-        }
-      }
-    },
-    "Lunch €12.50 yesterday" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Déjeuner 12,50 € hier"
-          }
-        }
-      }
-    },
-    "New conversation" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nouvelle conversation"
-          }
-        }
-      }
-    },
-    "No exchange rate for %@ on that day." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucun taux de change pour %@ ce jour-là."
-          }
-        }
-      }
-    },
-    "No note" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sans note"
-          }
-        }
-      }
-    },
-    "No place" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sans lieu"
-          }
-        }
-      }
-    },
-    "Rate a title" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Noter un titre"
           }
         }
       }
@@ -1124,26 +894,6 @@
         }
       }
     },
-    "Send" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Envoyer"
-          }
-        }
-      }
-    },
-    "Series" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Série"
-          }
-        }
-      }
-    },
     "Something went wrong." : {
       "localizations" : {
         "fr" : {
@@ -1314,66 +1064,6 @@
         }
       }
     },
-    "The assistant has used up its quota for now. Try again in a moment." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’assistant a épuisé son quota pour le moment. Réessayez dans un instant."
-          }
-        }
-      }
-    },
-    "The assistant isn't available: Gemini can't be reached right now." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’assistant est indisponible : Gemini ne répond pas pour le moment."
-          }
-        }
-      }
-    },
-    "The assistant isn't available: Gemini doesn't know the model set on the server." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’assistant est indisponible : Gemini ne connaît pas le modèle configuré sur le serveur."
-          }
-        }
-      }
-    },
-    "The assistant isn't available: Gemini rejected the server's API key." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’assistant est indisponible : Gemini a refusé la clé d’API du serveur."
-          }
-        }
-      }
-    },
-    "The assistant isn't available: no Gemini API key is set on the server." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’assistant est indisponible : aucune clé d’API Gemini n’est configurée sur le serveur."
-          }
-        }
-      }
-    },
-    "The assistant took too long to answer. Try again." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’assistant a mis trop de temps à répondre. Réessayez."
-          }
-        }
-      }
-    },
     "The budget changed on the server." : {
       "localizations" : {
         "fr" : {
@@ -1444,42 +1134,12 @@
         }
       }
     },
-    "Thinking" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réflexion"
-          }
-        }
-      }
-    },
     "This month and the next ones: past months keep their budget." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ce mois-ci et les suivants : les mois passés gardent leur budget."
-          }
-        }
-      }
-    },
-    "This operation was deleted on another device." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cette opération a été supprimée sur un autre appareil."
-          }
-        }
-      }
-    },
-    "This suggestion has a date that can't be used." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cette suggestion porte une date inutilisable."
           }
         }
       }
@@ -1554,26 +1214,6 @@
         }
       }
     },
-    "Try again" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réessayer"
-          }
-        }
-      }
-    },
-    "Try asking" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Demandez par exemple"
-          }
-        }
-      }
-    },
     "Uncategorized" : {
       "localizations" : {
         "fr" : {
@@ -1594,32 +1234,12 @@
         }
       }
     },
-    "Watched on %@" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vu le %@"
-          }
-        }
-      }
-    },
     "Weekly groceries with Anna" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Courses de la semaine avec Anna"
-          }
-        }
-      }
-    },
-    "What's left on my watchlist?" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Que reste-t-il dans ma watchlist ?"
           }
         }
       }
@@ -1660,16 +1280,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vos plafonds reviennent aussi à leurs valeurs par défaut. Les opérations vont dans la corbeille, d’où vous pourrez les restaurer."
-          }
-        }
-      }
-    },
-    "Your messages and the data the assistant looks up are sent to Google Gemini." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vos messages et les données que l’assistant consulte sont envoyés à Google Gemini."
           }
         }
       }

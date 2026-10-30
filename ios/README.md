@@ -10,13 +10,12 @@ The native **iOS** app, built entirely in SwiftUI against the iOS 26 "Liquid Gla
 - **History ledger** • day groups with day totals, each operation at the time it happened (latest first, read in the time zone the phone is in now), a search field, and filter chips for each category.
 - **Multi-currency** • pick the entry currency; the euro equivalent recomputes live and is stored with the operation, so past entries keep the rate they were logged at. Every rate carries the 1% a bank adds on top of the reference rate, so the euro figure matches the statement rather than the mid-market quote.
 - **English & French** • the language follows the device, or the one picked in Settings, and switches on the spot. Amounts and dates follow it too: `€1,234.50` in English, `1 234,50 €` in French.
-- **Assistant** • ask about the budget or the watchlist in plain words, or describe an expense to log. The server answers through Google Gemini; a change it suggests (log, edit or delete an operation, rate a watched title) shows as a card and happens only once confirmed, through the ordinary sync. At launch the app asks the server whether Gemini takes its key and knows its model; while it doesn't, the Assistant tab is greyed out and says why.
 - **Trash** • a deleted operation leaves the budget but stays in the server's trash, listed under **Settings ▸ Trash**, until it is restored.
 - **Sign in & sync** • one account, opened with the passkey of the Obole portal, behind Face ID; every change is pushed to the server and restored on a fresh device. Offline changes stay local and reconcile when the connection returns, and edits made in the web interface merge in rather than being overwritten.
 
 ## Screens
 
-**Sign in** → **Budget · History · Assistant · Settings**. A **＋** in the Budget and History headers presents the *New operation* sheet. Navigation uses the native iOS 26 Liquid Glass tab bar, which minimizes as you scroll.
+**Sign in** → **Budget · History · Settings**. A **＋** in the Budget and History headers presents the *New operation* sheet. Navigation uses the native iOS 26 Liquid Glass tab bar, which minimizes as you scroll.
 
 ## Tech
 
@@ -28,7 +27,6 @@ Swift · SwiftUI · Observation · URLSession, in a single target (`Obole`) with
 Obole/
 ├─ Application/    App entry, root shell (auth gate + native TabView)
 ├─ Core/
-│  ├─ Assistant/   The assistant's messages and suggestions, and ProposalApplier carrying out a confirmed one
 │  ├─ Errors/      UserFacingError: the failures written for the person, and the generic message for any other
 │  ├─ Budget/      Derived selectors (month summary, category spend, day groups)
 │  ├─ Formatting/  Euro, amount, rate and date formatting, in the interface's language
@@ -40,7 +38,7 @@ Obole/
 │  ├─ Session/     ApplicationSession: auth state + pull/push sync; PortalConnection: sign-in through the portal (PKCE)
 │  ├─ Storage/     LocalStore (JSON snapshot), BudgetDocument, sync base & merge, debug seed
 │  └─ Theme/       Design tokens, haptics
-├─ Features/       One folder per screen (Identity, Budget, History, Operations, Assistant, Settings)
+├─ Features/       One folder per screen (Identity, Budget, History, Operations, Settings)
 └─ UIComponents/   Liquid glass surfaces, buttons, progress, tiles
 ```
 
@@ -119,7 +117,7 @@ To reach the real sign-in screen, edit the scheme (**Product ▸ Scheme ▸ Edit
 | --- | --- |
 | `-demo` | Seeds the sample month and skips sign-in (on by default) |
 | `-demo-empty` | Skips sign-in with an empty store (use alone, not with `-demo`) |
-| `-tab budget\|history\|assistant\|settings` | Opens directly on a given tab |
+| `-tab budget\|history\|settings` | Opens directly on a given tab |
 | `-open add` | Opens straight into the New operation sheet |
 
 Example: `-demo -tab history` launches on the History tab with data.

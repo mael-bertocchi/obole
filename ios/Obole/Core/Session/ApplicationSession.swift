@@ -33,7 +33,6 @@ final class ApplicationSession {
     private(set) var identityState: IdentityState = .loading /*!< Whether the app is signed in */
     private(set) var syncState: SyncState = .idle /*!< Where the budget stands with the server */
     private(set) var lastSyncedAt: Date? /*!< When the budget was last in step with the server */
-    private(set) var assistantUnavailableReason: String? /*!< Why the assistant can't answer, nil while it can */
 
     let serverURLString = ApplicationSession.serverURL /*!< The server's address */
 
@@ -78,7 +77,6 @@ final class ApplicationSession {
         identityState = .signedIn
         wireLocalChanges()
         refreshRates()
-        checkAssistant()
         await reconcile()
         repriceRecentOperations()
     }
@@ -97,7 +95,6 @@ final class ApplicationSession {
         identityState = .signedIn
         wireLocalChanges()
         refreshRates()
-        checkAssistant()
         await reconcile()
         repriceRecentOperations()
     }
@@ -115,7 +112,6 @@ final class ApplicationSession {
         SyncBase.clear()
         syncState = .idle
         lastSyncedAt = nil
-        assistantUnavailableReason = nil
         identityState = .signedOut
     }
 
@@ -142,47 +138,6 @@ final class ApplicationSession {
     }
 
     /**
-     * @method ask
-     * @description Asks the assistant, in the interface's language and on the person's day
-     *
-     * @param messages The conversation, ending with the question
-     * @returns The assistant's answer and the changes it suggests
-     */
-    func ask(_ messages: [AssistantMessage]) async throws -> AssistantReply {
-        let conversation = AssistantConversation(
-            messages: messages,
-            language: Localization.isFrench ? "fr" : "en",
-            today: ExchangeRates.day(from: .now)
-        )
-        do {
-            let reply = try await api.converse(conversation)
-            assistantUnavailableReason = nil
-            return reply
-        } catch APIError.explained(let status, let reason) where APIError.assistantMessage(reason: reason) != nil {
-            assistantUnavailableReason = APIError.assistantMessage(reason: reason)
-            throw APIError.explained(status: status, reason: reason)
-        }
-    }
-
-    /**
-     * @method checkAssistant
-     * @description Asks the server whether the assistant can answer, so its tab can be turned off when it can't. A
-     * failed question changes nothing
-     */
-    private func checkAssistant() {
-        guard !isDemo else {
-            return
-        }
-
-        Task { [api] in
-            guard let status = try? await api.getAssistantStatus() else {
-                return
-            }
-            assistantUnavailableReason = status.isAvailable ? nil : APIError.assistantMessage(reason: status.reason ?? "") ?? String(appLocalized: "The assistant isn't available: Gemini can't be reached right now.")
-        }
-    }
-
-    /**
      * @method trash
      * @description Reads the operations in the trash
      *
@@ -204,32 +159,6 @@ final class ApplicationSession {
     }
 
     /**
-     * @method rateTitle
-     * @description Marks a title of the watchlist watched, with a rating and a comment. The app has no watchlist of its
-     * own, so this goes straight to the server
-     *
-     * @param entryId The entry's id
-     * @param rating The rating, in half stars from 1 to 10
-     * @param comment The comment, if any
-     * @param watchedAt When it was watched
-     */
-    func rateTitle(entryId: String, rating: Int, comment: String?, watchedAt: Date) async throws {
-        try await api.rateWatchlistEntry(id: entryId, rating: rating, comment: comment, watchedAt: watchedAt)
-    }
-
-    /**
-     * @method addToWatchlist
-     * @description Puts a film or a series on the watchlist. The app has no watchlist of its own, so this goes straight
-     * to the server
-     *
-     * @param mediaType `movie` or `tv`
-     * @param tmdbId Its identifier in the catalog
-     */
-    func addToWatchlist(mediaType: String, tmdbId: Int) async throws {
-        try await api.addWatchlistEntry(mediaType: mediaType, tmdbId: tmdbId)
-    }
-
-    /**
      * @method applicationBecameActive
      * @description Catches up with the server whenever the app comes back to the foreground
      */
@@ -238,7 +167,6 @@ final class ApplicationSession {
             return
         }
         refreshRates()
-        checkAssistant()
 
         Task {
             await reconcile()
