@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 import type { PrismaClient } from 'prisma/generated/prisma/client';
 import assistantRoutes from 'src/modules/assistant/assistant-routes';
 import { AssistantStatus } from 'src/modules/assistant/assistant-status';
+import { forgetCatalog } from 'src/modules/watchlist/catalog/catalog-service';
 import type { Variables } from 'src/plugins/environment';
 import type { IdentityService } from 'src/plugins/identity';
 import type { Maybe } from 'src/shared/models';
@@ -12,6 +13,7 @@ import { RequestError } from 'src/shared/models';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { standIn } from '../../support/stand-in';
+import { stubCatalog } from '../../support/tmdb';
 import { testVariables } from '../../support/variables';
 
 /**
@@ -75,6 +77,7 @@ const groceries = {
 interface TestApp {
     app: FastifyInstance; /*!< The server */
     operations: { findMany: ReturnType<typeof vi.fn>; findUnique: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> }; /*!< The operations table */
+    entries: { findFirst: ReturnType<typeof vi.fn>; findUnique: ReturnType<typeof vi.fn> }; /*!< The watchlist table */
 }
 
 /**
@@ -89,13 +92,14 @@ async function buildApp(variables: Variables = testVariables()): Promise<TestApp
         update: vi.fn()
     };
     const categories = { findMany: vi.fn(() => Promise.resolve([{ id: 'groceries', name: 'Groceries', monthlyLimit: 400 }, { id: 'restaurant', name: 'Restaurant', monthlyLimit: 250 }])) };
+    const entries = { findFirst: vi.fn(() => Promise.resolve(null)), findUnique: vi.fn(() => Promise.resolve(null)) };
     const app = Fastify();
 
     app.setValidatorCompiler(validatorCompiler);
     app.setSerializerCompiler(serializerCompiler);
 
     app.decorate('variables', variables);
-    app.decorate('prisma', standIn<PrismaClient>({ budgetOperation: operations, budgetCategory: categories }));
+    app.decorate('prisma', standIn<PrismaClient>({ budgetOperation: operations, budgetCategory: categories, watchlistEntry: entries }));
     app.decorate('identity', standIn<IdentityService>({ authenticate: () => Promise.resolve() }));
     app.decorate('assistant', new AssistantStatus(variables, app.log));
 
@@ -115,7 +119,7 @@ async function buildApp(variables: Variables = testVariables()): Promise<TestApp
 
     await app.register(assistantRoutes, { prefix: '/v1/assistant' });
 
-    return { app, operations };
+    return { app, operations, entries };
 }
 
 /**
@@ -137,12 +141,37 @@ interface ReplyBody {
 afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    forgetCatalog();
 });
+
+/**
+ * @function stubGeminiAndCatalog
+ * @description Replaces `fetch` with both stand-ins: the catalog's for its address, Gemini's for the rest.
+ *
+ * @param {unknown[][]} turns The parts of each of Gemini's turns, in order.
+ *
+ * @returns {GeminiCall[]} The requests Gemini receives, as they come.
+ */
+function stubGeminiAndCatalog(turns: unknown[][]): GeminiCall[] {
+    stubCatalog(testVariables().WATCHLIST_TMDB_URL);
+
+    const catalog = vi.mocked(fetch).getMockImplementation();
+    const calls = stubGemini(turns);
+    const gemini = vi.mocked(fetch).getMockImplementation();
+
+    vi.mocked(fetch).mockImplementation((...args) => {
+        const answer = typeof args[0] === 'string' && args[0].startsWith(testVariables().WATCHLIST_TMDB_URL) ? catalog : gemini;
+
+        return answer?.(...args) ?? Promise.reject(new Error('No stand-in'));
+    });
+
+    return calls;
+}
 
 describe('POST /v1/assistant/messages', () => {
     it('reads the budget through a tool, sends the result back, and answers', async () => {
         const calls = stubGemini([
-            [{ functionCall: { id: 'call-1', name: 'search_operations', args: { query: 'monoprix' } }, thoughtSignature: 'sig-1' }],
+            [{ functionCall: { id: 'call-1', name: 'budget_search_operations', args: { query: 'monoprix' } }, thoughtSignature: 'sig-1' }],
             [{ text: 'Tu as dépensé 42,50 € chez Monoprix.' }]
         ]);
         const { app, operations } = await buildApp();
@@ -156,15 +185,15 @@ describe('POST /v1/assistant/messages', () => {
 
         const second = calls[1]?.body.contents ?? [];
 
-        expect(second[1]).toEqual({ role: 'model', parts: [{ functionCall: { id: 'call-1', name: 'search_operations', args: { query: 'monoprix' } }, thoughtSignature: 'sig-1' }] });
-        expect(second[2]?.parts[0]).toMatchObject({ functionResponse: { id: 'call-1', name: 'search_operations', response: { count: 1, totalEuros: 42.5 } } });
+        expect(second[1]).toEqual({ role: 'model', parts: [{ functionCall: { id: 'call-1', name: 'budget_search_operations', args: { query: 'monoprix' } }, thoughtSignature: 'sig-1' }] });
+        expect(second[2]?.parts[0]).toMatchObject({ functionResponse: { id: 'call-1', name: 'budget_search_operations', response: { count: 1, totalEuros: 42.5 } } });
 
         await app.close();
     });
 
     it('turns a suggested operation into a proposal without storing anything', async () => {
         stubGemini([
-            [{ functionCall: { id: 'call-1', name: 'propose_create_operation', args: { date: '2026-10-28', name: 'Déjeuner', categoryId: 'restaurant', amount: 12.5, currencyCode: 'CHF', location: 'Genève' } } }],
+            [{ functionCall: { id: 'call-1', name: 'budget_propose_create_operation', args: { date: '2026-10-28', name: 'Déjeuner', categoryId: 'restaurant', amount: 12.5, currencyCode: 'CHF', location: 'Genève' } } }],
             [{ text: 'Je te propose de l’ajouter, confirme-le.' }]
         ]);
         const { app, operations } = await buildApp();
@@ -181,7 +210,7 @@ describe('POST /v1/assistant/messages', () => {
     });
 
     it('shows the operation a suggested deletion is about', async () => {
-        stubGemini([[{ functionCall: { id: 'call-1', name: 'propose_delete_operation', args: { operationId: 'op-1' } } }], [{ text: 'À confirmer.' }]]);
+        stubGemini([[{ functionCall: { id: 'call-1', name: 'budget_propose_delete_operation', args: { operationId: 'op-1' } } }], [{ text: 'À confirmer.' }]]);
         const { app } = await buildApp();
         const response = await app.inject({ method: 'POST', url: '/v1/assistant/messages', payload: ask('Supprime Monoprix') });
 
@@ -192,7 +221,7 @@ describe('POST /v1/assistant/messages', () => {
 
     it('tells the model what to fix when its arguments do not hold up', async () => {
         const calls = stubGemini([
-            [{ functionCall: { id: 'call-1', name: 'propose_create_operation', args: { date: '2026-10-28', name: 'Déjeuner', categoryId: 'food', amount: 12.5, currencyCode: 'EUR' } } }],
+            [{ functionCall: { id: 'call-1', name: 'budget_propose_create_operation', args: { date: '2026-10-28', name: 'Déjeuner', categoryId: 'food', amount: 12.5, currencyCode: 'EUR' } } }],
             [{ text: 'Quelle catégorie ?' }]
         ]);
         const { app } = await buildApp();
@@ -205,7 +234,7 @@ describe('POST /v1/assistant/messages', () => {
     });
 
     it('stops offering tools once the model has used up its rounds', async () => {
-        const call = [{ functionCall: { name: 'search_operations', args: {} } }];
+        const call = [{ functionCall: { name: 'budget_search_operations', args: {} } }];
         const calls = stubGemini([call, call, call, call, call, call, [{ text: 'Voilà.' }]]);
         const { app } = await buildApp();
         const response = await app.inject({ method: 'POST', url: '/v1/assistant/messages', payload: ask('Analyse tout') });
@@ -219,7 +248,7 @@ describe('POST /v1/assistant/messages', () => {
 
     it('refuses itself once the conversation runs past its deadline', async () => {
         const clock = { now: 0 };
-        const call = [{ functionCall: { name: 'search_operations', args: {} } }];
+        const call = [{ functionCall: { name: 'budget_search_operations', args: {} } }];
         const calls = stubGemini([call, call, call, call]);
         const fetchStub = vi.mocked(fetch);
         const answer = fetchStub.getMockImplementation();
@@ -237,6 +266,70 @@ describe('POST /v1/assistant/messages', () => {
         expect(response.statusCode).toBe(StatusCodes.SERVICE_UNAVAILABLE);
         expect(response.json<{ data: { reason: string } }>().data.reason).toBe('assistant-timeout');
         expect(calls).toHaveLength(3);
+
+        await app.close();
+    });
+
+    it('reads what a title is about from the catalog', async () => {
+        const calls = stubGeminiAndCatalog([
+            [{ functionCall: { id: 'call-1', name: 'watchlist_title_details', args: { query: 'seigneur des anneaux' } } }],
+            [{ text: 'Un hobbit hérite d’un anneau.' }]
+        ]);
+        const { app } = await buildApp();
+        const response = await app.inject({ method: 'POST', url: '/v1/assistant/messages', payload: ask('De quoi parle le Seigneur des anneaux ?') });
+
+        expect(response.statusCode).toBe(StatusCodes.OK);
+        expect(calls[1]?.body.contents[2]?.parts[0]).toMatchObject({
+            functionResponse: {
+                name: 'watchlist_title_details',
+                response: { tmdbId: 120, mediaType: 'movie', year: '2001', overview: 'Un jeune hobbit hérite d’un anneau.', genres: ['Aventure', 'Fantastique'], saga: 'Le Seigneur des anneaux - Saga', watchlistEntryId: null, otherMatches: [{ tmdbId: 1399, mediaType: 'tv', title: 'Game of Thrones', year: '2011' }, { tmdbId: 404, mediaType: 'movie', title: 'Sans date', year: null }] }
+            }
+        });
+        expect(JSON.stringify(calls[1]?.body.contents[2])).toContain('Netflix');
+
+        await app.close();
+    });
+
+    it('tells the model the catalog is unavailable rather than letting it guess', async () => {
+        const calls = stubGeminiAndCatalog([
+            [{ functionCall: { id: 'call-1', name: 'watchlist_title_details', args: { mediaType: 'movie', tmdbId: 777 } } }],
+            [{ text: 'Le catalogue est indisponible.' }]
+        ]);
+        const { app } = await buildApp();
+        const response = await app.inject({ method: 'POST', url: '/v1/assistant/messages', payload: ask('Et le film 777 ?') });
+
+        expect(response.statusCode).toBe(StatusCodes.OK);
+        expect(JSON.stringify(calls[1]?.body.contents[2])).toContain('catalog is unavailable');
+
+        await app.close();
+    });
+
+    it('turns a suggested title into a proposal without adding it', async () => {
+        stubGeminiAndCatalog([
+            [{ functionCall: { id: 'call-1', name: 'watchlist_propose_add_title', args: { mediaType: 'tv', tmdbId: 1399 } } }],
+            [{ text: 'Je te propose de l’ajouter.' }]
+        ]);
+        const { app } = await buildApp();
+        const response = await app.inject({ method: 'POST', url: '/v1/assistant/messages', payload: ask('Ajoute Game of Thrones') });
+
+        expect(response.json<ReplyBody>().data.proposals).toEqual([{ kind: 'addTitle', mediaType: 'tv', tmdbId: 1399, title: 'Game of Thrones', releaseDate: '2011-04-17', posterPath: '/got.jpg', overview: 'Neuf familles nobles se disputent le contrôle de Westeros.' }]);
+
+        await app.close();
+    });
+
+    it('does not suggest adding a title already on the watchlist', async () => {
+        const calls = stubGeminiAndCatalog([
+            [{ functionCall: { id: 'call-1', name: 'watchlist_propose_add_title', args: { mediaType: 'tv', tmdbId: 1399 } } }],
+            [{ text: 'Il y est déjà.' }]
+        ]);
+        const { app, entries } = await buildApp();
+
+        entries.findFirst.mockResolvedValueOnce({ id: 'entry-1' });
+
+        const response = await app.inject({ method: 'POST', url: '/v1/assistant/messages', payload: ask('Ajoute Game of Thrones') });
+
+        expect(response.json<ReplyBody>().data.proposals).toEqual([]);
+        expect(JSON.stringify(calls[1]?.body.contents[2])).toContain('already on the watchlist');
 
         await app.close();
     });

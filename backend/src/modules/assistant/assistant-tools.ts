@@ -1,13 +1,19 @@
 import { randomUUID } from 'node:crypto';
 
+import type { FastifyBaseLogger } from 'fastify';
 import type { BudgetOperation, PrismaClient } from 'prisma/generated/prisma/client';
 import type { GeminiFunction } from 'src/modules/assistant/assistant-gemini';
 import type { OperationSummary, Proposal } from 'src/modules/assistant/assistant-models';
 import { OperationChangesSchema, OperationDraftSchema } from 'src/modules/assistant/assistant-models';
 import { StoredCategoryLimitsSchema } from 'src/modules/budget/state/state-models';
 import { DEFAULT_MONTHLY_LIMIT } from 'src/modules/budget/state/state-service';
+import type { CatalogDetails, CatalogTitle } from 'src/modules/watchlist/catalog/catalog-models';
+import { MediaTypeSchema } from 'src/modules/watchlist/catalog/catalog-models';
+import { searchCatalog, titleDetails } from 'src/modules/watchlist/catalog/catalog-service';
+import type { Variables } from 'src/plugins/environment';
 import { OWNER_ID } from 'src/plugins/identity';
-import type { Perhaps } from 'src/shared/models';
+import type { Maybe, Perhaps } from 'src/shared/models';
+import { RequestError } from 'src/shared/models';
 import { z } from 'zod';
 
 /**
@@ -22,6 +28,8 @@ const SEARCH_SCAN_MAX = 5000;
  */
 export interface ToolContext {
     prisma: PrismaClient; /*!< The database client */
+    variables: Variables; /*!< The environment, holding the catalog's address and token */
+    logger: FastifyBaseLogger; /*!< The request logger */
     language: 'en' | 'fr'; /*!< The language the owner reads */
     today: string; /*!< The owner's day, as `YYYY-MM-DD` */
 }
@@ -150,7 +158,7 @@ async function unknownCategory(prisma: PrismaClient, categoryId: Perhaps<string>
 
 /**
  * @constant SearchOperationsSchema
- * @description Zod schema for the arguments of `search_operations`.
+ * @description Zod schema for the arguments of `budget_search_operations`.
  */
 const SearchOperationsSchema = z.object({
     query: z.string().trim().min(1).max(100).optional(),
@@ -166,7 +174,7 @@ const SearchOperationsSchema = z.object({
  */
 const searchOperations: AssistantTool = {
     declaration: {
-        name: 'search_operations',
+        name: 'budget_search_operations',
         description: 'Finds logged operations (expenses) in the budget, latest first. Returns how many match, their total in euros, and up to `limit` of them. Every filter is optional.',
         parameters: {
             type: 'object',
@@ -214,7 +222,7 @@ const searchOperations: AssistantTool = {
 
 /**
  * @constant MonthSummarySchema
- * @description Zod schema for the arguments of `month_summary`.
+ * @description Zod schema for the arguments of `budget_month_summary`.
  */
 const MonthSummarySchema = z.object({
     month: z.string().regex(/^\d{4}-\d{2}$/)
@@ -226,7 +234,7 @@ const MonthSummarySchema = z.object({
  */
 const monthSummary: AssistantTool = {
     declaration: {
-        name: 'month_summary',
+        name: 'budget_month_summary',
         description: 'Sums up one month of the budget: the monthly budget, what was spent in euros, what is left, and each category\'s spending against its limit.',
         parameters: {
             type: 'object',
@@ -281,7 +289,7 @@ const monthSummary: AssistantTool = {
 
 /**
  * @constant SearchWatchlistSchema
- * @description Zod schema for the arguments of `search_watchlist`.
+ * @description Zod schema for the arguments of `watchlist_search`.
  */
 const SearchWatchlistSchema = z.object({
     query: z.string().trim().min(1).max(100).optional(),
@@ -295,7 +303,7 @@ const SearchWatchlistSchema = z.object({
  */
 const searchWatchlist: AssistantTool = {
     declaration: {
-        name: 'search_watchlist',
+        name: 'watchlist_search',
         description: 'Finds films and series on the watchlist, the latest added first: their id, title, kind, runtime in minutes or seasons, and once watched, the day, the rating (in half stars, 1 to 10) and the comment.',
         parameters: {
             type: 'object',
@@ -346,7 +354,7 @@ const searchWatchlist: AssistantTool = {
  */
 const proposeCreateOperation: AssistantTool = {
     declaration: {
-        name: 'propose_create_operation',
+        name: 'budget_propose_create_operation',
         description: 'Suggests logging a new operation. Nothing is stored: the owner sees the suggestion and confirms it or not.',
         parameters: {
             type: 'object',
@@ -382,7 +390,7 @@ const proposeCreateOperation: AssistantTool = {
 
 /**
  * @constant ProposeUpdateSchema
- * @description Zod schema for the arguments of `propose_update_operation`.
+ * @description Zod schema for the arguments of `budget_propose_update_operation`.
  */
 const ProposeUpdateSchema = z.object({
     operationId: z.string().min(1),
@@ -395,8 +403,8 @@ const ProposeUpdateSchema = z.object({
  */
 const proposeUpdateOperation: AssistantTool = {
     declaration: {
-        name: 'propose_update_operation',
-        description: 'Suggests changing an existing operation, found first with search_operations. Nothing is stored: the owner confirms it or not.',
+        name: 'budget_propose_update_operation',
+        description: 'Suggests changing an existing operation, found first with budget_search_operations. Nothing is stored: the owner confirms it or not.',
         parameters: {
             type: 'object',
             properties: {
@@ -429,7 +437,7 @@ const proposeUpdateOperation: AssistantTool = {
         const operation = await findLiveOperation(context.prisma, parsed.data.operationId);
 
         if (operation === undefined) {
-            return { result: { error: 'Unknown operation: find its id with search_operations' } };
+            return { result: { error: 'Unknown operation: find its id with budget_search_operations' } };
         }
 
         const refusal = await unknownCategory(context.prisma, parsed.data.changes.categoryId);
@@ -444,7 +452,7 @@ const proposeUpdateOperation: AssistantTool = {
 
 /**
  * @constant ProposeDeleteSchema
- * @description Zod schema for the arguments of `propose_delete_operation`.
+ * @description Zod schema for the arguments of `budget_propose_delete_operation`.
  */
 const ProposeDeleteSchema = z.object({
     operationId: z.string().min(1)
@@ -456,8 +464,8 @@ const ProposeDeleteSchema = z.object({
  */
 const proposeDeleteOperation: AssistantTool = {
     declaration: {
-        name: 'propose_delete_operation',
-        description: 'Suggests deleting one operation, found first with search_operations. It would go to the trash, where it can be restored. Nothing is deleted: the owner confirms it or not.',
+        name: 'budget_propose_delete_operation',
+        description: 'Suggests deleting one operation, found first with budget_search_operations. It would go to the trash, where it can be restored. Nothing is deleted: the owner confirms it or not.',
         parameters: {
             type: 'object',
             properties: {
@@ -476,7 +484,7 @@ const proposeDeleteOperation: AssistantTool = {
         const operation = await findLiveOperation(context.prisma, parsed.data.operationId);
 
         if (operation === undefined) {
-            return { result: { error: 'Unknown operation: find its id with search_operations' } };
+            return { result: { error: 'Unknown operation: find its id with budget_search_operations' } };
         }
 
         return { result: { status: 'Shown to the owner, waiting for confirmation' }, proposal: { kind: 'deleteOperation', operation: summaryOf(operation) } };
@@ -485,7 +493,7 @@ const proposeDeleteOperation: AssistantTool = {
 
 /**
  * @constant ProposeRatingSchema
- * @description Zod schema for the arguments of `propose_rate_title`.
+ * @description Zod schema for the arguments of `watchlist_propose_rate_title`.
  */
 const ProposeRatingSchema = z.object({
     entryId: z.uuid(),
@@ -500,8 +508,8 @@ const ProposeRatingSchema = z.object({
  */
 const proposeRateTitle: AssistantTool = {
     declaration: {
-        name: 'propose_rate_title',
-        description: 'Suggests marking a watchlist title as watched, with a rating and an optional comment. Find its id first with search_watchlist. Nothing is stored: the owner confirms it or not.',
+        name: 'watchlist_propose_rate_title',
+        description: 'Suggests marking a watchlist title as watched, with a rating and an optional comment. Find its id first with watchlist_search. Nothing is stored: the owner confirms it or not.',
         parameters: {
             type: 'object',
             properties: {
@@ -523,7 +531,7 @@ const proposeRateTitle: AssistantTool = {
         const entry = await context.prisma.watchlistEntry.findUnique({ where: { id: parsed.data.entryId } });
 
         if (entry === null) {
-            return { result: { error: 'Unknown title: find its id with search_watchlist' } };
+            return { result: { error: 'Unknown title: find its id with watchlist_search' } };
         }
 
         return {
@@ -541,15 +549,221 @@ const proposeRateTitle: AssistantTool = {
 };
 
 /**
+ * @constant CATALOG_UNAVAILABLE
+ * @description What the model reads when the catalog can't be asked, so it says so instead of answering from memory.
+ */
+const CATALOG_UNAVAILABLE: ToolOutcome = { result: { error: 'The film and series catalog is unavailable right now: say so, and do not describe the title from memory' } };
+
+/**
+ * @constant OTHER_MATCHES
+ * @description How many other titles a search by name lists besides the one it describes, for the model to tell them apart.
+ */
+const OTHER_MATCHES = 4;
+
+/**
+ * @function yearOf
+ * @description The year of a release date.
+ *
+ * @param {Maybe<string>} date The date, as `YYYY-MM-DD`, or null.
+ *
+ * @returns {Maybe<string>} Its year, or null.
+ */
+function yearOf(date: Maybe<string>): Maybe<string> {
+    return date === null || date === '' ? null : date.slice(0, 4);
+}
+
+/**
+ * @function watchlistEntryOf
+ * @description The watchlist's entry for a title of the catalog.
+ *
+ * @param {PrismaClient} prisma The database client.
+ * @param {CatalogTitle} title The title.
+ *
+ * @returns {Promise<Maybe<string>>} The entry's id, or null when the title isn't on the watchlist.
+ */
+async function watchlistEntryOf(prisma: PrismaClient, title: Pick<CatalogTitle, 'mediaType' | 'tmdbId'>): Promise<Maybe<string>> {
+    const entry = await prisma.watchlistEntry.findFirst({ where: { mediaType: title.mediaType, tmdbId: title.tmdbId } });
+
+    return entry?.id ?? null;
+}
+
+/**
+ * @function describedTitle
+ * @description A title of the catalog as the model reads it: what it is about, its genres, its length, its saga, where to
+ * watch it, and whether it is on the watchlist.
+ *
+ * @param {CatalogDetails} details The title's details.
+ * @param {Maybe<string>} entryId Its watchlist entry, or null.
+ *
+ * @returns {Record<string, unknown>} The title.
+ */
+function describedTitle(details: CatalogDetails, entryId: Maybe<string>): Record<string, unknown> {
+    const names = (providers: CatalogDetails['offers']['subscription']): string[] => providers.map((provider) => provider.name);
+
+    return {
+        tmdbId: details.tmdbId,
+        mediaType: details.mediaType,
+        title: details.title,
+        originalTitle: details.originalTitle,
+        year: yearOf(details.releaseDate),
+        overview: details.overview,
+        genres: details.genres.map((genre) => genre.name),
+        runtime: details.runtime,
+        seasons: details.seasons,
+        saga: details.collection?.name ?? null,
+        whereToWatch: { subscription: names(details.offers.subscription), free: names(details.offers.free), rent: names(details.offers.rent), buy: names(details.offers.buy) },
+        watchlistEntryId: entryId
+    };
+}
+
+/**
+ * @constant TitleDetailsSchema
+ * @description Zod schema for the arguments of `watchlist_title_details`: a watchlist entry, a title of the catalog, or a
+ * name to look for.
+ */
+const TitleDetailsSchema = z.object({
+    entryId: z.uuid().optional(),
+    mediaType: MediaTypeSchema.optional(),
+    tmdbId: z.number().int().positive().optional(),
+    query: z.string().trim().min(1).max(100).optional()
+}).refine((args) => args.entryId !== undefined || (args.mediaType !== undefined && args.tmdbId !== undefined) || args.query !== undefined, { message: 'Give entryId, mediaType and tmdbId, or query' });
+
+/**
+ * @constant watchlistTitleDetails
+ * @description Reads what a film or a series is about from the catalog, on the watchlist or not.
+ */
+const watchlistTitleDetails: AssistantTool = {
+    declaration: {
+        name: 'watchlist_title_details',
+        description: 'Reads a film or a series from the catalog (TMDB): its synopsis, year, genres, runtime or seasons, saga, the services it can be watched on, and its watchlist entry id if it is on the watchlist. Name it by its watchlist entry id, by mediaType and tmdbId, or by a query; a query describes the best match and lists a few others.',
+        parameters: {
+            type: 'object',
+            properties: {
+                entryId: { type: 'string', description: 'A watchlist entry id, from watchlist_search' },
+                mediaType: { type: 'string', enum: ['movie', 'tv'], description: 'Film or series, with tmdbId' },
+                tmdbId: { type: 'integer', description: 'The title\'s catalog id, with mediaType' },
+                query: { type: 'string', description: 'The title\'s name, to look for in the catalog' }
+            }
+        }
+    },
+    run: async (context: ToolContext, args: Record<string, unknown>): Promise<ToolOutcome> => {
+        const parsed = TitleDetailsSchema.safeParse(args);
+
+        if (!parsed.success) {
+            return invalid(parsed.error);
+        }
+
+        const { entryId, mediaType, tmdbId, query } = parsed.data;
+        let target: Perhaps<Pick<CatalogTitle, 'mediaType' | 'tmdbId'>> = mediaType !== undefined && tmdbId !== undefined ? { mediaType, tmdbId } : undefined;
+        let others: CatalogTitle[] = [];
+
+        try {
+            if (entryId !== undefined) {
+                const entry = await context.prisma.watchlistEntry.findUnique({ where: { id: entryId } });
+                const entryMedia = MediaTypeSchema.safeParse(entry?.mediaType);
+
+                if (entry === null || !entryMedia.success) {
+                    return { result: { error: 'Unknown title: find its id with watchlist_search' } };
+                }
+
+                target = { mediaType: entryMedia.data, tmdbId: entry.tmdbId };
+            } else if (target === undefined && query !== undefined) {
+                const [best, ...rest] = await searchCatalog(context.variables, context.logger, query, context.language);
+
+                if (best === undefined) {
+                    return { result: { error: `Nothing in the catalog matches "${query}"` } };
+                }
+
+                target = best;
+                others = rest.slice(0, OTHER_MATCHES);
+            }
+
+            if (target === undefined) {
+                return { result: { error: 'Give entryId, mediaType and tmdbId, or query' } };
+            }
+
+            const details = await titleDetails(context.variables, context.logger, target.mediaType, target.tmdbId, context.language);
+            const otherMatches = others.map((title) => ({ tmdbId: title.tmdbId, mediaType: title.mediaType, title: title.title, year: yearOf(title.releaseDate) }));
+
+            return { result: { ...describedTitle(details, await watchlistEntryOf(context.prisma, details)), otherMatches } };
+        } catch (error: unknown) {
+            if (error instanceof RequestError) {
+                return CATALOG_UNAVAILABLE;
+            }
+
+            throw error;
+        }
+    }
+};
+
+/**
+ * @constant ProposeAddTitleSchema
+ * @description Zod schema for the arguments of `watchlist_propose_add_title`.
+ */
+const ProposeAddTitleSchema = z.object({
+    mediaType: MediaTypeSchema,
+    tmdbId: z.number().int().positive()
+});
+
+/**
+ * @constant watchlistProposeAddTitle
+ * @description Suggests adding a film or a series to the watchlist.
+ */
+const watchlistProposeAddTitle: AssistantTool = {
+    declaration: {
+        name: 'watchlist_propose_add_title',
+        description: 'Suggests adding a film or a series to the watchlist, found first with watchlist_title_details. Nothing is stored: the owner confirms it or not.',
+        parameters: {
+            type: 'object',
+            properties: {
+                mediaType: { type: 'string', enum: ['movie', 'tv'], description: 'Film or series' },
+                tmdbId: { type: 'integer', description: 'The title\'s catalog id' }
+            },
+            required: ['mediaType', 'tmdbId']
+        }
+    },
+    run: async (context: ToolContext, args: Record<string, unknown>): Promise<ToolOutcome> => {
+        const parsed = ProposeAddTitleSchema.safeParse(args);
+
+        if (!parsed.success) {
+            return invalid(parsed.error);
+        }
+
+        if (await watchlistEntryOf(context.prisma, parsed.data) !== null) {
+            return { result: { error: 'This title is already on the watchlist' } };
+        }
+
+        let details: CatalogDetails;
+
+        try {
+            details = await titleDetails(context.variables, context.logger, parsed.data.mediaType, parsed.data.tmdbId, context.language);
+        } catch (error: unknown) {
+            if (error instanceof RequestError) {
+                return { result: { error: 'Unknown title, or the catalog is unavailable: find it with watchlist_title_details' } };
+            }
+
+            throw error;
+        }
+
+        return {
+            result: { status: 'Shown to the owner, waiting for confirmation' },
+            proposal: { kind: 'addTitle', mediaType: details.mediaType, tmdbId: details.tmdbId, title: details.title, releaseDate: details.releaseDate, posterPath: details.posterPath, overview: details.overview }
+        };
+    }
+};
+
+/**
  * @constant ASSISTANT_TOOLS
- * @description Every tool the model may call: three that read, four that only suggest.
+ * @description Every tool the model may call, named after the app it works on: four that read, five that only suggest.
  */
 export const ASSISTANT_TOOLS: readonly AssistantTool[] = [
     searchOperations,
     monthSummary,
     searchWatchlist,
+    watchlistTitleDetails,
     proposeCreateOperation,
     proposeUpdateOperation,
     proposeDeleteOperation,
-    proposeRateTitle
+    proposeRateTitle,
+    watchlistProposeAddTitle
 ];
