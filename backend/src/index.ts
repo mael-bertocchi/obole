@@ -12,6 +12,8 @@ import settingsRoutes from 'src/modules/budget/settings/settings-routes';
 import stateRoutes from 'src/modules/budget/state/state-routes';
 import healthRoutes from 'src/modules/health/health-routes';
 import identityRoutes from 'src/modules/identity/identity-routes';
+import mcpRoutes from 'src/modules/mcp/mcp-routes';
+import oauthRoutes from 'src/modules/oauth/oauth-routes';
 import catalogRoutes from 'src/modules/watchlist/catalog/catalog-routes';
 import entriesRoutes from 'src/modules/watchlist/entries/entries-routes';
 import assistantPlugin from 'src/plugins/assistant';
@@ -134,6 +136,8 @@ async function startServer(): Promise<void> {
     await fastify.register(assistantRoutes, { prefix: '/v1/assistant' });
     await fastify.register(catalogRoutes, { prefix: '/v1/watchlist/catalog' });
     await fastify.register(entriesRoutes, { prefix: '/v1/watchlist/entries' });
+    await fastify.register(oauthRoutes);
+    await fastify.register(mcpRoutes, { prefix: '/mcp' });
 
     fastify.setNotFoundHandler(handleNotFound);
 

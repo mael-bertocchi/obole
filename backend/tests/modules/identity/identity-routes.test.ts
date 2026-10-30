@@ -6,6 +6,7 @@ import { StatusCodes } from 'http-status-codes';
 import type { PrismaClient } from 'prisma/generated/prisma/client';
 import identityRoutes from 'src/modules/identity/identity-routes';
 import { pkceChallenge } from 'src/modules/identity/identity-service';
+import oauthRoutes from 'src/modules/oauth/oauth-routes';
 import identityPlugin from 'src/plugins/identity';
 import type { Maybe } from 'src/shared/models';
 import { RequestError } from 'src/shared/models';
@@ -158,6 +159,7 @@ async function buildApp(enrollmentToken = TOKEN): Promise<TestApp> {
     });
 
     await app.register(identityRoutes, { prefix: '/v1/identity' });
+    await app.register(oauthRoutes);
 
     return { app, passkeys };
 }
@@ -464,5 +466,126 @@ describe('connecting the app', () => {
         const options = await post(app, '/v1/identity/login/options');
 
         expect((await post(app, '/v1/identity/connect', { response: stranger.get(challengeOf(options)), challenge: pkceChallenge(VERIFIER) })).statusCode).toBe(StatusCodes.UNAUTHORIZED);
+    });
+});
+
+describe('authorizing an MCP client', () => {
+    /**
+     * @constant API
+     * @description The headers of a request reaching the API through its proxy, at its public address
+     */
+    const API = { 'x-forwarded-proto': 'https', 'x-forwarded-host': 'api.example.fr' };
+    /**
+     * @constant CALLBACK
+     * @description Where the client waits for its code
+     */
+    const CALLBACK = 'https://claude.example.com/api/mcp/auth_callback';
+
+    /**
+     * @function registerClient
+     * @description Registers a client waiting on the callback, returning its id.
+     */
+    async function registerClient(app: FastifyInstance): Promise<string> {
+        const response = await app.inject({ method: 'POST', url: '/oauth/register', headers: API, payload: { redirect_uris: [CALLBACK], client_name: 'Claude' } });
+
+        expect(response.statusCode).toBe(StatusCodes.CREATED);
+
+        return response.json<{ client_id: string }>().client_id;
+    }
+
+    /**
+     * @function authorize
+     * @description Authorizes a client with the passkey, as the portal's page does, returning where it is sent back.
+     */
+    async function authorize(app: FastifyInstance, authenticator: SoftwareAuthenticator, clientId: string, redirectUri: string = CALLBACK): Promise<LightMyRequestResponse> {
+        const options = await post(app, '/v1/identity/login/options');
+
+        return await post(app, '/v1/oauth/authorize', { response: authenticator.get(challengeOf(options)), clientId, redirectUri, codeChallenge: pkceChallenge(VERIFIER), state: 'a-state' });
+    }
+
+    /**
+     * @function token
+     * @description Asks for tokens with a form-encoded body, as OAuth clients do.
+     */
+    async function token(app: FastifyInstance, fields: Record<string, string>): Promise<LightMyRequestResponse> {
+        return await app.inject({ method: 'POST', url: '/oauth/token', headers: { ...API, 'content-type': 'application/x-www-form-urlencoded' }, payload: new URLSearchParams(fields).toString() });
+    }
+
+    it('tells clients where to authorize and where to get tokens', async () => {
+        const { app } = await buildApp();
+        const resource = await app.inject({ method: 'GET', url: '/.well-known/oauth-protected-resource/mcp', headers: API });
+        const server = await app.inject({ method: 'GET', url: '/.well-known/oauth-authorization-server', headers: API });
+
+        expect(resource.json()).toMatchObject({ resource: 'https://api.example.fr/mcp', authorization_servers: ['https://api.example.fr'] });
+        expect(server.json()).toMatchObject({ issuer: 'https://api.example.fr', authorization_endpoint: `${ORIGIN}/authorize`, token_endpoint: 'https://api.example.fr/oauth/token', registration_endpoint: 'https://api.example.fr/oauth/register', code_challenge_methods_supported: ['S256'] });
+    });
+
+    it('registers clients waiting over HTTPS or on the loopback address only', async () => {
+        const { app } = await buildApp();
+        const register = async (uri: string): Promise<number> => (await app.inject({ method: 'POST', url: '/oauth/register', payload: { redirect_uris: [uri] } })).statusCode;
+
+        expect(await register('https://claude.ai/api/mcp/auth_callback')).toBe(StatusCodes.CREATED);
+        expect(await register('http://localhost:33418/callback')).toBe(StatusCodes.CREATED);
+        expect(await register('http://evil.example.com/callback')).toBe(StatusCodes.BAD_REQUEST);
+        expect(await register('https://claude.ai/callback#fragment')).toBe(StatusCodes.BAD_REQUEST);
+    });
+
+    it('sends the client back with a code it trades once for tokens, then refreshes them', async () => {
+        const { app } = await buildApp();
+        const authenticator = new SoftwareAuthenticator({ origin: ORIGIN });
+
+        await enroll(app, authenticator);
+
+        const clientId = await registerClient(app);
+        const described = await app.inject({ method: 'GET', url: `/v1/oauth/client?${new URLSearchParams({ clientId, redirectUri: CALLBACK }).toString()}` });
+
+        expect(described.json()).toEqual({ data: { name: 'Claude', redirectHost: 'claude.example.com' } });
+
+        const authorized = await authorize(app, authenticator, clientId);
+        const redirect = new URL(authorized.json<{ data: { redirectUrl: string } }>().data.redirectUrl);
+        const code = redirect.searchParams.get('code') ?? '';
+
+        expect(`${redirect.origin}${redirect.pathname}`).toBe(CALLBACK);
+        expect(redirect.searchParams.get('state')).toBe('a-state');
+
+        const traded = await token(app, { grant_type: 'authorization_code', code, code_verifier: VERIFIER, client_id: clientId, redirect_uri: CALLBACK });
+        const tokens = traded.json<{ access_token: string; refresh_token: string; token_type: string; expires_in: number }>();
+
+        expect(traded.statusCode).toBe(StatusCodes.OK);
+        expect(tokens).toMatchObject({ token_type: 'Bearer', expires_in: 900 });
+        expect((await app.inject({ method: 'GET', url: '/v1/identity/me', headers: { authorization: `Bearer ${tokens.access_token}` } })).statusCode).toBe(StatusCodes.OK);
+        expect((await token(app, { grant_type: 'authorization_code', code, code_verifier: VERIFIER, client_id: clientId, redirect_uri: CALLBACK })).json()).toMatchObject({ error: 'invalid_grant' });
+
+        const refreshed = await token(app, { grant_type: 'refresh_token', refresh_token: tokens.refresh_token });
+
+        expect(refreshed.statusCode).toBe(StatusCodes.OK);
+        expect((await token(app, { grant_type: 'refresh_token', refresh_token: tokens.refresh_token })).json()).toMatchObject({ error: 'invalid_grant' });
+    });
+
+    it('hands out no code for an address the client did not register, or a forged client', async () => {
+        const { app } = await buildApp();
+        const authenticator = new SoftwareAuthenticator({ origin: ORIGIN });
+
+        await enroll(app, authenticator);
+
+        const clientId = await registerClient(app);
+        const forged = `${Buffer.from(JSON.stringify({ r: ['https://evil.example.com/cb'], n: 'Claude', t: 0 })).toString('base64url')}.${clientId.split('.')[1] ?? ''}`;
+
+        expect((await authorize(app, authenticator, clientId, 'https://evil.example.com/cb')).statusCode).toBe(StatusCodes.BAD_REQUEST);
+        expect((await authorize(app, authenticator, forged, 'https://evil.example.com/cb')).statusCode).toBe(StatusCodes.BAD_REQUEST);
+    });
+
+    it('burns the code on a wrong verifier', async () => {
+        const { app } = await buildApp();
+        const authenticator = new SoftwareAuthenticator({ origin: ORIGIN });
+
+        await enroll(app, authenticator);
+
+        const clientId = await registerClient(app);
+        const authorized = await authorize(app, authenticator, clientId);
+        const code = new URL(authorized.json<{ data: { redirectUrl: string } }>().data.redirectUrl).searchParams.get('code') ?? '';
+
+        expect((await token(app, { grant_type: 'authorization_code', code, code_verifier: `${VERIFIER}x`, client_id: clientId, redirect_uri: CALLBACK })).json()).toMatchObject({ error: 'invalid_grant' });
+        expect((await token(app, { grant_type: 'authorization_code', code, code_verifier: VERIFIER, client_id: clientId, redirect_uri: CALLBACK })).json()).toMatchObject({ error: 'invalid_grant' });
     });
 });

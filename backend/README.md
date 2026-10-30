@@ -10,6 +10,7 @@ The **Fastify + TypeScript** server behind the Obole portal: it opens the single
 - **A trash for operations** • a deleted operation is kept with the moment it was deleted, out of the budget, and can be restored.
 - **Watchlist** • films and series to watch, then watched with a rating in half stars and a comment (`/v1/watchlist/entries`). What a title is comes from TMDB, which the server asks itself so its token never leaves it (`/v1/watchlist/catalog`): search, details with where to watch it in France (JustWatch data), sagas and genres, kept in memory for a while. A title and its saga's name are stored in English and in French, so the list reads right in either language.
 - **Assistant** • a conversation with Gemini about the budget and the watchlist (`POST /v1/assistant/messages`). The model reads through tools the server runs itself, and can only *suggest* changes: each suggestion comes back to the portal, which carries it out through the ordinary routes once the owner confirms it.
+- **MCP server** • Claude, or any MCP client, reads and changes the budget and the watchlist through `/mcp` (Streamable HTTP), with tools named after their app. The client is let in with OAuth 2.1: it registers itself, the owner authorizes it on the portal with the passkey, and it gets the same tokens as the apps.
 - **Hardened** • Helmet, CORS open to the portal's origin only, rate limiting, Zod request validation, and a non-root Docker image.
 
 ## Stack
@@ -58,6 +59,13 @@ Node 24 · Fastify 5 · TypeScript · Prisma 7 · PostgreSQL · Zod · SimpleWeb
 | `GET /v1/watchlist/catalog/collections/:id` | access | A saga's films, in the order they came out |
 | `GET /v1/watchlist/catalog/genres` | access | Every genre of films and series |
 | `GET /v1/health` | public | Liveness and database connectivity |
+| `POST /mcp` | access | The MCP endpoint: one JSON-RPC message, answered as JSON; `401` with `WWW-Authenticate` pointing to the metadata without a token |
+| `GET /.well-known/oauth-protected-resource/mcp` | public | Which server authorizes access to `/mcp` (RFC 9728) |
+| `GET /.well-known/oauth-authorization-server` | public | Where to register, authorize and get tokens (RFC 8414) |
+| `POST /oauth/register` | public | Register an MCP client and its redirect URIs (RFC 7591): HTTPS, or HTTP on the loopback address |
+| `POST /oauth/token` | public | Trade a code and its PKCE verifier, or a refresh token, for tokens, in OAuth's shape |
+| `GET /v1/oauth/client?clientId=&redirectUri=` | public | For the portal's authorization page: the client's name and the host it waits on |
+| `POST /v1/oauth/authorize` | public | For that page: exchange the passkey's signed `{ response }` for the address to send the client back to, with its code |
 
 Every response is wrapped in `{ "data": … }`; errors are `{ "message": …, "data": … }`. The catalog routes write in `?language=en` or `fr` (French by default).
 
@@ -138,6 +146,15 @@ ASSISTANT_GEMINI_MODEL="gemini-3.8-flash"   # optional
 Every message sends the whole conversation (`generateContent`), so nothing is kept on Gemini's side between turns. The model sees the categories and reads the rest through four tools, each named after the app it works on (`budget_search_operations`, `budget_month_summary`, `watchlist_search`, and `watchlist_title_details`, which reads a title's synopsis, genres and streaming services from TMDB); its five other tools (`budget_propose_create_operation`, `budget_propose_update_operation`, `budget_propose_delete_operation`, `watchlist_propose_rate_title`, `watchlist_propose_add_title`) change nothing and only return a suggestion for the owner to confirm. Without a key, the route answers `503`.
 
 Once the server is ready, it reads the model's card from Gemini (`GET /models/{model}`, which costs no quota) to check the key and the model, and writes the outcome to its logs. `GET /v1/assistant/status` answers from that check, and the conversations correct it as they go: `reason` is `assistant-not-configured`, `assistant-refused`, `assistant-unknown-model` or `assistant-unreachable`, the last one checked again after a minute. The model thinks at a low level to keep each turn short. When Gemini takes more than a minute over one turn, or the whole conversation more than 80 seconds (Cloudflare, in front of the server, gives up at 100), the route answers `503` with `assistant-timeout`, which leaves the assistant on. It is not a `504`, which Cloudflare would swap for its own page. Each answer from Gemini is logged with how long it took.
+
+## MCP
+
+`/mcp` offers Obole to Claude and other MCP clients. In Claude, add a custom connector with the URL `https://<api host>/mcp`: Claude registers itself, sends you to the portal's `/authorize` page to confirm with your passkey, then calls the tools as you.
+
+- **Read** • `budget_list_categories`, `budget_search_operations`, `budget_month_summary`, `watchlist_search`, and `watchlist_title_details`, which reads a title's synopsis, genres and streaming services from TMDB.
+- **Write** • `budget_create_operation` (priced at its day's rate with the bank's markup, as the apps price it, and dated at noon UTC on its day), `budget_update_operation`, `budget_delete_operation` (to the trash), `watchlist_rate_title` and `watchlist_add_title`. Each is marked as writing, and the delete as destructive, so the client asks before running them.
+
+The server keeps no MCP session: each message is answered on its own. Client ids are signed with `JWT_SECRET` rather than stored, so they survive restarts; changing the secret signs every client out. The tokens are the apps' own (`JWT_ACCESS_EXPIRY`, refreshed with `JWT_REFRESH_EXPIRY`). Outside `localhost`, the addresses the metadata gives are always HTTPS.
 
 ## Scripts
 
