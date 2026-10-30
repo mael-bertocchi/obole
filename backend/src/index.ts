@@ -3,7 +3,6 @@ import Fastify from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { hasZodFastifySchemaValidationErrors, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { StatusCodes } from 'http-status-codes';
-import assistantRoutes from 'src/modules/assistant/assistant-routes';
 import categoriesRoutes from 'src/modules/budget/categories/categories-routes';
 import historyRoutes from 'src/modules/budget/history/history-routes';
 import operationsRoutes from 'src/modules/budget/operations/operations-routes';
@@ -16,7 +15,6 @@ import mcpRoutes from 'src/modules/mcp/mcp-routes';
 import oauthRoutes from 'src/modules/oauth/oauth-routes';
 import catalogRoutes from 'src/modules/watchlist/catalog/catalog-routes';
 import entriesRoutes from 'src/modules/watchlist/entries/entries-routes';
-import assistantPlugin from 'src/plugins/assistant';
 import databasePlugin from 'src/plugins/database';
 import environmentPlugin from 'src/plugins/environment';
 import identityPlugin from 'src/plugins/identity';
@@ -121,7 +119,6 @@ async function startServer(): Promise<void> {
     await fastify.register(securityPlugin);
     await fastify.register(databasePlugin);
     await fastify.register(identityPlugin);
-    await fastify.register(assistantPlugin);
 
     fastify.setErrorHandler(handleGlobalError);
 
@@ -133,7 +130,6 @@ async function startServer(): Promise<void> {
     await fastify.register(categoriesRoutes, { prefix: '/v1/budget/categories' });
     await fastify.register(settingsRoutes, { prefix: '/v1/budget/settings' });
     await fastify.register(historyRoutes, { prefix: '/v1/budget/history' });
-    await fastify.register(assistantRoutes, { prefix: '/v1/assistant' });
     await fastify.register(catalogRoutes, { prefix: '/v1/watchlist/catalog' });
     await fastify.register(entriesRoutes, { prefix: '/v1/watchlist/entries' });
     await fastify.register(oauthRoutes);

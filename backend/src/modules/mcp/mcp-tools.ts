@@ -96,7 +96,7 @@ export function euros(value: number): number {
 
 /**
  * @interface OperationLine
- * @description An operation in a few fields, as the model and the assistant's suggestions see it.
+ * @description An operation in a few fields, as the model sees it.
  */
 export interface OperationLine {
     id: string; /*!< Its id */
@@ -110,7 +110,7 @@ export interface OperationLine {
 
 /**
  * @function summaryOf
- * @description An operation as the model and the proposals see it.
+ * @description An operation as the model sees it.
  *
  * @param {BudgetOperation} row The stored operation.
  *

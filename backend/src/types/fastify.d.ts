@@ -1,7 +1,6 @@
 import '@fastify/jwt';
 import 'fastify';
 import type { PrismaClient } from 'prisma/generated/prisma/client';
-import type { AssistantStatus } from 'src/modules/assistant/assistant-status';
 import type { Variables } from 'src/plugins/environment';
 import type { IdentityService, TokenPayload } from 'src/plugins/identity';
 
@@ -29,6 +28,5 @@ declare module 'fastify' {
         identity: IdentityService;
         variables: Variables;
         prisma: PrismaClient;
-        assistant: AssistantStatus;
     }
 }
