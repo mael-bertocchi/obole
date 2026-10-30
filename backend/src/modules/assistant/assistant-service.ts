@@ -4,8 +4,9 @@ import type { PrismaClient } from 'prisma/generated/prisma/client';
 import type { GeminiContent, GeminiPart } from 'src/modules/assistant/assistant-gemini';
 import { generate } from 'src/modules/assistant/assistant-gemini';
 import type { AssistantReply, Conversation, Proposal } from 'src/modules/assistant/assistant-models';
-import type { ToolContext, ToolOutcome } from 'src/modules/assistant/assistant-tools';
+import type { ToolOutcome } from 'src/modules/assistant/assistant-tools';
 import { ASSISTANT_TOOLS } from 'src/modules/assistant/assistant-tools';
+import type { ToolContext } from 'src/modules/mcp/mcp-tools';
 import type { Variables } from 'src/plugins/environment';
 import { RequestError } from 'src/shared/models';
 
