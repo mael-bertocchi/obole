@@ -13,10 +13,10 @@
 
 ## The budget
 
-- **Budget** • the ring with what is left to spend, the spent, days-left and per-day figures, and every category against its limit. Step back through past months; a past month is measured against the budget frozen when it ended.
+- **Budget** • the ring with what is left to spend, the spent, days-left and per-day figures, and every category against its limit. The current month adds where it ends at its pace (recurring operations counted once) and, per category, a badge with the change from its usual spending at the same day. Step back through past months; a past month is measured against the budget frozen when it ended.
 - **History** • operations grouped by day with day totals, each at the time it happened (latest first, read in the browser's time zone), a search, and a filter chip per category.
 - **New & edit operation** • amount in any currency with the euro equivalent at the rate of the operation's own day (bank markup included), category, name, note, date and time, online, place, recurring. Delete with a confirmation.
-- **Analysis** • where the month is heading at its pace (recurring operations counted once, the rest carried on to the end of the month), drawn day by day against the usual curve and the budget, and each category so far against its average at the same day of the last six months, the largest rise first. Worked out in the page, from the budget it holds.
+- **Analysis** • what each of the last twelve months spent, in all or per category, against its budget and the average; the expenses that come back every month and what they cost over a year; and the habits of the last 90 days: each weekday's average, the share paid online, the places most spent at. Worked out in the page, from the budget it holds.
 - **Limits** • the monthly budget and each category's limit, with what is left to dispatch.
 - **Settings** • sync state, budget and limits, default currency, exchange rates, operation and category counts, the trash (restore a deleted operation), reset.
 - **English & French** • the page follows the browser's language, or the one picked in the account settings, and switches on the spot. Amounts and dates are written as in the app: `€1,234.50` in English, `1 234,50 €` in French.

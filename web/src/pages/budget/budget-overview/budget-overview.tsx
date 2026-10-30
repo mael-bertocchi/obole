@@ -3,7 +3,9 @@ import EmptyStateComponent from 'components/empty-state/empty-state';
 import RingComponent from 'components/ring/ring';
 import TrackBarComponent from 'components/track-bar/track-bar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { Maybe } from 'models';
+import type { Maybe, Perhaps } from 'models';
+import type { MonthProjection } from 'modules/budget/budget-analysis';
+import { compareMonth, projectMonth } from 'modules/budget/budget-analysis';
 import { categoryName, hexColor } from 'modules/budget/budget-categories';
 import { dayKey, daysInMonth, monthKey, monthStart, parseMonthKey, shiftMonth } from 'modules/budget/budget-dates';
 import { euro, monthTitle } from 'modules/budget/budget-formatting';
@@ -12,6 +14,7 @@ import type { CategorySpend } from 'modules/budget/budget-math';
 import { categorySpends, monthlyBudgetFor, operationsIn, summary, toDispatch } from 'modules/budget/budget-math';
 import { t } from 'modules/language/language-service';
 import BudgetLimitsComponent from 'pages/budget/budget-limits/budget-limits';
+import TrendBadgeComponent from 'pages/budget/budget-trend/budget-trend';
 import { useState, type JSX } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -86,17 +89,52 @@ function StatTileComponent(props: StatTileComponentProps): JSX.Element {
 }
 
 /**
+ * @interface ProjectionRowComponentProps
+ * @description Properties of the end-of-month projection
+ */
+interface ProjectionRowComponentProps {
+    projection: MonthProjection; /*!< Where the month is heading */
+}
+
+/**
+ * @function ProjectionRowComponent
+ * @description Where the current month ends at its pace, against its budget, with how it was worked out.
+ *
+ * @param {ProjectionRowComponentProps} props The properties of the component
+ */
+function ProjectionRowComponent(props: ProjectionRowComponentProps): JSX.Element {
+    const { projection } = props;
+    const margin = projection.limit - projection.projected;
+    const isOver = projection.limit > 0 && margin < 0;
+    const basis = projection.recurring > 0 ? t('analysis.basisRecurring', { pace: euro(projection.pace), recurring: euro(projection.recurring) }) : t('analysis.basis', { pace: euro(projection.pace) });
+    const status = isOver ? t('analysis.over', { amount: euro(-margin) }) : t('analysis.under', { amount: euro(margin) });
+
+    return (
+        <div className='mt-2.5 w-full rounded-2xl bg-fill px-4 py-3' title={basis}>
+            <div className='flex items-baseline justify-between gap-3'>
+                <p className='text-[12px] font-medium text-ink-secondary'>{t('analysis.projection')}</p>
+                <p className='text-[19px] font-semibold tracking-tight tabular-nums'>{euro(projection.projected)}</p>
+            </div>
+            {projection.limit > 0 && <p className={`text-right text-[13px] font-medium ${isOver ? 'text-negative-text' : 'text-positive-text'}`}>{status}</p>}
+            <p className='mt-1.5 text-[12px] leading-snug text-ink-tertiary'>{projection.isEarly ? t('analysis.early') : basis}</p>
+        </div>
+    );
+}
+
+/**
  * @interface CategoryRowComponentProps
  * @description Properties of one category row
  */
 interface CategoryRowComponentProps {
     spend: CategorySpend; /*!< The category and what was spent in it */
+    change: Perhaps<Maybe<number>>; /*!< Its change from usual by the same day, as a fraction, null when it usually spends nothing, left out when not compared */
     onOpen: () => void; /*!< Called to open its operations */
 }
 
 /**
  * @function CategoryRowComponent
- * @description A category against its limit. Over the limit, its figures and bar turn red.
+ * @description A category against its limit, with its change from usual in the current month. Over the limit, its
+ * figures and bar turn red.
  *
  * @param {CategoryRowComponentProps} props The properties of the component
  */
@@ -107,8 +145,9 @@ function CategoryRowComponent(props: CategoryRowComponentProps): JSX.Element {
         <button type='button' onClick={props.onOpen} className='-mx-3 flex w-[calc(100%+1.5rem)] flex-col gap-2.5 rounded-2xl px-3 py-3 text-left transition hover:bg-fill/70'>
             <span className='flex w-full items-center gap-3'>
                 <CategoryIconComponent category={props.spend.category} size={34} />
-                <span className='flex-1 text-[15px] font-medium'>{categoryName(props.spend.category)}</span>
-                <span className={`text-[14px] tabular-nums ${props.spend.isOverBudget ? 'font-semibold text-negative-text' : 'text-ink-secondary'}`}>
+                <span className='min-w-0 flex-1 truncate text-[15px] font-medium'>{categoryName(props.spend.category)}</span>
+                {props.change !== undefined && <TrendBadgeComponent change={props.change} />}
+                <span className={`shrink-0 whitespace-nowrap text-[14px] tabular-nums ${props.spend.isOverBudget ? 'font-semibold text-negative-text' : 'text-ink-secondary'}`}>
                     {range}
                 </span>
             </span>
@@ -120,7 +159,8 @@ function CategoryRowComponent(props: CategoryRowComponentProps): JSX.Element {
 /**
  * @function BudgetOverviewComponent
  * @description The Budget tab: what is left to spend in a month, the spent, days-left and per-day figures, and every
- * category against its limit. Each month is measured against its own budget, which can be edited at any time. The
+ * category against its limit. In the current month, where it ends at its pace, and each category's change from what it
+ * usually spent by the same day. Each month is measured against its own budget, which can be edited at any time. The
  * month shown lives in the address, so coming back from a category's operations lands on the same month.
  */
 function BudgetOverviewComponent(): JSX.Element {
@@ -138,6 +178,10 @@ function BudgetOverviewComponent(): JSX.Element {
     const canGoForward = month.getTime() < monthStart(now).getTime();
     const dispatch = toDispatch(document.categories, budget);
     const spends = categorySpends(document.operations, document.categories, month, budget).filter((spend) => spend.limit > 0 || spend.spent > 0);
+    const isCurrent = month.getTime() === monthStart(now).getTime();
+    const projection = isCurrent && hasOperations ? projectMonth(document, now) : null;
+    const comparison = isCurrent ? compareMonth(document, now) : null;
+    const changes = new Map((comparison !== null && comparison.referenceCount > 0 ? comparison.categories : []).map((entry) => [entry.category.id, entry.change]));
 
     /**
      * @function showMonth
@@ -184,6 +228,7 @@ function BudgetOverviewComponent(): JSX.Element {
                         <StatTileComponent label={t('budget.daysLeft')} value={hasOperations ? String(figures.daysLeft) : '•'} />
                         <StatTileComponent label={t('budget.perDay')} value={hasOperations ? euro(figures.perDay) : '•'} />
                     </div>
+                    {projection !== null && <ProjectionRowComponent projection={projection} />}
                 </section>
 
                 <section className='card p-6 sm:p-8 lg:col-span-3'>
@@ -205,7 +250,7 @@ function BudgetOverviewComponent(): JSX.Element {
                             <EmptyStateComponent message={t('budget.noSpending')} />
                         )}
                         {hasOperations && spends.map((spend) => (
-                            <CategoryRowComponent key={spend.category.id} spend={spend} onOpen={() => navigate(historyPath(spend.category.id, month))} />
+                            <CategoryRowComponent key={spend.category.id} spend={spend} change={changes.has(spend.category.id) ? changes.get(spend.category.id) ?? null : undefined} onOpen={() => navigate(historyPath(spend.category.id, month))} />
                         ))}
                     </div>
                 </section>

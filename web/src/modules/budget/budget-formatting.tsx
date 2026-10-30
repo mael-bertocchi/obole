@@ -175,6 +175,26 @@ export function monthWithYear(date: Date): string {
 }
 
 /**
+ * @function monthShort
+ * @description A month's abbreviated name: Sep.
+ */
+export function monthShort(date: Date): string {
+    return dateWords().shortMonths[date.getMonth()] ?? '';
+}
+
+/**
+ * @function weekdayShort
+ * @description A weekday's abbreviated name: Mon.
+ *
+ * @param {number} weekday The weekday, 0 for Sunday like `Date.getDay`.
+ *
+ * @returns {string} Its name.
+ */
+export function weekdayShort(weekday: number): string {
+    return dateWords().weekdays[weekday] ?? '';
+}
+
+/**
  * @function dayShort
  * @description A day and abbreviated month: 27 Sep.
  */

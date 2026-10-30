@@ -1,85 +1,60 @@
 import CategoryIconComponent from 'components/category-icon/category-icon';
 import EmptyStateComponent from 'components/empty-state/empty-state';
-import type { PaceChartLabels } from 'components/pace-chart/pace-chart';
-import PaceChartComponent from 'components/pace-chart/pace-chart';
-import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
+import type { MonthBar, MonthBarsLabels } from 'components/month-bars/month-bars';
+import MonthBarsComponent from 'components/month-bars/month-bars';
+import { Globe, MapPin } from 'lucide-react';
 import type { Maybe } from 'models';
-import type { CategoryComparison, MonthComparison, MonthProjection } from 'modules/budget/budget-analysis';
-import { compareMonth, projectMonth } from 'modules/budget/budget-analysis';
-import { categoryName } from 'modules/budget/budget-categories';
-import { dayShort, euro, monthTitle, percent } from 'modules/budget/budget-formatting';
+import type { MonthTotal, RecurringExpense, SpendingHabits } from 'modules/budget/budget-analysis';
+import { monthTotals, recurringExpenses, spendingHabits } from 'modules/budget/budget-analysis';
+import { categoriesOf, categoryName } from 'modules/budget/budget-categories';
+import { dayShort, euro, monthShort, monthWithYear, percent, weekdayShort } from 'modules/budget/budget-formatting';
 import { useDocument } from 'modules/budget/budget-hooks';
+import type { Category } from 'modules/budget/budget-models';
 import { t } from 'modules/language/language-service';
-import type { JSX } from 'react';
+import TrendBadgeComponent from 'pages/budget/budget-trend/budget-trend';
+import { useState, type JSX } from 'react';
 
 /**
- * @constant STEADY
- * @description How far from usual a figure may move and still read as steady: under 5%, once rounded as the badge shows it.
+ * @constant ACCENT
+ * @description The colour of the bars and of the online share.
  */
-const STEADY = 0.05;
+const ACCENT = '#6E56CF';
 
 /**
- * @type Trend
- * @description Which way a figure moved from usual: up, down, steady, or new when it usually is nothing.
+ * @constant ACCENT_LIGHT
+ * @description The colour of the in-person share, next to the online one.
  */
-type Trend = 'up' | 'down' | 'steady' | 'new';
+const ACCENT_LIGHT = '#C9BFF2';
 
 /**
- * @function trendOf
- * @description Which way a figure moved from usual.
+ * @constant COMPARED_MONTHS
+ * @description How many finished months the latest trend compares with the ones before them.
+ */
+const COMPARED_MONTHS = 3;
+
+/**
+ * @function spentOf
+ * @description What a month spent, in all or in one category.
  *
- * @param {Maybe<number>} change The change, as a fraction, or null when it usually is nothing.
+ * @param {MonthTotal} total The month.
+ * @param {Maybe<string>} categoryId The category, or null for all of them.
  *
- * @returns {Trend} Its trend.
+ * @returns {number} The euros spent.
  */
-function trendOf(change: Maybe<number>): Trend {
-    if (change === null) {
-        return 'new';
-    }
-
-    if (Math.round(Math.abs(change) * 100) < STEADY * 100) {
-        return 'steady';
-    }
-
-    return change > 0 ? 'up' : 'down';
+function spentOf(total: MonthTotal, categoryId: Maybe<string>): number {
+    return categoryId === null ? total.spent : total.byCategory[categoryId] ?? 0;
 }
 
 /**
- * @constant TREND_STYLES
- * @description How each trend's badge looks: spending more reads red, spending less green, the rest grey.
- */
-const TREND_STYLES: Record<Trend, string> = {
-    up: 'bg-negative-soft text-negative-text',
-    down: 'bg-[#EAF8EE] text-positive-text',
-    steady: 'bg-fill text-ink-secondary',
-    new: 'bg-accent-soft text-accent'
-};
-
-/**
- * @interface TrendBadgeComponentProps
- * @description Properties of a change badge
- */
-interface TrendBadgeComponentProps {
-    change: Maybe<number>; /*!< The change, as a fraction, or null when it usually is nothing */
-}
-
-/**
- * @function TrendBadgeComponent
- * @description A change from usual, with an arrow and its sign so it never rests on colour alone.
+ * @function average
+ * @description The average of some numbers.
  *
- * @param {TrendBadgeComponentProps} props The properties of the component
+ * @param {readonly number[]} values The numbers.
+ *
+ * @returns {Maybe<number>} Their average, or null without any.
  */
-function TrendBadgeComponent(props: TrendBadgeComponentProps): JSX.Element {
-    const trend = trendOf(props.change);
-    const Icon = trend === 'down' ? TrendingDown : trend === 'up' ? TrendingUp : Minus;
-    const label = props.change === null ? t('analysis.new') : `${props.change > 0 ? '+' : ''}${percent(props.change)}`;
-
-    return (
-        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-semibold tabular-nums ${TREND_STYLES[trend]}`}>
-            {trend !== 'new' && <Icon size={13} strokeWidth={2.4} />}
-            {label}
-        </span>
-    );
+function average(values: readonly number[]): Maybe<number> {
+    return values.length === 0 ? null : values.reduce((total, value) => total + value, 0) / values.length;
 }
 
 /**
@@ -89,11 +64,12 @@ function TrendBadgeComponent(props: TrendBadgeComponentProps): JSX.Element {
 interface FigureComponentProps {
     label: string; /*!< Its label */
     value: string; /*!< Its figure */
+    detail?: JSX.Element; /*!< What follows it, such as a badge */
 }
 
 /**
  * @function FigureComponent
- * @description One figure under the projection's chart.
+ * @description One figure under the trends' chart.
  *
  * @param {FigureComponentProps} props The properties of the component
  */
@@ -101,142 +77,238 @@ function FigureComponent(props: FigureComponentProps): JSX.Element {
     return (
         <div className='rounded-2xl bg-fill px-3 py-3'>
             <p className='text-[12px] font-medium text-ink-secondary'>{props.label}</p>
-            <p className='mt-0.5 text-[19px] font-semibold tracking-tight tabular-nums'>{props.value}</p>
+            <div className='mt-0.5 flex flex-wrap items-center gap-2'>
+                <p className='text-[19px] font-semibold tracking-tight tabular-nums'>{props.value}</p>
+                {props.detail}
+            </div>
         </div>
     );
 }
 
 /**
- * @interface ProjectionCardComponentProps
- * @description Properties of the projection's card
+ * @interface CategoryFilterComponentProps
+ * @description Properties of the category chips
  */
-interface ProjectionCardComponentProps {
-    projection: MonthProjection; /*!< Where the month is heading */
+interface CategoryFilterComponentProps {
+    categories: Category[]; /*!< The categories to pick from */
+    selected: Maybe<string>; /*!< The category picked, or null for all of them */
+    onSelect: (categoryId: Maybe<string>) => void; /*!< Called with the category picked */
 }
 
 /**
- * @function ProjectionCardComponent
- * @description Where the month ends at the current pace, against its budget: the projected spending, whether it stays
- * under the budget, how it was worked out, and the month's curve next to the usual one.
+ * @function chipClass
+ * @description How a category chip looks, picked or not.
  *
- * @param {ProjectionCardComponentProps} props The properties of the component
+ * @param {boolean} isSelected Whether it is picked.
+ *
+ * @returns {string} Its classes.
  */
-function ProjectionCardComponent(props: ProjectionCardComponentProps): JSX.Element {
-    const { projection } = props;
-    const margin = projection.limit - projection.projected;
-    const isOver = projection.limit > 0 && margin < 0;
-    const basis = projection.recurring > 0 ? t('analysis.basisRecurring', { pace: euro(projection.pace), recurring: euro(projection.recurring) }) : t('analysis.basis', { pace: euro(projection.pace) });
-    const labels: PaceChartLabels = { actual: t('analysis.actual'), projected: t('analysis.projected'), usual: t('analysis.usual'), limit: t('analysis.limit') };
+function chipClass(isSelected: boolean): string {
+    return `shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium transition ${isSelected ? 'bg-ink text-white' : 'bg-fill text-ink-secondary hover:bg-fill-strong'}`;
+}
 
-    /**
-     * @function formatDay
-     * @description A day of the month, with the month's short name.
-     */
-    const formatDay = (day: number): string => dayShort(new Date(projection.month.getFullYear(), projection.month.getMonth(), day));
+/**
+ * @function CategoryFilterComponent
+ * @description A row of chips picking the category the trends show, all of them first.
+ *
+ * @param {CategoryFilterComponentProps} props The properties of the component
+ */
+function CategoryFilterComponent(props: CategoryFilterComponentProps): JSX.Element {
+    return (
+        <div className='-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1'>
+            <button type='button' onClick={() => props.onSelect(null)} className={chipClass(props.selected === null)}>{t('analysis.allCategories')}</button>
+            {props.categories.map((category) => (
+                <button key={category.id} type='button' onClick={() => props.onSelect(category.id)} className={chipClass(props.selected === category.id)}>{categoryName(category)}</button>
+            ))}
+        </div>
+    );
+}
+
+/**
+ * @interface TrendsCardComponentProps
+ * @description Properties of the trends' card
+ */
+interface TrendsCardComponentProps {
+    totals: MonthTotal[]; /*!< The months, the oldest first */
+    categories: Category[]; /*!< The categories that spent over them */
+}
+
+/**
+ * @function TrendsCardComponent
+ * @description What each month spent over the last year, in all or in one category: a bar per month against its
+ * budget, the average of the finished months, the costliest month, and the last three finished months against the three
+ * before.
+ *
+ * @param {TrendsCardComponentProps} props The properties of the component
+ */
+function TrendsCardComponent(props: TrendsCardComponentProps): JSX.Element {
+    const [categoryId, setCategoryId] = useState<Maybe<string>>(null);
+
+    const finished = props.totals.filter((total) => !total.isCurrent);
+    const values = finished.map((total) => spentOf(total, categoryId));
+    const mean = average(values);
+    const costliest = finished.reduce<Maybe<MonthTotal>>((best, total) => (best === null || spentOf(total, categoryId) > spentOf(best, categoryId) ? total : best), null);
+    const recent = average(values.slice(-COMPARED_MONTHS));
+    const before = values.length >= COMPARED_MONTHS * 2 ? average(values.slice(-COMPARED_MONTHS * 2, -COMPARED_MONTHS)) : null;
+    const change = recent !== null && before !== null && before > 0 ? recent / before - 1 : null;
+    const labels: MonthBarsLabels = { spent: t('analysis.spent'), budget: t('analysis.limit'), average: t('analysis.average'), partial: t('analysis.partial') };
+    const bars: MonthBar[] = props.totals.map((total) => ({ key: total.month.toISOString(), label: monthShort(total.month), title: monthWithYear(total.month), value: spentOf(total, categoryId), marker: categoryId === null && total.limit > 0 ? total.limit : null, isPartial: total.isCurrent }));
+    const badge = before === null ? undefined : <TrendBadgeComponent change={change} />;
 
     return (
-        <section className='card p-6 sm:p-8 lg:col-span-3 lg:self-start'>
-            <h2 className='text-[20px] font-semibold tracking-tight'>{t('analysis.projection')}</h2>
-            <div className='mt-4 flex flex-wrap items-end gap-x-4 gap-y-1'>
-                <p className='text-[40px] font-semibold leading-none tracking-tight tabular-nums'>{euro(projection.projected)}</p>
-                {projection.limit > 0 && (
-                    <p className={`pb-1 text-[15px] font-medium ${isOver ? 'text-negative-text' : 'text-positive-text'}`}>
-                        {isOver ? t('analysis.over', { amount: euro(-margin) }) : t('analysis.under', { amount: euro(margin) })}
-                    </p>
-                )}
-            </div>
-            <p className='mt-2 text-[14px] text-ink-secondary'>{basis}</p>
-            {projection.isEarly && <p className='mt-1 text-[13px] text-ink-tertiary'>{t('analysis.early')}</p>}
+        <section className='card p-6 sm:p-8'>
+            <h2 className='text-[20px] font-semibold tracking-tight'>{t('analysis.trends')}</h2>
+            <p className='mt-1 text-[13px] text-ink-secondary'>{t('analysis.trendsNote')}</p>
+            <CategoryFilterComponent categories={props.categories} selected={categoryId} onSelect={setCategoryId} />
 
-            <div className='mt-6'>
-                <PaceChartComponent length={projection.length} cumulative={projection.cumulative} usual={projection.usual} projected={projection.projected} limit={projection.limit} labels={labels} formatAmount={euro} formatDay={formatDay} />
+            <div className='mt-5'>
+                <MonthBarsComponent bars={bars} average={mean} labels={labels} formatAmount={euro} />
             </div>
 
-            <div className='mt-6 grid grid-cols-3 gap-2.5'>
-                <FigureComponent label={t('analysis.spentSoFar')} value={euro(projection.spent)} />
-                <FigureComponent label={t('analysis.perDay')} value={euro(projection.pace)} />
-                <FigureComponent label={t('analysis.budget')} value={projection.limit > 0 ? euro(projection.limit) : '•'} />
+            <div className='mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-3'>
+                <FigureComponent label={t('analysis.monthlyAverage')} value={mean === null ? '•' : euro(mean)} />
+                <FigureComponent label={costliest === null ? t('analysis.costliest') : t('analysis.costliestIn', { month: monthWithYear(costliest.month) })} value={costliest === null ? '•' : euro(spentOf(costliest, categoryId))} />
+                <FigureComponent label={t('analysis.lastThree')} value={recent === null ? '•' : euro(recent)} detail={badge} />
             </div>
         </section>
     );
 }
 
 /**
- * @interface ComparisonRowComponentProps
- * @description Properties of one category's comparison
+ * @interface RecurringRowComponentProps
+ * @description Properties of one recurring expense
  */
-interface ComparisonRowComponentProps {
-    comparison: CategoryComparison; /*!< The category, this month and usually */
+interface RecurringRowComponentProps {
+    expense: RecurringExpense; /*!< The expense */
 }
 
 /**
- * @function ComparisonRowComponent
- * @description A category's spending this month so far, what it usually is by now, and the change.
+ * @function RecurringRowComponent
+ * @description A recurring expense: its name and category, when it was last paid, and what it costs a month and a year.
  *
- * @param {ComparisonRowComponentProps} props The properties of the component
+ * @param {RecurringRowComponentProps} props The properties of the component
  */
-function ComparisonRowComponent(props: ComparisonRowComponentProps): JSX.Element {
-    const { category, spent, usual, change } = props.comparison;
+function RecurringRowComponent(props: RecurringRowComponentProps): JSX.Element {
+    const { expense } = props;
 
     return (
         <div className='flex items-center gap-3 py-2.5'>
-            <CategoryIconComponent category={category} size={34} />
+            <CategoryIconComponent category={expense.category} size={34} />
             <span className='min-w-0 flex-1'>
-                <span className='block truncate text-[15px] font-medium'>{categoryName(category)}</span>
-                <span className='block text-[13px] text-ink-secondary tabular-nums'>{t('analysis.usually', { amount: euro(usual) })}</span>
+                <span className='block truncate text-[15px] font-medium'>{expense.name}</span>
+                <span className='block truncate text-[13px] text-ink-secondary'>{categoryName(expense.category)} • {t('analysis.lastPaid', { date: dayShort(expense.lastDate) })}</span>
             </span>
-            <span className='flex flex-col items-end gap-1'>
-                <span className='text-[15px] font-semibold tabular-nums'>{euro(spent)}</span>
-                <TrendBadgeComponent change={change} />
+            <span className='text-right'>
+                <span className='block text-[15px] font-semibold tabular-nums'>{t('analysis.perMonth', { amount: euro(expense.monthly) })}</span>
+                <span className='block text-[13px] text-ink-secondary tabular-nums'>{t('analysis.perYear', { amount: euro(expense.yearly) })}</span>
             </span>
         </div>
     );
 }
 
 /**
- * @interface ComparisonCardComponentProps
- * @description Properties of the comparison's card
+ * @interface RecurringCardComponentProps
+ * @description Properties of the recurring expenses' card
  */
-interface ComparisonCardComponentProps {
-    comparison: MonthComparison; /*!< The month so far against usual */
+interface RecurringCardComponentProps {
+    expenses: RecurringExpense[]; /*!< The expenses, the costliest first */
 }
 
 /**
- * @function ComparisonCardComponent
- * @description The month so far against what is usually spent by the same day: in all, then category by category, the
- * largest rise first.
+ * @function RecurringCardComponent
+ * @description The expenses that come back every month, with what they all cost over a year.
  *
- * @param {ComparisonCardComponentProps} props The properties of the component
+ * @param {RecurringCardComponentProps} props The properties of the component
  */
-function ComparisonCardComponent(props: ComparisonCardComponentProps): JSX.Element {
-    const { comparison } = props;
-    const note = comparison.referenceCount === 1 ? t('analysis.comparedOne') : t('analysis.compared', { count: String(comparison.referenceCount) });
+function RecurringCardComponent(props: RecurringCardComponentProps): JSX.Element {
+    const yearly = props.expenses.reduce((total, expense) => total + expense.yearly, 0);
 
     return (
-        <section className='card p-6 sm:p-8 lg:sticky lg:top-24 lg:col-span-2 lg:self-start'>
-            <h2 className='text-[20px] font-semibold tracking-tight'>{t('analysis.comparison')}</h2>
-            {comparison.referenceCount === 0 && (
+        <section className='card p-6 sm:p-8 lg:col-span-3 lg:self-start'>
+            <div className='flex items-baseline justify-between gap-4'>
+                <h2 className='text-[20px] font-semibold tracking-tight'>{t('analysis.recurring')}</h2>
+                {props.expenses.length > 0 && <p className='shrink-0 whitespace-nowrap text-[15px] font-semibold tabular-nums'>{t('analysis.perYear', { amount: euro(yearly) })}</p>}
+            </div>
+            <p className='mt-1 text-[13px] text-ink-secondary'>{t('analysis.recurringNote')}</p>
+            <div className='mt-3 divide-y divide-hairline'>
+                {props.expenses.length === 0 && <EmptyStateComponent message={t('analysis.noRecurring')} />}
+                {props.expenses.map((expense) => (
+                    <RecurringRowComponent key={`${expense.category.id}-${expense.name}`} expense={expense} />
+                ))}
+            </div>
+        </section>
+    );
+}
+
+/**
+ * @interface HabitsCardComponentProps
+ * @description Properties of the habits' card
+ */
+interface HabitsCardComponentProps {
+    habits: SpendingHabits; /*!< The habits */
+}
+
+/**
+ * @function HabitsCardComponent
+ * @description How the last ninety days were spent, recurring operations left out: what each weekday costs on
+ * average, the share paid online, and the places most spent at.
+ *
+ * @param {HabitsCardComponentProps} props The properties of the component
+ */
+function HabitsCardComponent(props: HabitsCardComponentProps): JSX.Element {
+    const { habits } = props;
+    const busiest = Math.max(1, ...habits.weekdays.map((entry) => entry.average));
+    const total = habits.online + habits.inPerson;
+    const onlineShare = total > 0 ? habits.online / total : 0;
+
+    return (
+        <section className='card p-6 sm:p-8 lg:col-span-2 lg:self-start'>
+            <h2 className='text-[20px] font-semibold tracking-tight'>{t('analysis.habits')}</h2>
+            <p className='mt-1 text-[13px] text-ink-secondary'>{t('analysis.habitsNote')}</p>
+
+            {total === 0 && (
                 <div className='mt-4'>
-                    <EmptyStateComponent message={t('analysis.noHistory')} />
+                    <EmptyStateComponent message={t('analysis.noHabits')} />
                 </div>
             )}
-            {comparison.referenceCount > 0 && (
+            {total > 0 && (
                 <>
-                    <p className='mt-1 text-[13px] text-ink-secondary'>{note}</p>
-                    <div className='mt-4 flex items-center justify-between gap-3 rounded-2xl bg-fill px-4 py-3'>
-                        <span>
-                            <span className='block text-[13px] font-medium text-ink-secondary'>{t('analysis.total')}</span>
-                            <span className='block text-[22px] font-semibold tracking-tight tabular-nums'>{euro(comparison.spent)}</span>
-                            <span className='block text-[13px] text-ink-secondary tabular-nums'>{t('analysis.usually', { amount: euro(comparison.usual) })}</span>
-                        </span>
-                        <TrendBadgeComponent change={comparison.change} />
-                    </div>
-                    <div className='mt-3 divide-y divide-hairline'>
-                        {comparison.categories.length === 0 && <EmptyStateComponent message={t('analysis.nothingSpent')} />}
-                        {comparison.categories.map((entry) => (
-                            <ComparisonRowComponent key={entry.category.id} comparison={entry} />
+                    <h3 className='mt-5 text-[13px] font-semibold text-ink-secondary'>{t('analysis.byWeekday')}</h3>
+                    <div className='mt-2 flex flex-col gap-1.5'>
+                        {habits.weekdays.map((entry) => (
+                            <div key={entry.weekday} className='flex items-center gap-3 text-[13px]'>
+                                <span className='w-10 text-ink-secondary'>{weekdayShort(entry.weekday)}</span>
+                                <span className='h-2 flex-1 overflow-hidden rounded-full bg-fill'>
+                                    <span className='block h-full rounded-full' style={{ width: `${(entry.average / busiest) * 100}%`, backgroundColor: ACCENT, opacity: entry.average === busiest ? 1 : 0.55 }} />
+                                </span>
+                                <span className='w-14 text-right font-medium tabular-nums'>{euro(entry.average)}</span>
+                            </div>
                         ))}
                     </div>
+
+                    <h3 className='mt-6 text-[13px] font-semibold text-ink-secondary'>{t('analysis.howPaid')}</h3>
+                    <div className='mt-2 flex h-2 gap-0.5 overflow-hidden rounded-full'>
+                        <span className='h-full rounded-l-full' style={{ width: `${onlineShare * 100}%`, backgroundColor: ACCENT }} />
+                        <span className='h-full flex-1 rounded-r-full' style={{ backgroundColor: ACCENT_LIGHT }} />
+                    </div>
+                    <div className='mt-2 flex justify-between text-[13px]'>
+                        <span className='flex items-center gap-1.5'><Globe size={14} className='text-accent' />{t('analysis.online')} <span className='font-semibold tabular-nums'>{percent(onlineShare)}</span></span>
+                        <span className='flex items-center gap-1.5'><MapPin size={14} className='text-ink-tertiary' />{t('analysis.inPerson')} <span className='font-semibold tabular-nums'>{percent(1 - onlineShare)}</span></span>
+                    </div>
+
+                    {habits.places.length > 0 && (
+                        <>
+                            <h3 className='mt-6 text-[13px] font-semibold text-ink-secondary'>{t('analysis.places')}</h3>
+                            <div className='mt-1 divide-y divide-hairline'>
+                                {habits.places.map((place) => (
+                                    <div key={place.name} className='flex items-center justify-between gap-3 py-2 text-[14px]'>
+                                        <span className='min-w-0 truncate'>{place.name}</span>
+                                        <span className='shrink-0 text-ink-secondary tabular-nums'>{t('analysis.visits', { count: String(place.count) })} • <span className='font-semibold text-ink'>{euro(place.spent)}</span></span>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </>
             )}
         </section>
@@ -245,26 +317,28 @@ function ComparisonCardComponent(props: ComparisonCardComponentProps): JSX.Eleme
 
 /**
  * @function BudgetAnalysisComponent
- * @description The Analysis tab: where the current month is heading at its pace, and how it compares with the usual
- * spending at the same point of the month, in all and per category. Everything is worked out on the device, from the
- * budget the page already holds.
+ * @description The Analysis tab, about what a single month can't show: how the spending moved over the last year, the
+ * expenses that come back every month, and the recent habits. Everything is worked out in the page, from the budget it
+ * already holds.
  */
 function BudgetAnalysisComponent(): JSX.Element {
     const document = useDocument();
     const now = new Date();
-    const projection = projectMonth(document, now);
-    const comparison = compareMonth(document, now);
+    const totals = monthTotals(document, now);
+    const spending = new Set(totals.flatMap((total) => Object.keys(total.byCategory).filter((id) => (total.byCategory[id] ?? 0) > 0)));
+    const categories = categoriesOf(document.categories).filter((category) => spending.has(category.id));
 
     return (
         <div className='animate-rise'>
             <p className='eyebrow'>{t('analysis.eyebrow')}</p>
-            <h1 className='mt-1 whitespace-nowrap text-[28px] font-semibold leading-tight tracking-tight sm:text-[34px]'>
-                {monthTitle(projection.month)} <span className='font-normal text-ink-tertiary'>{projection.month.getFullYear()}</span>
-            </h1>
+            <h1 className='mt-1 text-[28px] font-semibold leading-tight tracking-tight sm:text-[34px]'>{t('analysis.title', { count: String(totals.length) })}</h1>
 
-            <div className='mt-6 grid grid-cols-1 gap-5 lg:grid-cols-5'>
-                <ProjectionCardComponent projection={projection} />
-                <ComparisonCardComponent comparison={comparison} />
+            <div className='mt-6 flex flex-col gap-5'>
+                <TrendsCardComponent totals={totals} categories={categories} />
+                <div className='grid grid-cols-1 gap-5 lg:grid-cols-5'>
+                    <RecurringCardComponent expenses={recurringExpenses(document, now)} />
+                    <HabitsCardComponent habits={spendingHabits(document, now)} />
+                </div>
             </div>
         </div>
     );

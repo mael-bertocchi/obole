@@ -1,4 +1,4 @@
-import { compareMonth, projectMonth, referenceMonths } from 'modules/budget/budget-analysis';
+import { compareMonth, monthTotals, projectMonth, recurringExpenses, referenceMonths, spendingHabits } from 'modules/budget/budget-analysis';
 import { describe, expect, it } from 'vitest';
 
 import { document, NOW, operation } from '../../support/fixtures';
@@ -26,24 +26,7 @@ describe('projectMonth', () => {
         expect(projection.recurring).toBeCloseTo(900);
         expect(projection.pace).toBeCloseTo(20);
         expect(projection.projected).toBeCloseTo(1500);
-        expect(projection.cumulative).toHaveLength(27);
-        expect(projection.cumulative[1]).toBeCloseTo(900);
-        expect(projection.cumulative[26]).toBeCloseTo(1440);
-        expect(projection.usual).toBeNull();
         expect(projection.isEarly).toBe(false);
-    });
-
-    it('averages what the past months had spent by each day', () => {
-        const operations = [
-            operation({ id: 'july', date: new Date(2026, 6, 5), amount: 100 }),
-            operation({ id: 'august', date: new Date(2026, 7, 31), amount: 300 })
-        ];
-        const usual = projectMonth(document(operations), NOW).usual ?? [];
-
-        expect(usual).toHaveLength(30);
-        expect(usual[3]).toBeCloseTo(0);
-        expect(usual[4]).toBeCloseTo(50);
-        expect(usual[29]).toBeCloseTo(50);
     });
 });
 
@@ -75,5 +58,64 @@ describe('compareMonth', () => {
         expect(comparison.referenceCount).toBe(0);
         expect(comparison.change).toBeNull();
         expect(comparison.categories[0]?.change).toBeNull();
+    });
+});
+
+describe('monthTotals', () => {
+    it('sums each month since the first operation, against its budget, the current one under way', () => {
+        const operations = [
+            operation({ id: 'jul', date: new Date(2026, 6, 4), amount: 100, categoryId: 'restaurant' }),
+            operation({ id: 'sep', date: new Date(2026, 8, 2), amount: 40 })
+        ];
+        const totals = monthTotals(document(operations, { budgetHistory: { '2026-07': { monthlyLimit: 1500, categoryLimits: {} } } }), NOW);
+
+        expect(totals.map((total) => total.month.getMonth())).toEqual([6, 7, 8]);
+        expect(totals[0]).toMatchObject({ spent: 100, limit: 1500, byCategory: { restaurant: 100 }, isCurrent: false });
+        expect(totals[1]?.spent).toBe(0);
+        expect(totals[2]).toMatchObject({ spent: 40, limit: 3000, isCurrent: true });
+    });
+
+    it('covers twelve months at most', () => {
+        const totals = monthTotals(document([operation({ id: 'old', date: new Date(2024, 0, 1) })]), NOW);
+
+        expect(totals).toHaveLength(12);
+        expect(totals[0]?.month).toEqual(new Date(2025, 9, 1));
+    });
+});
+
+describe('recurringExpenses', () => {
+    it('finds the expenses marked recurring and those coming back for about the same amount', () => {
+        const operations = [
+            operation({ id: 'rent', date: new Date(2026, 8, 1), name: 'Loyer', amount: 850, categoryId: 'administrative', isRecurring: true }),
+            ...[5, 6, 7, 8].map((month) => operation({ id: `phone-${month}`, date: new Date(2026, month, 5), name: 'Free ', amount: month === 7 ? 21 : 19.99, categoryId: 'telecom' })),
+            ...[6, 7, 8].map((month) => operation({ id: `food-${month}`, date: new Date(2026, month, 9), name: 'Carrefour', amount: [40, 90, 150][month - 6] ?? 0 })),
+            ...[2, 3, 4].map((month) => operation({ id: `gym-${month}`, date: new Date(2026, month, 3), name: 'Gym', amount: 35, categoryId: 'selfcare' }))
+        ];
+        const found = recurringExpenses(document(operations), NOW);
+
+        expect(found.map((expense) => expense.name)).toEqual(['Loyer', 'Free ']);
+        expect(found[0]).toMatchObject({ monthly: 850, yearly: 10200, months: 1 });
+        expect(found[1]?.monthly).toBeCloseTo(19.99);
+        expect(found[1]?.months).toBe(4);
+    });
+});
+
+describe('spendingHabits', () => {
+    it('spreads the last ninety days over the weekdays, online and in person, and the places, recurring left out', () => {
+        const operations = [
+            operation({ id: 'sat', date: new Date(2026, 8, 26, 12), amount: 26, location: 'Le Comptoir' }),
+            operation({ id: 'sat2', date: new Date(2026, 8, 19, 12), amount: 13, location: 'le comptoir ' }),
+            operation({ id: 'web', date: new Date(2026, 8, 22, 12), amount: 39, isOnline: true }),
+            operation({ id: 'rent', date: new Date(2026, 8, 1), amount: 850, isRecurring: true }),
+            operation({ id: 'old', date: new Date(2026, 4, 1), amount: 500 })
+        ];
+        const habits = spendingHabits(document(operations), NOW);
+        const saturday = habits.weekdays.find((entry) => entry.weekday === 6);
+
+        expect(habits.weekdays.map((entry) => entry.weekday)).toEqual([1, 2, 3, 4, 5, 6, 0]);
+        expect(saturday?.average).toBeCloseTo(39 / 13);
+        expect(habits.online).toBe(39);
+        expect(habits.inPerson).toBe(39);
+        expect(habits.places).toEqual([{ name: 'Le Comptoir', spent: 39, count: 2 }]);
     });
 });
